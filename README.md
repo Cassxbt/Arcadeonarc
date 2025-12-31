@@ -1,4 +1,4 @@
-<![CDATA[<div align="center">
+<div align="center">
 
 # ARCADE ON ARC
 
@@ -357,4 +357,3 @@ This project is licensed under the MIT License — see the [LICENSE](LICENSE) fi
 [Twitter](https://twitter.com/cassxbt) · [GitHub](https://github.com/cassxbt)
 
 </div>
-]]>
