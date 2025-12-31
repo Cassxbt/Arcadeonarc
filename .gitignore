@@ -1,0 +1,138 @@
+# =============================================
+# ARCADE ON ARC - COMPREHENSIVE GITIGNORE
+# =============================================
+
+# =============================================
+# SECRETS & SENSITIVE FILES
+# =============================================
+.env
+.env.*
+.env.local
+.env.development
+.env.production
+.env.test
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+secrets/
+.secrets/
+private/
+*.secret
+*secret*.json
+
+# =============================================
+# INTERNAL DOCUMENTATION (NOT FOR PUBLIC)
+# =============================================
+arc_ecosystem_deep_dive.md
+arc_quick_reference.md
+circle_integration_guide.md
+docs/internal/
+notes/
+*.internal.md
+TODO.md
+
+# =============================================
+# DEPENDENCIES
+# =============================================
+node_modules/
+.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# =============================================
+# NEXT.JS
+# =============================================
+.next/
+out/
+build/
+.vercel
+
+# =============================================
+# FOUNDRY / SOLIDITY
+# =============================================
+cache/
+contracts/cache/
+contracts/out/
+contracts/broadcast/*/31337/
+contracts/broadcast/**/dry-run/
+!contracts/broadcast/
+
+# =============================================
+# BUILD & COMPILED FILES
+# =============================================
+*.tsbuildinfo
+next-env.d.ts
+dist/
+*.js.map
+*.d.ts.map
+
+# =============================================
+# TESTING & COVERAGE
+# =============================================
+coverage/
+.nyc_output/
+*.lcov
+test-results/
+playwright-report/
+
+# =============================================
+# IDE & EDITOR
+# =============================================
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+
+# =============================================
+# OPERATING SYSTEM
+# =============================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# =============================================
+# DEBUG & LOGS
+# =============================================
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+lerna-debug.log*
+*.log
+logs/
+
+# =============================================
+# MISC
+# =============================================
+.cache/
+tmp/
+temp/
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# =============================================
+# PYTHON (if any scripts)
+# =============================================
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+venv/
+.venv/

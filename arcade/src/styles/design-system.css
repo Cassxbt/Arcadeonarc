@@ -1,0 +1,935 @@
+/* ===========================================
+   RETRO ARCADE DESIGN SYSTEM
+   80s Neon Arcade Aesthetic
+   =========================================== */
+
+/* Google Fonts - Retro Pixel Font */
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Orbitron:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  /* ===== RETRO NEON COLOR PALETTE ===== */
+
+  /* Primary Neon Colors */
+  --neon-pink: #ff2a6d;
+  --neon-cyan: #05d9e8;
+  --neon-yellow: #f9f002;
+  --neon-green: #39ff14;
+  --neon-purple: #d300c5;
+  --neon-orange: #ff6b35;
+  --neon-blue: #01cdfe;
+
+  /* Glow variations */
+  --glow-pink: 0 0 10px #ff2a6d, 0 0 20px #ff2a6d, 0 0 40px #ff2a6d;
+  --glow-cyan: 0 0 10px #05d9e8, 0 0 20px #05d9e8, 0 0 40px #05d9e8;
+  --glow-yellow: 0 0 10px #f9f002, 0 0 20px #f9f002, 0 0 40px #f9f002;
+  --glow-green: 0 0 10px #39ff14, 0 0 20px #39ff14, 0 0 40px #39ff14;
+  --glow-purple: 0 0 10px #d300c5, 0 0 20px #d300c5, 0 0 40px #d300c5;
+
+  /* Game-specific colors */
+  --color-primary: #ff2a6d;
+  --color-primary-hover: #ff4d8a;
+  --color-primary-light: #ff6b9d;
+  --color-success: #39ff14;
+  --color-success-light: #6fff4d;
+  --color-danger: #ff2a2a;
+  --color-danger-light: #ff5c5c;
+  --color-warning: #f9f002;
+
+  /* Dark Arcade Theme */
+  --bg-primary: #0a0a12;
+  --bg-secondary: #12121a;
+  --bg-tertiary: #1a1a24;
+  --bg-card: #141420;
+  --bg-card-hover: #1e1e2e;
+
+  --text-primary: #ffffff;
+  --text-secondary: #b8b8c8;
+  --text-muted: #6a6a7a;
+
+  --border-color: #2a2a3a;
+  --border-color-light: #3a3a4a;
+  --border-neon: var(--neon-pink);
+
+  /* ===== SPACING ===== */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+  --space-3xl: 4rem;
+
+  /* ===== BORDER RADIUS ===== */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-full: 9999px;
+
+  /* ===== SHADOWS ===== */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.5);
+  --shadow-glow: var(--glow-pink);
+  --shadow-glow-cyan: var(--glow-cyan);
+  --shadow-glow-green: var(--glow-green);
+
+  /* ===== TRANSITIONS ===== */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+  --transition-slow: 350ms ease;
+
+  /* ===== FONTS ===== */
+  --font-pixel: 'Press Start 2P', monospace;
+  --font-arcade: 'Orbitron', sans-serif;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'Orbitron', monospace;
+}
+
+/* Light theme - Keep arcade feel but lighter */
+[data-theme="light"] {
+  --bg-primary: #e8e8f0;
+  --bg-secondary: #d8d8e0;
+  --bg-tertiary: #c8c8d0;
+  --bg-card: #f0f0f8;
+  --bg-card-hover: #e0e0ea;
+
+  --text-primary: #0a0a12;
+  --text-secondary: #3a3a4a;
+  --text-muted: #6a6a7a;
+
+  --border-color: #c0c0d0;
+  --border-color-light: #a0a0b0;
+}
+
+/* ===== BASE STYLES ===== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* CRT Scanline Overlay */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(0deg,
+      rgba(0, 0, 0, 0.1) 0px,
+      rgba(0, 0, 0, 0.1) 1px,
+      transparent 1px,
+      transparent 2px);
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.3;
+}
+
+/* Arcade Grid Background */
+body::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image:
+    linear-gradient(rgba(5, 217, 232, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(5, 217, 232, 0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* ===== TYPOGRAPHY ===== */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-arcade);
+  font-weight: 700;
+  line-height: 1.2;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+h1 {
+  font-size: 2.5rem;
+  text-shadow: var(--glow-pink);
+}
+
+h2 {
+  font-size: 2rem;
+  text-shadow: 0 0 10px var(--neon-cyan);
+}
+
+h3 {
+  font-size: 1.5rem;
+}
+
+h4 {
+  font-size: 1.25rem;
+}
+
+/* Pixel text style */
+.pixel-text {
+  font-family: var(--font-pixel);
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+}
+
+/* Neon text effects */
+.neon-text-pink {
+  color: var(--neon-pink);
+  text-shadow: var(--glow-pink);
+}
+
+.neon-text-cyan {
+  color: var(--neon-cyan);
+  text-shadow: var(--glow-cyan);
+}
+
+.neon-text-yellow {
+  color: var(--neon-yellow);
+  text-shadow: var(--glow-yellow);
+}
+
+.neon-text-green {
+  color: var(--neon-green);
+  text-shadow: var(--glow-green);
+}
+
+/* ===== UTILITY CLASSES ===== */
+.text-primary {
+  color: var(--color-primary);
+}
+
+.text-success {
+  color: var(--color-success);
+}
+
+.text-danger {
+  color: var(--color-danger);
+}
+
+.text-muted {
+  color: var(--text-muted);
+}
+
+.text-secondary {
+  color: var(--text-secondary);
+}
+
+.bg-card {
+  background-color: var(--bg-card);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-lg);
+}
+
+/* ===== BUTTON STYLES ===== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-lg);
+  font-family: var(--font-arcade);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  border: 2px solid transparent;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg,
+      transparent,
+      rgba(255, 255, 255, 0.2),
+      transparent);
+  transition: left 0.5s;
+}
+
+.btn:hover::before {
+  left: 100%;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--neon-pink), var(--neon-purple));
+  color: white;
+  border-color: var(--neon-pink);
+  box-shadow: 0 0 15px rgba(255, 42, 109, 0.4);
+}
+
+.btn-primary:hover:not(:disabled) {
+  box-shadow: var(--glow-pink);
+  transform: translateY(-2px);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--neon-cyan);
+  border: 2px solid var(--neon-cyan);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: rgba(5, 217, 232, 0.1);
+  box-shadow: var(--glow-cyan);
+  transform: translateY(-2px);
+}
+
+.btn-success {
+  background: linear-gradient(135deg, var(--neon-green), #00aa00);
+  color: #000;
+  border-color: var(--neon-green);
+  box-shadow: 0 0 15px rgba(57, 255, 20, 0.4);
+}
+
+.btn-success:hover:not(:disabled) {
+  box-shadow: var(--glow-green);
+  transform: translateY(-2px);
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, var(--color-danger), #cc0000);
+  color: white;
+  border-color: var(--color-danger);
+}
+
+.btn-danger:hover:not(:disabled) {
+  box-shadow: 0 0 20px rgba(255, 42, 42, 0.6);
+  transform: translateY(-2px);
+}
+
+.btn-lg {
+  padding: var(--space-md) var(--space-xl);
+  font-size: 1rem;
+}
+
+.btn-sm {
+  padding: var(--space-xs) var(--space-md);
+  font-size: 0.75rem;
+}
+
+/* Arcade Play Button */
+.btn-play {
+  background: linear-gradient(180deg, var(--neon-green) 0%, #00cc00 100%);
+  color: #000;
+  font-family: var(--font-pixel);
+  font-size: 0.625rem;
+  padding: var(--space-md) var(--space-xl);
+  border: 3px solid #ffffff;
+  box-shadow:
+    0 0 10px var(--neon-green),
+    inset 0 -4px 0 rgba(0, 0, 0, 0.2);
+  text-transform: uppercase;
+}
+
+.btn-play:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 0 20px var(--neon-green),
+    0 0 40px var(--neon-green),
+    inset 0 -4px 0 rgba(0, 0, 0, 0.2);
+}
+
+.btn-play:active {
+  transform: translateY(0);
+  box-shadow:
+    0 0 10px var(--neon-green),
+    inset 0 2px 0 rgba(0, 0, 0, 0.2);
+}
+
+/* ===== INPUT STYLES ===== */
+.input {
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  font-family: var(--font-arcade);
+  font-size: 0.875rem;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  transition: all var(--transition-fast);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 15px rgba(5, 217, 232, 0.3);
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+  font-family: var(--font-sans);
+}
+
+/* ===== CARD STYLES ===== */
+.card {
+  background: var(--bg-card);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  transition: all var(--transition-normal);
+  position: relative;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, var(--neon-pink), var(--neon-cyan), var(--neon-pink));
+  border-radius: var(--radius-lg);
+  z-index: -1;
+  opacity: 0;
+  transition: opacity var(--transition-normal);
+}
+
+.card:hover::before {
+  opacity: 0.5;
+}
+
+.card-interactive:hover {
+  transform: translateY(-4px);
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 30px rgba(5, 217, 232, 0.2);
+}
+
+/* Arcade Cabinet Card */
+.card-arcade {
+  background: linear-gradient(180deg, var(--bg-tertiary) 0%, var(--bg-primary) 100%);
+  border: 3px solid var(--neon-cyan);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  position: relative;
+}
+
+.card-arcade::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--neon-pink), var(--neon-cyan), var(--neon-yellow), var(--neon-green));
+}
+
+/* ===== LAYOUT UTILITIES ===== */
+.container {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 var(--space-lg);
+}
+
+.flex {
+  display: flex;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.gap-sm {
+  gap: var(--space-sm);
+}
+
+.gap-md {
+  gap: var(--space-md);
+}
+
+.gap-lg {
+  gap: var(--space-lg);
+}
+
+/* Grid */
+.grid {
+  display: grid;
+}
+
+.grid-cols-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.grid-cols-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.grid-cols-4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+@media (max-width: 768px) {
+
+  .grid-cols-2,
+  .grid-cols-3,
+  .grid-cols-4 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes bounce {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shake {
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  25% {
+    transform: translateX(-5px);
+  }
+
+  75% {
+    transform: translateX(5px);
+  }
+}
+
+@keyframes neonFlicker {
+
+  0%,
+  19%,
+  21%,
+  23%,
+  25%,
+  54%,
+  56%,
+  100% {
+    text-shadow:
+      0 0 4px #fff,
+      0 0 11px #fff,
+      0 0 19px #fff,
+      0 0 40px var(--neon-pink),
+      0 0 80px var(--neon-pink),
+      0 0 90px var(--neon-pink);
+  }
+
+  20%,
+  24%,
+  55% {
+    text-shadow: none;
+  }
+}
+
+@keyframes glowPulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 5px var(--neon-cyan), 0 0 10px var(--neon-cyan);
+  }
+
+  50% {
+    box-shadow: 0 0 10px var(--neon-cyan), 0 0 20px var(--neon-cyan), 0 0 30px var(--neon-cyan);
+  }
+}
+
+@keyframes rainbowBorder {
+  0% {
+    border-color: var(--neon-pink);
+  }
+
+  25% {
+    border-color: var(--neon-cyan);
+  }
+
+  50% {
+    border-color: var(--neon-yellow);
+  }
+
+  75% {
+    border-color: var(--neon-green);
+  }
+
+  100% {
+    border-color: var(--neon-pink);
+  }
+}
+
+@keyframes arcadeText {
+
+  0%,
+  100% {
+    text-shadow:
+      0 0 10px currentColor,
+      0 0 20px currentColor;
+  }
+
+  50% {
+    text-shadow:
+      0 0 20px currentColor,
+      0 0 40px currentColor,
+      0 0 60px currentColor;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s infinite;
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+.animate-bounce {
+  animation: bounce 1s infinite;
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease;
+}
+
+.animate-slideUp {
+  animation: slideUp 0.3s ease;
+}
+
+.animate-shake {
+  animation: shake 0.3s ease;
+}
+
+.animate-neon {
+  animation: neonFlicker 1.5s infinite alternate;
+}
+
+.animate-glow {
+  animation: glowPulse 2s infinite;
+}
+
+.animate-rainbow {
+  animation: rainbowBorder 3s infinite;
+}
+
+.animate-arcade {
+  animation: arcadeText 2s infinite;
+}
+
+/* ===== GAME-SPECIFIC STYLES ===== */
+.tile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  background: linear-gradient(180deg, var(--bg-tertiary) 0%, var(--bg-secondary) 100%);
+  border: 3px solid var(--border-color);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-size: 1.5rem;
+  position: relative;
+}
+
+.tile::before {
+  content: '?';
+  font-family: var(--font-pixel);
+  font-size: 1rem;
+  color: var(--neon-cyan);
+  text-shadow: 0 0 10px var(--neon-cyan);
+}
+
+.tile:hover:not(.tile-revealed) {
+  background: var(--bg-card-hover);
+  border-color: var(--neon-cyan);
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(5, 217, 232, 0.3);
+}
+
+.tile-safe {
+  background: linear-gradient(180deg, var(--neon-green) 0%, #00aa00 100%);
+  border-color: var(--neon-green);
+  color: #000;
+  box-shadow: var(--glow-green);
+}
+
+.tile-safe::before {
+  content: '✓';
+  color: #000;
+  text-shadow: none;
+}
+
+.tile-death {
+  background: linear-gradient(180deg, var(--color-danger) 0%, #aa0000 100%);
+  border-color: var(--color-danger);
+  color: white;
+  animation: shake 0.5s ease;
+  box-shadow: 0 0 20px rgba(255, 42, 42, 0.5);
+}
+
+.tile-death::before {
+  content: '💀';
+  text-shadow: none;
+}
+
+.tile-revealed {
+  cursor: default;
+}
+
+/* Multiplier Display */
+.multiplier {
+  font-family: var(--font-arcade);
+  font-weight: 700;
+  color: var(--neon-green);
+  text-shadow: var(--glow-green);
+}
+
+.multiplier-large {
+  font-size: 3rem;
+  animation: arcadeText 1.5s infinite;
+}
+
+/* Balance Display */
+.balance {
+  font-family: var(--font-arcade);
+  font-weight: 600;
+  color: var(--neon-yellow);
+  text-shadow: 0 0 10px var(--neon-yellow);
+}
+
+/* ===== LEADERBOARD ===== */
+.leaderboard-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--border-color);
+  transition: all var(--transition-fast);
+}
+
+.leaderboard-row:hover {
+  background: var(--bg-card-hover);
+}
+
+.leaderboard-row:last-child {
+  border-bottom: none;
+}
+
+.leaderboard-rank {
+  width: 2.5rem;
+  font-family: var(--font-pixel);
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.leaderboard-rank.top-1 {
+  color: var(--neon-yellow);
+  text-shadow: 0 0 10px var(--neon-yellow);
+}
+
+.leaderboard-rank.top-2 {
+  color: #c0c0c0;
+  text-shadow: 0 0 10px #c0c0c0;
+}
+
+.leaderboard-rank.top-3 {
+  color: #cd7f32;
+  text-shadow: 0 0 10px #cd7f32;
+}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--neon-pink), var(--neon-purple));
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, var(--neon-cyan), var(--neon-blue));
+}
+
+/* ===== SPECIAL EFFECTS ===== */
+
+/* Neon Border Effect */
+.neon-border {
+  border: 2px solid var(--neon-pink);
+  box-shadow:
+    0 0 5px var(--neon-pink),
+    inset 0 0 5px var(--neon-pink);
+}
+
+/* Arcade Screen Effect */
+.arcade-screen {
+  background: var(--bg-primary);
+  border: 4px solid var(--neon-cyan);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    0 0 10px var(--neon-cyan),
+    inset 0 0 30px rgba(0, 0, 0, 0.5);
+  position: relative;
+  overflow: hidden;
+}
+
+.arcade-screen::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg,
+      rgba(5, 217, 232, 0.1) 0%,
+      transparent 50%,
+      rgba(5, 217, 232, 0.05) 100%);
+  pointer-events: none;
+}
+
+/* High Score Display */
+.high-score {
+  font-family: var(--font-pixel);
+  font-size: 0.75rem;
+  color: var(--neon-yellow);
+  text-shadow: 0 0 10px var(--neon-yellow);
+  letter-spacing: 0.1em;
+}
+
+/* Coin/Token Display */
+.token-display {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-md);
+  background: var(--bg-tertiary);
+  border: 2px solid var(--neon-green);
+  border-radius: var(--radius-full);
+  font-family: var(--font-arcade);
+  font-size: 0.875rem;
+  color: var(--neon-green);
+  text-shadow: 0 0 5px var(--neon-green);
+}
+
+/* Loading State */
+.loading-arcade {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+}
+
+.loading-arcade::before {
+  content: 'LOADING';
+  font-family: var(--font-pixel);
+  font-size: 0.625rem;
+  color: var(--neon-cyan);
+  animation: pulse 1s infinite;
+}
+
+.loading-arcade::after {
+  content: '...';
+  font-family: var(--font-pixel);
+  font-size: 0.625rem;
+  color: var(--neon-cyan);
+  animation: pulse 1s infinite 0.5s;
+}

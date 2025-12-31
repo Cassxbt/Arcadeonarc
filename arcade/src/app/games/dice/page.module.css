@@ -1,0 +1,515 @@
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--space-lg);
+}
+
+.header {
+    text-align: center;
+    margin-bottom: var(--space-xl);
+}
+
+.title {
+    font-size: 2.5rem;
+    margin-bottom: var(--space-sm);
+}
+
+.subtitle {
+    color: var(--text-secondary);
+    font-size: 1.125rem;
+}
+
+.gameLayout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: var(--space-xl);
+}
+
+/* Control Panel */
+.controlPanel {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+}
+
+.card h3 {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: var(--space-md);
+}
+
+/* Bet Input */
+.betInput {
+    display: flex;
+    align-items: center;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: var(--space-sm) var(--space-md);
+    margin-bottom: var(--space-md);
+}
+
+.currency {
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-right: var(--space-sm);
+}
+
+.input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-size: 1.25rem;
+    font-weight: 600;
+    font-family: var(--font-mono);
+    outline: none;
+}
+
+.quickBets {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-xs);
+    margin-bottom: var(--space-md);
+}
+
+.quickBtn,
+.actionBtn {
+    padding: var(--space-sm);
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.quickBtn:hover:not(:disabled),
+.actionBtn:hover:not(:disabled) {
+    background: var(--bg-card-hover);
+    border-color: var(--color-primary);
+    color: var(--text-primary);
+}
+
+.quickBtn:disabled,
+.actionBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.betActions {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-xs);
+}
+
+.actionBtn {
+    font-weight: 600;
+}
+
+/* Bet Type Toggle */
+.betTypeToggle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-xs);
+}
+
+.betTypeBtn {
+    padding: var(--space-md);
+    background: var(--bg-tertiary);
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.betTypeBtn:hover:not(:disabled) {
+    border-color: var(--color-primary);
+}
+
+.betTypeActive {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: white;
+}
+
+/* Stats */
+.statsGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-md);
+}
+
+.statItem {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.statLabel {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.statValue {
+    font-family: var(--font-mono);
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.statValueHighlight {
+    font-family: var(--font-mono);
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-primary);
+}
+
+.statValueSuccess {
+    font-family: var(--font-mono);
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-success);
+}
+
+.statValueStreak {
+    font-family: var(--font-mono);
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-warning);
+}
+
+/* Roll Button */
+.rollBtn {
+    width: 100%;
+    padding: var(--space-lg);
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+    color: white;
+    border: none;
+    border-radius: var(--radius-lg);
+    font-size: 1.25rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.rollBtn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-glow);
+}
+
+.rollBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Game Area */
+.gameArea {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--space-xl);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xl);
+}
+
+/* Slider */
+.sliderContainer {
+    padding: var(--space-xl) var(--space-lg);
+}
+
+.sliderTrack {
+    position: relative;
+    height: 24px;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-full);
+    margin-bottom: var(--space-md);
+    overflow: hidden;
+}
+
+.sliderFill {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    border-radius: var(--radius-full);
+    transition: all var(--transition-fast);
+}
+
+.sliderTarget {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 40px;
+    height: 40px;
+    background: var(--bg-primary);
+    border: 3px solid var(--color-primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    box-shadow: var(--shadow-md);
+}
+
+.targetValue {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+}
+
+.slider {
+    width: 100%;
+    height: 24px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    cursor: pointer;
+    margin-top: -24px;
+    position: relative;
+    z-index: 3;
+}
+
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 40px;
+    height: 40px;
+    background: transparent;
+    cursor: grab;
+}
+
+.slider::-webkit-slider-thumb:active {
+    cursor: grabbing;
+}
+
+.sliderLabels {
+    display: flex;
+    justify-content: space-between;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    margin-top: var(--space-md);
+}
+
+/* Dice Result */
+.diceResult {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-lg);
+}
+
+.diceBox {
+    width: 150px;
+    height: 150px;
+    background: var(--bg-tertiary);
+    border: 4px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+}
+
+.diceRolling {
+    animation: diceShake 0.1s infinite;
+    border-color: var(--color-primary);
+}
+
+.diceValue {
+    font-family: var(--font-mono);
+    font-size: 4rem;
+    font-weight: 800;
+    color: var(--text-primary);
+}
+
+.resultWin,
+.resultLoss {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-md) var(--space-xl);
+    border-radius: var(--radius-lg);
+    font-weight: 600;
+    animation: slideUp 0.3s ease;
+}
+
+.resultWin {
+    background: rgba(34, 197, 94, 0.1);
+    border: 2px solid var(--color-success);
+    color: var(--color-success);
+}
+
+.resultLoss {
+    background: rgba(239, 68, 68, 0.1);
+    border: 2px solid var(--color-danger);
+    color: var(--color-danger);
+}
+
+.resultEmoji {
+    font-size: 1.5rem;
+}
+
+/* Animations */
+@keyframes diceShake {
+
+    0%,
+    100% {
+        transform: rotate(0deg);
+    }
+
+    25% {
+        transform: rotate(-5deg);
+    }
+
+    75% {
+        transform: rotate(5deg);
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .container {
+        padding: var(--space-md);
+    }
+
+    .header {
+        margin-bottom: var(--space-lg);
+    }
+
+    .title {
+        font-size: 1.75rem;
+    }
+
+    .subtitle {
+        font-size: 1rem;
+    }
+
+    .gameLayout {
+        grid-template-columns: 1fr;
+        gap: var(--space-md);
+    }
+
+    .controlPanel {
+        order: 1;
+    }
+
+    .gameArea {
+        order: 0;
+        padding: var(--space-lg);
+    }
+
+    .card {
+        padding: var(--space-md);
+    }
+
+    .card h3 {
+        font-size: 0.75rem;
+        margin-bottom: var(--space-sm);
+    }
+
+    .quickBets {
+        gap: 4px;
+        margin-bottom: var(--space-sm);
+    }
+
+    .quickBtn,
+    .actionBtn {
+        padding: var(--space-xs);
+        font-size: 0.875rem;
+    }
+
+    .betTypeBtn {
+        padding: var(--space-sm);
+        font-size: 0.875rem;
+    }
+
+    .statsGrid {
+        gap: var(--space-sm);
+    }
+
+    .statLabel {
+        font-size: 0.7rem;
+    }
+
+    .statValue,
+    .statValueHighlight,
+    .statValueSuccess,
+    .statValueStreak {
+        font-size: 1rem;
+    }
+
+    .rollBtn {
+        padding: var(--space-md);
+        font-size: 1rem;
+    }
+
+    .sliderContainer {
+        padding: var(--space-lg) var(--space-sm);
+    }
+
+    .sliderLabels {
+        font-size: 0.65rem;
+    }
+
+    .diceBox {
+        width: 100px;
+        height: 100px;
+    }
+
+    .diceValue {
+        font-size: 2.5rem;
+    }
+
+    .resultWin,
+    .resultLoss {
+        padding: var(--space-sm) var(--space-md);
+        font-size: 0.875rem;
+    }
+
+    .resultEmoji {
+        font-size: 1.25rem;
+    }
+}
+
+/* Extra small screens */
+@media (max-width: 380px) {
+    .statsGrid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .diceBox {
+        width: 80px;
+        height: 80px;
+    }
+
+    .diceValue {
+        font-size: 2rem;
+    }
+}

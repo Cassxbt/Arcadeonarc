@@ -1,0 +1,515 @@
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--space-lg);
+}
+
+.header {
+    text-align: center;
+    margin-bottom: var(--space-xl);
+}
+
+.title {
+    font-size: 2.5rem;
+    margin-bottom: var(--space-sm);
+}
+
+.subtitle {
+    color: var(--text-secondary);
+    font-size: 1.125rem;
+}
+
+.gameLayout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: var(--space-xl);
+}
+
+/* Control Panel */
+.controlPanel {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+}
+
+.card h3 {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: var(--space-md);
+}
+
+.betInput,
+.autoCashout {
+    display: flex;
+    align-items: center;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: var(--space-sm) var(--space-md);
+}
+
+.betInput {
+    margin-bottom: var(--space-md);
+}
+
+.currency,
+.multiplierLabel {
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.currency {
+    margin-right: var(--space-sm);
+}
+
+.multiplierLabel {
+    margin-left: var(--space-sm);
+}
+
+.input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-size: 1.25rem;
+    font-weight: 600;
+    font-family: var(--font-mono);
+    outline: none;
+}
+
+.quickBets {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-xs);
+}
+
+.quickBtn {
+    padding: var(--space-sm);
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.quickBtn:hover:not(:disabled) {
+    background: var(--bg-card-hover);
+    border-color: var(--color-primary);
+    color: var(--text-primary);
+}
+
+.quickBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Game Actions */
+.gameActions {
+    margin-top: var(--space-md);
+}
+
+.primaryBtn {
+    width: 100%;
+    padding: var(--space-lg);
+    background: linear-gradient(135deg, var(--color-danger), #ff6b6b);
+    color: white;
+    border: none;
+    border-radius: var(--radius-lg);
+    font-size: 1.125rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.primaryBtn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+}
+
+.primaryBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.cashoutBtn {
+    width: 100%;
+    padding: var(--space-lg);
+    background: linear-gradient(135deg, var(--color-success), var(--color-success-light));
+    color: white;
+    border: none;
+    border-radius: var(--radius-lg);
+    font-size: 1.25rem;
+    font-weight: 700;
+    cursor: pointer;
+    animation: pulseCashout 0.5s infinite;
+}
+
+.cashoutBtn:hover {
+    transform: scale(1.02);
+}
+
+/* Results */
+.resultWin,
+.resultLoss {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: var(--space-lg);
+    border-radius: var(--radius-lg);
+    margin-top: var(--space-md);
+    animation: slideUp 0.3s ease;
+}
+
+.resultWin {
+    background: rgba(34, 197, 94, 0.1);
+    border: 2px solid var(--color-success);
+    color: var(--color-success);
+}
+
+.resultLoss {
+    background: rgba(239, 68, 68, 0.1);
+    border: 2px solid var(--color-danger);
+    color: var(--color-danger);
+}
+
+.resultEmoji {
+    font-size: 2rem;
+    margin-bottom: var(--space-sm);
+}
+
+.resultPayout {
+    font-family: var(--font-mono);
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-top: var(--space-sm);
+}
+
+/* Game Area */
+.gameArea {
+    position: relative;
+    background: #0f172a;
+    /* Darker space background */
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    min-height: 400px;
+    display: flex;
+    align-items: flex-end;
+    /* Align rocket to bottom initially */
+    justify-content: center;
+    padding-bottom: 60px;
+}
+
+/* Stars Background */
+.stars {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    background-image:
+        radial-gradient(1px 1px at 20px 30px, #fff, rgba(0, 0, 0, 0)),
+        radial-gradient(1px 1px at 40px 70px, #fff, rgba(0, 0, 0, 0)),
+        radial-gradient(1px 1px at 50px 160px, #fff, rgba(0, 0, 0, 0)),
+        radial-gradient(1px 1px at 90px 40px, #fff, rgba(0, 0, 0, 0)),
+        radial-gradient(1px 1px at 130px 80px, #fff, rgba(0, 0, 0, 0));
+    background-size: 200px 200px;
+    animation: starsScroll 20s linear infinite;
+    opacity: 0.5;
+}
+
+.starsActive {
+    animation-duration: 2s;
+    /* Fast warp speed during flight */
+    opacity: 0.8;
+}
+
+/* Rocket Container */
+.rocketContainer {
+    position: relative;
+    width: 60px;
+    height: 60px;
+    z-index: 10;
+    transition: transform 0.1s linear;
+}
+
+.rocket {
+    font-size: 3rem;
+    transform: rotate(-45deg);
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3));
+    position: relative;
+    z-index: 2;
+}
+
+.flame {
+    position: absolute;
+    bottom: -15px;
+    left: 50%;
+    transform: translateX(-50%) rotate(135deg);
+    font-size: 1.5rem;
+    animation: thrust 0.1s infinite alternate;
+    opacity: 0;
+    transition: opacity 0.2s;
+    z-index: 1;
+}
+
+.flameActive {
+    opacity: 1;
+}
+
+/* Juice Effects */
+.shake {
+    animation: shake 0.5s cubic-bezier(.36, .07, .19, .97) both;
+}
+
+.crashExplosion {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 5rem;
+    animation: explode 0.6s cubic-bezier(0, 0, 0.2, 1) forwards;
+    z-index: 20;
+    pointer-events: none;
+}
+
+/* Trajectory Line */
+.trajectoryLine {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    background: linear-gradient(to top,
+            rgba(59, 130, 246, 0) 0%,
+            rgba(59, 130, 246, 0.5) 50%,
+            var(--color-primary) 100%);
+    border-radius: 4px;
+    z-index: 5;
+    box-shadow: 0 0 15px var(--color-primary);
+}
+
+/* Multiplier Display */
+.multiplierDisplay {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    z-index: 0;
+}
+
+.multiplierValue {
+    font-family: var(--font-mono);
+    font-size: 6rem;
+    font-weight: 800;
+    color: rgba(255, 255, 255, 0.1);
+    text-shadow: 0 0 30px rgba(255, 255, 255, 0.05);
+    transition: all 0.1s linear;
+}
+
+.gameStateActive .multiplierValue {
+    color: var(--color-primary);
+    text-shadow: 0 0 40px rgba(59, 130, 246, 0.4);
+    font-size: 7rem;
+}
+
+.multiplierCrashed .multiplierValue {
+    color: var(--color-danger);
+    text-shadow: 0 0 40px rgba(239, 68, 68, 0.5);
+}
+
+.multiplierHint {
+    display: block;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    margin-top: var(--space-sm);
+    animation: pulse 1s infinite;
+}
+
+/* Animations */
+@keyframes thrust {
+    0% {
+        transform: translateX(-50%) rotate(135deg) scale(0.8);
+        opacity: 0.7;
+    }
+
+    100% {
+        transform: translateX(-50%) rotate(135deg) scale(1.2);
+        opacity: 1;
+    }
+}
+
+@keyframes starsScroll {
+    from {
+        background-position: 0 0;
+    }
+
+    to {
+        background-position: 0 200px;
+    }
+}
+
+@keyframes shake {
+
+    10%,
+    90% {
+        transform: translate3d(-2px, 0, 0);
+    }
+
+    20%,
+    80% {
+        transform: translate3d(4px, 0, 0);
+    }
+
+    30%,
+    50%,
+    70% {
+        transform: translate3d(-6px, 0, 0);
+    }
+
+    40%,
+    60% {
+        transform: translate3d(6px, 0, 0);
+    }
+}
+
+@keyframes explode {
+    0% {
+        transform: translate(-50%, -50%) scale(0.5);
+        opacity: 1;
+    }
+
+    50% {
+        transform: translate(-50%, -50%) scale(1.5);
+        opacity: 0.8;
+    }
+
+    100% {
+        transform: translate(-50%, -50%) scale(2);
+        opacity: 0;
+    }
+}
+
+@keyframes pulseCashout {
+    0% {
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
+    }
+
+    70% {
+        box-shadow: 0 0 0 20px rgba(34, 197, 94, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .container {
+        padding: var(--space-md);
+    }
+
+    .header {
+        margin-bottom: var(--space-lg);
+    }
+
+    .title {
+        font-size: 1.75rem;
+    }
+
+    .subtitle {
+        font-size: 1rem;
+    }
+
+    .gameLayout {
+        grid-template-columns: 1fr;
+        gap: var(--space-md);
+    }
+
+    .controlPanel {
+        order: 1;
+    }
+
+    .gameArea {
+        order: 0;
+        min-height: 350px;
+        padding: var(--space-lg);
+    }
+
+    .card {
+        padding: var(--space-md);
+    }
+
+    .card h3 {
+        font-size: 0.75rem;
+        margin-bottom: var(--space-sm);
+    }
+
+    .quickBets {
+        gap: 4px;
+        margin-bottom: var(--space-sm);
+    }
+
+    .quickBtn {
+        padding: var(--space-xs);
+        font-size: 0.875rem;
+    }
+
+    .primaryBtn,
+    .cashoutBtn {
+        padding: var(--space-md);
+        font-size: 1rem;
+    }
+
+    .multiplierValue {
+        font-size: 4rem;
+    }
+
+    .gameStateActive .multiplierValue {
+        font-size: 5rem;
+    }
+
+    .resultWin,
+    .resultLoss {
+        padding: var(--space-md);
+    }
+}
