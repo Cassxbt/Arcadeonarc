@@ -29,6 +29,8 @@ import {
     Link,
     Medal,
     Wallet,
+    HelpCircle,
+    BarChart3,
     type LucideIcon,
 } from 'lucide-react';
 
@@ -62,6 +64,8 @@ export {
     Link,
     Medal,
     Wallet,
+    HelpCircle,
+    BarChart3,
     type LucideIcon,
 };
 

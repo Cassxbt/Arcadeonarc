@@ -1,3 +1,6 @@
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
 import {
   TowerControl,
@@ -13,6 +16,7 @@ import {
   ChevronDown,
   Wallet,
 } from '@/components/icons';
+import { GameSelector } from '@/components/GameSelector';
 import styles from './page.module.css';
 
 const games = [
@@ -46,8 +50,19 @@ const games = [
 ];
 
 export default function Home() {
+  const [showGameSelector, setShowGameSelector] = useState(false);
+
+  const handleStartPlaying = () => {
+    setShowGameSelector(true);
+  };
+
   return (
     <div className={styles.container}>
+      {/* Game Selector Animation Overlay */}
+      {showGameSelector && (
+        <GameSelector onClose={() => setShowGameSelector(false)} />
+      )}
+
       {/* Hero Section */}
       <section className={styles.hero}>
         <h1 className={styles.arcadeTitle}>ARCADE</h1>
@@ -58,10 +73,10 @@ export default function Home() {
           Fast, fair, and fun crypto gaming on Arc L1
         </p>
         <div className={styles.heroButtons}>
-          <Link href="/games/tower" className={styles.primaryBtn}>
+          <button onClick={handleStartPlaying} className={styles.primaryBtn}>
             <Play size={18} style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} />
             Start Playing
-          </Link>
+          </button>
           <a
             href="https://faucet.circle.com"
             target="_blank"

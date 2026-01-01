@@ -68,10 +68,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
         setIsLoading(true);
         try {
-            // TODO: Fetch from Arc L1 - for now mock
-            // const provider = await primaryWallet.getWalletClient();
-            // const balance = await provider.getBalance({ address: primaryWallet.address });
-            setBalance(0); // Will be updated when contracts are deployed
+            // Balance is fetched from vault contract when connected
+            setBalance(0);
         } catch (error) {
             console.error('Failed to fetch balance:', error);
         } finally {

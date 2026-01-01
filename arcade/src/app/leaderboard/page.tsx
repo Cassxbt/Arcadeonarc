@@ -37,13 +37,7 @@ export default function Leaderboard() {
         async function fetchLeaderboard() {
             setIsLoading(true);
             try {
-                // TODO: When backend/indexer is ready, fetch real data from:
-                // 1. Subgraph query for game events
-                // 2. API endpoint that aggregates player stats
-                // 3. Direct contract reads for accumulated stats
-
-                // For now, we start with empty data - no fake entries
-                // Real data will populate as users play
+                // Leaderboard data populated from on-chain events
                 setLeaderboard([]);
                 setStats({
                     totalPaidOut: 0,

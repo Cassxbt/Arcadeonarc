@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useDynamicContext, DynamicWidget } from '@dynamic-labs/sdk-react-core';
 import { useTheme } from '@/lib/theme';
 import { useSound } from '@/lib/sounds';
@@ -10,15 +10,13 @@ import { useGame } from '@/lib/game-context';
 import { DepositModal } from './DepositModal';
 import {
     Gamepad2,
-    TowerControl,
-    Dice6,
-    Bomb,
+    HelpCircle,
+    BarChart3,
     Trophy,
     Volume2,
     VolumeX,
     Sun,
     Moon,
-    Wallet,
     Twitter,
     MessageCircle,
 } from './icons';
@@ -26,10 +24,11 @@ import styles from './Navbar.module.css';
 
 export function NavbarContent() {
     const pathname = usePathname();
+    const router = useRouter();
     const { primaryWallet } = useDynamicContext();
     const { theme, toggleTheme } = useTheme();
     const { soundEnabled, toggleSound } = useSound();
-    const { demoMode, toggleDemoMode, effectiveBalance } = useGame();
+    const { balance } = useGame();
 
     const [depositModalOpen, setDepositModalOpen] = useState(false);
     const [modalMode, setModalMode] = useState<'deposit' | 'withdraw'>('deposit');
@@ -79,6 +78,9 @@ export function NavbarContent() {
         filter: 'drop-shadow(0 0 6px var(--neon-cyan))',
     };
 
+    // Get display balance - real balance when connected, 0 otherwise
+    const displayBalance = primaryWallet ? balance : 0;
+
     return (
         <>
             <nav className={styles.navbar}>
@@ -91,28 +93,21 @@ export function NavbarContent() {
                         <span className={styles.logoText}>ARCade</span>
                     </Link>
 
-                    {/* Desktop Navigation Links */}
+                    {/* Desktop Navigation Links - FAQ, STATS, LEADERBOARD */}
                     <div className={styles.nav}>
                         <Link
-                            href="/games/tower"
-                            className={`${styles.navLink} ${isActiveLink('/games/tower') ? styles.navLinkActive : ''}`}
+                            href="/faq"
+                            className={`${styles.navLink} ${isActiveLink('/faq') ? styles.navLinkActive : ''}`}
                         >
-                            <TowerControl size={18} style={iconStyle('var(--neon-cyan)', isActiveLink('/games/tower'))} />
-                            Tower
+                            <HelpCircle size={18} style={iconStyle('var(--neon-cyan)', isActiveLink('/faq'))} />
+                            FAQ
                         </Link>
                         <Link
-                            href="/games/dice"
-                            className={`${styles.navLink} ${isActiveLink('/games/dice') ? styles.navLinkActive : ''}`}
+                            href="/stats"
+                            className={`${styles.navLink} ${isActiveLink('/stats') ? styles.navLinkActive : ''}`}
                         >
-                            <Dice6 size={18} style={iconStyle('var(--neon-green)', isActiveLink('/games/dice'))} />
-                            Dice
-                        </Link>
-                        <Link
-                            href="/games/crash"
-                            className={`${styles.navLink} ${isActiveLink('/games/crash') ? styles.navLinkActive : ''}`}
-                        >
-                            <Bomb size={18} style={iconStyle('var(--neon-pink)', isActiveLink('/games/crash'))} />
-                            Cannon
+                            <BarChart3 size={18} style={iconStyle('var(--neon-green)', isActiveLink('/stats'))} />
+                            Stats
                         </Link>
                         <Link
                             href="/leaderboard"
@@ -125,16 +120,16 @@ export function NavbarContent() {
 
                     {/* Right side */}
                     <div className={styles.right}>
-                        {/* Balance Display */}
+                        {/* Real-time USDC Balance Display */}
                         <div className={styles.balance}>
-                            {demoMode && <span className={styles.demoTag}>DEMO</span>}
+                            <span className={styles.balanceLabel}>USDC</span>
                             <span className={styles.balanceAmount}>
-                                ${effectiveBalance.toFixed(2)}
+                                ${displayBalance.toFixed(2)}
                             </span>
                         </div>
 
                         {/* Deposit/Withdraw buttons for connected wallet */}
-                        {primaryWallet && !demoMode && (
+                        {primaryWallet && (
                             <div className={styles.walletActions}>
                                 <button onClick={openDeposit} className={styles.depositBtn}>
                                     Deposit
@@ -145,21 +140,8 @@ export function NavbarContent() {
                             </div>
                         )}
 
-                        {/* Desktop Controls */}
+                        {/* Desktop Controls - Sound and Theme only */}
                         <div className={styles.controls}>
-                            {/* Demo Mode Toggle */}
-                            <button
-                                onClick={toggleDemoMode}
-                                className={styles.iconBtn}
-                                title={demoMode ? 'Exit Demo Mode' : 'Enter Demo Mode'}
-                            >
-                                {demoMode ? (
-                                    <Dice6 size={20} style={controlIconStyle} />
-                                ) : (
-                                    <Wallet size={20} style={controlIconStyle} />
-                                )}
-                            </button>
-
                             {/* Sound Toggle */}
                             <button
                                 onClick={toggleSound}
@@ -187,7 +169,7 @@ export function NavbarContent() {
                             </button>
                         </div>
 
-                        {/* Wallet */}
+                        {/* Arcade-styled Wallet/Login Widget */}
                         <div className={styles.walletWidget}>
                             <DynamicWidget />
                         </div>
@@ -214,40 +196,31 @@ export function NavbarContent() {
                 <div className={styles.mobileDrawerContent}>
                     {/* Mobile Balance */}
                     <div className={styles.mobileBalance}>
-                        {demoMode && <span className={styles.demoTag}>DEMO</span>}
+                        <span className={styles.balanceLabel}>USDC</span>
                         <span className={styles.mobileBalanceAmount}>
-                            ${effectiveBalance.toFixed(2)}
+                            ${displayBalance.toFixed(2)}
                         </span>
                     </div>
 
                     {/* Mobile Navigation */}
                     <nav className={styles.mobileNav}>
                         <Link
-                            href="/games/tower"
-                            className={`${styles.mobileNavLink} ${isActiveLink('/games/tower') ? styles.mobileNavLinkActive : ''}`}
+                            href="/faq"
+                            className={`${styles.mobileNavLink} ${isActiveLink('/faq') ? styles.mobileNavLinkActive : ''}`}
                         >
                             <span className={styles.mobileNavIcon}>
-                                <TowerControl size={24} style={{ color: 'var(--neon-cyan)' }} />
+                                <HelpCircle size={24} style={{ color: 'var(--neon-cyan)' }} />
                             </span>
-                            Tower
+                            FAQ
                         </Link>
                         <Link
-                            href="/games/dice"
-                            className={`${styles.mobileNavLink} ${isActiveLink('/games/dice') ? styles.mobileNavLinkActive : ''}`}
+                            href="/stats"
+                            className={`${styles.mobileNavLink} ${isActiveLink('/stats') ? styles.mobileNavLinkActive : ''}`}
                         >
                             <span className={styles.mobileNavIcon}>
-                                <Dice6 size={24} style={{ color: 'var(--neon-green)' }} />
+                                <BarChart3 size={24} style={{ color: 'var(--neon-green)' }} />
                             </span>
-                            Dice
-                        </Link>
-                        <Link
-                            href="/games/crash"
-                            className={`${styles.mobileNavLink} ${isActiveLink('/games/crash') ? styles.mobileNavLinkActive : ''}`}
-                        >
-                            <span className={styles.mobileNavIcon}>
-                                <Bomb size={24} style={{ color: 'var(--neon-pink)' }} />
-                            </span>
-                            Cannon
+                            Stats
                         </Link>
                         <Link
                             href="/leaderboard"
@@ -262,19 +235,6 @@ export function NavbarContent() {
 
                     {/* Mobile Controls */}
                     <div className={styles.mobileControls}>
-                        <button
-                            onClick={toggleDemoMode}
-                            className={styles.mobileControlBtn}
-                        >
-                            <span>
-                                {demoMode ? (
-                                    <Dice6 size={20} style={{ color: 'var(--neon-cyan)' }} />
-                                ) : (
-                                    <Wallet size={20} style={{ color: 'var(--neon-cyan)' }} />
-                                )}
-                            </span>
-                            {demoMode ? 'Exit Demo' : 'Demo Mode'}
-                        </button>
                         <button
                             onClick={toggleSound}
                             className={styles.mobileControlBtn}
@@ -304,7 +264,7 @@ export function NavbarContent() {
                     </div>
 
                     {/* Mobile Wallet Actions */}
-                    {primaryWallet && !demoMode && (
+                    {primaryWallet && (
                         <div className={styles.mobileWalletActions}>
                             <button onClick={openDeposit} className={styles.mobileDepositBtn}>
                                 Deposit

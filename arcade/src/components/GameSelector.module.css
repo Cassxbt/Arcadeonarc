@@ -1,0 +1,217 @@
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.95);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.container {
+    text-align: center;
+    padding: var(--space-2xl);
+}
+
+.selectorBox {
+    background: var(--bg-card);
+    border: 3px solid var(--neon-cyan);
+    border-radius: var(--radius-xl);
+    padding: var(--space-xl);
+    box-shadow: 0 0 50px rgba(5, 217, 232, 0.3);
+    animation: glowPulse 1s infinite;
+}
+
+@keyframes glowPulse {
+
+    0%,
+    100% {
+        box-shadow: 0 0 30px rgba(5, 217, 232, 0.3);
+    }
+
+    50% {
+        box-shadow: 0 0 60px rgba(5, 217, 232, 0.5);
+    }
+}
+
+.gameCards {
+    display: flex;
+    gap: var(--space-lg);
+    padding: var(--space-md);
+}
+
+.gameCard {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-xl) var(--space-2xl);
+    background: var(--bg-tertiary);
+    border: 3px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    transition: all 0.1s ease;
+    opacity: 0.4;
+    transform: scale(0.9);
+}
+
+.gameCardActive {
+    opacity: 1;
+    transform: scale(1.1);
+    border-color: var(--game-color, var(--neon-cyan));
+    box-shadow: 0 0 30px rgba(5, 217, 232, 0.4);
+    background: var(--bg-card);
+}
+
+.gameCardSelected {
+    opacity: 1;
+    transform: scale(1.15);
+    border-color: var(--game-color, var(--neon-cyan));
+    box-shadow:
+        0 0 40px var(--game-color, var(--neon-cyan)),
+        0 0 80px var(--game-color, var(--neon-cyan));
+    animation: selectedPulse 0.5s ease infinite;
+}
+
+@keyframes selectedPulse {
+
+    0%,
+    100% {
+        transform: scale(1.15);
+    }
+
+    50% {
+        transform: scale(1.2);
+    }
+}
+
+.iconWrapper {
+    filter: drop-shadow(0 0 15px currentColor);
+}
+
+.gameName {
+    font-family: var(--font-pixel);
+    font-size: 0.75rem;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.selectingText {
+    margin-top: var(--space-xl);
+    font-family: var(--font-arcade);
+    font-size: 1rem;
+    color: var(--neon-cyan);
+    text-shadow: 0 0 10px var(--neon-cyan);
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/* May the odds favor you message */
+.messageOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.8);
+    animation: messageFade 2s ease forwards;
+    z-index: 1001;
+}
+
+@keyframes messageFade {
+    0% {
+        opacity: 0;
+    }
+
+    10% {
+        opacity: 1;
+    }
+
+    70% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+    }
+}
+
+.message {
+    font-family: var(--font-pixel);
+    font-size: 2rem;
+    color: var(--neon-yellow);
+    text-shadow:
+        0 0 20px var(--neon-yellow),
+        0 0 40px var(--neon-yellow),
+        0 0 80px var(--neon-yellow);
+    letter-spacing: 0.15em;
+    text-align: center;
+    animation: messageGlow 0.5s ease infinite alternate;
+}
+
+@keyframes messageGlow {
+    from {
+        text-shadow:
+            0 0 20px var(--neon-yellow),
+            0 0 40px var(--neon-yellow);
+    }
+
+    to {
+        text-shadow:
+            0 0 30px var(--neon-yellow),
+            0 0 60px var(--neon-yellow),
+            0 0 100px var(--neon-yellow);
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .gameCards {
+        flex-direction: column;
+        gap: var(--space-sm);
+    }
+
+    .gameCard {
+        padding: var(--space-md) var(--space-lg);
+        flex-direction: row;
+    }
+
+    .iconWrapper svg {
+        width: 32px;
+        height: 32px;
+    }
+
+    .message {
+        font-size: 1.25rem;
+        padding: 0 var(--space-lg);
+    }
+}

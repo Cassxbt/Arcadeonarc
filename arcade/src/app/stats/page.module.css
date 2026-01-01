@@ -1,0 +1,205 @@
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: var(--space-xl) var(--space-lg);
+}
+
+.header {
+    text-align: center;
+    padding: var(--space-2xl) 0;
+}
+
+.title {
+    font-family: var(--font-pixel);
+    font-size: 2rem;
+    color: var(--neon-green);
+    text-shadow: var(--glow-green);
+    margin: var(--space-md) 0;
+    letter-spacing: 0.1em;
+}
+
+.subtitle {
+    font-family: var(--font-arcade);
+    color: var(--text-secondary);
+    font-size: 1rem;
+}
+
+.error {
+    background: rgba(255, 42, 42, 0.1);
+    border: 2px solid var(--color-danger);
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+    margin-bottom: var(--space-xl);
+    text-align: center;
+    color: var(--color-danger);
+}
+
+/* Stats Grid */
+.statsGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-xl);
+}
+
+.statCard {
+    background: var(--bg-card);
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    padding: var(--space-xl);
+    text-align: center;
+    transition: all var(--transition-normal);
+    position: relative;
+    overflow: hidden;
+}
+
+.statCard::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--neon-pink), var(--neon-cyan), var(--neon-yellow), var(--neon-green));
+}
+
+.statCard:hover {
+    border-color: var(--neon-cyan);
+    transform: translateY(-4px);
+    box-shadow: 0 0 30px rgba(5, 217, 232, 0.2);
+}
+
+.statIcon {
+    margin-bottom: var(--space-md);
+}
+
+.statTitle {
+    font-family: var(--font-arcade);
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: var(--space-md);
+}
+
+.bigValue {
+    font-family: var(--font-pixel);
+    font-size: 2rem;
+    color: var(--neon-yellow);
+    text-shadow: var(--glow-yellow);
+    margin-bottom: var(--space-sm);
+}
+
+.skeleton {
+    height: 60px;
+    background: linear-gradient(90deg, var(--bg-tertiary) 25%, var(--bg-secondary) 50%, var(--bg-tertiary) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: var(--radius-md);
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+.noData {
+    font-family: var(--font-arcade);
+    color: var(--text-muted);
+    padding: var(--space-lg);
+}
+
+.statMeta {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-xs);
+    font-family: var(--font-arcade);
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.gameTag {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-xs) var(--space-md);
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.address {
+    font-family: var(--font-mono);
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+
+.gameDisplay {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-md);
+    margin-bottom: var(--space-sm);
+}
+
+.gameName {
+    font-family: var(--font-pixel);
+    font-size: 1.5rem;
+    color: var(--text-primary);
+    text-transform: uppercase;
+}
+
+.percentage {
+    color: var(--neon-cyan);
+}
+
+.gameBreakdown {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-lg);
+    margin-top: var(--space-md);
+}
+
+.breakdownItem {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-family: var(--font-arcade);
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.footer {
+    text-align: center;
+    padding: var(--space-2xl) 0;
+    color: var(--text-muted);
+    font-family: var(--font-arcade);
+    font-size: 0.75rem;
+    border-top: 2px solid var(--border-color);
+    margin-top: var(--space-2xl);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .title {
+        font-size: 1.5rem;
+    }
+
+    .statsGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .bigValue {
+        font-size: 1.5rem;
+    }
+
+    .gameName {
+        font-size: 1rem;
+    }
+}

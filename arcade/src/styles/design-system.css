@@ -1,7 +1,4 @@
-/* ===========================================
-   RETRO ARCADE DESIGN SYSTEM
-   80s Neon Arcade Aesthetic
-   =========================================== */
+/* Design System - Core Styles */
 
 /* Google Fonts - Retro Pixel Font */
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Orbitron:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap');
@@ -761,7 +758,7 @@ h4 {
 }
 
 .tile-death::before {
-  content: '💀';
+  content: '';
   text-shadow: none;
 }
 
