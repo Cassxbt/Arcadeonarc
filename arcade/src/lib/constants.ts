@@ -47,8 +47,8 @@ export const GAME_CONFIG = {
   QUICK_BETS: [1, 5, 10, 25, 50, 100],
 };
 
-// Dynamic SDK Environment ID
-export const DYNAMIC_ENVIRONMENT_ID = 'dyn_BelSGGVhfXsFi3UGdz09m2cLoUzzqFqjSHHXP7gvmWPUspcFzo1E7Qa6';
+// Dynamic SDK Environment ID (Live)
+export const DYNAMIC_ENVIRONMENT_ID = 'dyn_PCsSusp6WLIij9OPlKCyGpofY5nZDTzXla580rTuk7uVCx9BhH4BODrz';
 
 // API Endpoints
 export const API_ENDPOINTS = {
