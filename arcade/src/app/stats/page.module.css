@@ -16,6 +16,57 @@
     text-shadow: var(--glow-green);
     margin: var(--space-md) 0;
     letter-spacing: 0.1em;
+    animation: neonFlickerGreen 5s infinite;
+}
+
+/* Subtle green neon flicker */
+@keyframes neonFlickerGreen {
+
+    0%,
+    100% {
+        opacity: 1;
+        text-shadow:
+            0 0 10px var(--neon-green),
+            0 0 20px var(--neon-green),
+            0 0 40px var(--neon-green);
+    }
+
+    8% {
+        opacity: 0.9;
+        text-shadow:
+            0 0 8px var(--neon-green),
+            0 0 15px var(--neon-green);
+    }
+
+    10% {
+        opacity: 1;
+        text-shadow:
+            0 0 12px var(--neon-green),
+            0 0 25px var(--neon-green),
+            0 0 50px var(--neon-green);
+    }
+
+    60% {
+        opacity: 1;
+        text-shadow:
+            0 0 10px var(--neon-green),
+            0 0 20px var(--neon-green),
+            0 0 40px var(--neon-green);
+    }
+
+    62% {
+        opacity: 0.85;
+        text-shadow:
+            0 0 6px var(--neon-green);
+    }
+
+    64% {
+        opacity: 1;
+        text-shadow:
+            0 0 10px var(--neon-green),
+            0 0 20px var(--neon-green),
+            0 0 40px var(--neon-green);
+    }
 }
 
 .subtitle {

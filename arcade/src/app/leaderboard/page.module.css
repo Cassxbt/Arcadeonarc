@@ -22,21 +22,56 @@
     margin-bottom: var(--space-sm);
     text-transform: uppercase;
     letter-spacing: 0.15em;
-    animation: arcadeGlow 2s infinite alternate;
+    animation: neonFlickerYellow 3.5s infinite;
 }
 
-@keyframes arcadeGlow {
-    0% {
+/* Subtle yellow neon flicker */
+@keyframes neonFlickerYellow {
+
+    0%,
+    100% {
+        opacity: 1;
         text-shadow:
             0 0 10px var(--neon-yellow),
-            0 0 20px var(--neon-yellow);
+            0 0 20px var(--neon-yellow),
+            0 0 40px var(--neon-yellow);
     }
 
-    100% {
+    12% {
+        opacity: 0.9;
         text-shadow:
+            0 0 8px var(--neon-yellow),
+            0 0 15px var(--neon-yellow);
+    }
+
+    14% {
+        opacity: 1;
+        text-shadow:
+            0 0 12px var(--neon-yellow),
+            0 0 25px var(--neon-yellow),
+            0 0 50px var(--neon-yellow);
+    }
+
+    70% {
+        opacity: 1;
+        text-shadow:
+            0 0 10px var(--neon-yellow),
             0 0 20px var(--neon-yellow),
-            0 0 40px var(--neon-yellow),
-            0 0 60px var(--neon-yellow);
+            0 0 40px var(--neon-yellow);
+    }
+
+    72% {
+        opacity: 0.85;
+        text-shadow:
+            0 0 6px var(--neon-yellow);
+    }
+
+    74% {
+        opacity: 1;
+        text-shadow:
+            0 0 10px var(--neon-yellow),
+            0 0 20px var(--neon-yellow),
+            0 0 40px var(--neon-yellow);
     }
 }
 

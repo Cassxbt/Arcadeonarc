@@ -16,6 +16,57 @@
     text-shadow: var(--glow-cyan);
     margin: var(--space-md) 0;
     letter-spacing: 0.1em;
+    animation: neonFlickerCyan 4s infinite;
+}
+
+/* Subtle cyan neon flicker */
+@keyframes neonFlickerCyan {
+
+    0%,
+    100% {
+        opacity: 1;
+        text-shadow:
+            0 0 10px var(--neon-cyan),
+            0 0 20px var(--neon-cyan),
+            0 0 40px var(--neon-cyan);
+    }
+
+    4% {
+        opacity: 0.9;
+        text-shadow:
+            0 0 8px var(--neon-cyan),
+            0 0 15px var(--neon-cyan);
+    }
+
+    6% {
+        opacity: 1;
+        text-shadow:
+            0 0 12px var(--neon-cyan),
+            0 0 25px var(--neon-cyan),
+            0 0 50px var(--neon-cyan);
+    }
+
+    45% {
+        opacity: 1;
+        text-shadow:
+            0 0 10px var(--neon-cyan),
+            0 0 20px var(--neon-cyan),
+            0 0 40px var(--neon-cyan);
+    }
+
+    47% {
+        opacity: 0.85;
+        text-shadow:
+            0 0 6px var(--neon-cyan);
+    }
+
+    49% {
+        opacity: 1;
+        text-shadow:
+            0 0 10px var(--neon-cyan),
+            0 0 20px var(--neon-cyan),
+            0 0 40px var(--neon-cyan);
+    }
 }
 
 .subtitle {
