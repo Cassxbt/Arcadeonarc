@@ -1,16 +1,34 @@
 'use client';
 
 import { useState, useCallback, useMemo } from 'react';
+import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { useGame } from '@/lib/game-context';
 import { useSound } from '@/lib/sounds';
 import { Dice6, Flame, Sparkles, Frown } from '@/components/icons';
+import { GameModeSelector } from '@/components/GameModeSelector';
+import { DemoLimitOverlay } from '@/components/DemoLimitOverlay';
 import styles from './page.module.css';
 
 type GameState = 'idle' | 'rolling' | 'won' | 'lost';
 
 export default function DiceGame() {
-    const { effectiveBalance, betAmount, setBetAmount, canBet, addBetRecord } = useGame();
+    const { primaryWallet, setShowAuthFlow } = useDynamicContext();
+    const {
+        effectiveBalance,
+        betAmount,
+        setBetAmount,
+        canBet,
+        addBetRecord,
+        demoMode,
+        toggleDemoMode,
+        isDemoLimitReached,
+    } = useGame();
     const { playSound } = useSound();
+
+    // Mode selection state
+    const [modeSelected, setModeSelected] = useState(false);
+    const showModeSelector = !primaryWallet && !demoMode && !modeSelected;
+    const showDemoLimitReached = demoMode && isDemoLimitReached('dice');
 
     const [gameState, setGameState] = useState<GameState>('idle');
     const [target, setTarget] = useState(50);
@@ -90,6 +108,30 @@ export default function DiceGame() {
         if (gameState === 'rolling') return;
         setBetAmount(betAmount * 2);
     };
+
+    // Handle demo mode selection
+    const handleDemoSelect = () => {
+        toggleDemoMode();
+        setModeSelected(true);
+    };
+
+    // If user needs to select mode, show the selector
+    if (showModeSelector) {
+        return (
+            <GameModeSelector
+                gameName="Dice"
+                gameIcon={<Dice6 size={64} style={{ color: 'var(--neon-green)' }} />}
+                onDemoSelect={handleDemoSelect}
+            />
+        );
+    }
+
+    // If demo limit reached, show overlay
+    if (showDemoLimitReached) {
+        return (
+            <DemoLimitOverlay gameName="Dice" onSignIn={() => setShowAuthFlow?.(true)} />
+        );
+    }
 
     return (
         <div className={styles.container}>

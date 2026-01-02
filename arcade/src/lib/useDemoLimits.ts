@@ -71,7 +71,9 @@ export function useDemoLimits(): DemoLimitState {
     }, []);
 
     const canPlay = useCallback((game: 'tower' | 'dice' | 'crash'): boolean => {
-        const gameLimit = limits[game];
+        const gameLimit = limits?.[game];
+        if (!gameLimit?.date) return true; // If no data, allow play
+
         const today = getToday();
 
         // If date is different, reset count (effectively 5 plays available)
@@ -79,11 +81,13 @@ export function useDemoLimits(): DemoLimitState {
             return true;
         }
 
-        return gameLimit.count < MAX_PLAYS_PER_DAY;
+        return (gameLimit.count || 0) < MAX_PLAYS_PER_DAY;
     }, [limits]);
 
     const getRemainingPlays = useCallback((game: 'tower' | 'dice' | 'crash'): number => {
-        const gameLimit = limits[game];
+        const gameLimit = limits?.[game];
+        if (!gameLimit?.date) return MAX_PLAYS_PER_DAY; // If no data, all plays available
+
         const today = getToday();
 
         // If date is different, all plays available
@@ -91,7 +95,7 @@ export function useDemoLimits(): DemoLimitState {
             return MAX_PLAYS_PER_DAY;
         }
 
-        return Math.max(0, MAX_PLAYS_PER_DAY - gameLimit.count);
+        return Math.max(0, MAX_PLAYS_PER_DAY - (gameLimit.count || 0));
     }, [limits]);
 
     const isLimitReached = useCallback((game: 'tower' | 'dice' | 'crash'): boolean => {
@@ -100,10 +104,10 @@ export function useDemoLimits(): DemoLimitState {
 
     const recordPlay = useCallback((game: 'tower' | 'dice' | 'crash'): boolean => {
         const today = getToday();
-        const currentLimit = limits[game];
+        const currentLimit = limits?.[game] || { count: 0, date: today };
 
-        // Reset if new day
-        const newCount = currentLimit.date === today ? currentLimit.count + 1 : 1;
+        // Reset if new day or no date
+        const newCount = currentLimit.date === today ? (currentLimit.count || 0) + 1 : 1;
 
         if (newCount > MAX_PLAYS_PER_DAY) {
             return false; // Limit reached

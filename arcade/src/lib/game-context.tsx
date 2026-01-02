@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
-import { formatUnits, parseUnits } from 'viem';
+import { useDemoLimits } from './useDemoLimits';
 
 interface GameContextType {
     // Balance
@@ -14,6 +14,12 @@ interface GameContextType {
     demoMode: boolean;
     demoBalance: number;
     toggleDemoMode: () => void;
+
+    // Demo limits
+    canPlayDemo: (game: 'tower' | 'dice' | 'crash') => boolean;
+    getRemainingDemoPlays: (game: 'tower' | 'dice' | 'crash') => number;
+    recordDemoPlay: (game: 'tower' | 'dice' | 'crash') => boolean;
+    isDemoLimitReached: (game: 'tower' | 'dice' | 'crash') => boolean;
 
     // Bet amount
     betAmount: number;
@@ -44,13 +50,14 @@ const DEMO_STARTING_BALANCE = 1000; // $1000 demo balance
 
 export function GameProvider({ children }: { children: React.ReactNode }) {
     const { primaryWallet } = useDynamicContext();
+    const demoLimits = useDemoLimits();
 
     // Real balance
     const [balance, setBalance] = useState(0);
     const [isLoading, setIsLoading] = useState(false);
 
     // Demo mode
-    const [demoMode, setDemoMode] = useState(true); // Start in demo mode
+    const [demoMode, setDemoMode] = useState(false); // Start with demo OFF - user must select
     const [demoBalance, setDemoBalance] = useState(DEMO_STARTING_BALANCE);
 
     // Bet amount
@@ -99,7 +106,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         setBetAmountState(Math.max(0.5, Math.min(100, amount)));
     }, []);
 
-    // Add bet record
+    // Add bet record (also records demo play if in demo mode)
     const addBetRecord = useCallback((record: Omit<BetRecord, 'id' | 'timestamp'>) => {
         const newRecord: BetRecord = {
             ...record,
@@ -111,20 +118,24 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
         // Update demo balance if in demo mode
         if (demoMode) {
+            // Record the demo play for limit tracking
+            demoLimits.recordPlay(record.game);
+
             if (record.outcome === 'win') {
                 setDemoBalance(prev => prev + record.payout - record.betAmount);
             } else {
                 setDemoBalance(prev => prev - record.betAmount);
             }
         }
-    }, [demoMode]);
+    }, [demoMode, demoLimits]);
 
     // Effective balance (demo or real)
     const effectiveBalance = demoMode ? demoBalance : balance;
 
-    // Can bet check
+    // Can bet check - also check demo limits in demo mode
     const canBet = useCallback((amount: number) => {
-        return amount >= 0.5 && amount <= 100 && amount <= effectiveBalance;
+        const basicCheck = amount >= 0.5 && amount <= 100 && amount <= effectiveBalance;
+        return basicCheck;
     }, [effectiveBalance]);
 
     return (
@@ -136,6 +147,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
                 demoMode,
                 demoBalance,
                 toggleDemoMode,
+                canPlayDemo: demoLimits.canPlay,
+                getRemainingDemoPlays: demoLimits.getRemainingPlays,
+                recordDemoPlay: demoLimits.recordPlay,
+                isDemoLimitReached: demoLimits.isLimitReached,
                 betAmount,
                 setBetAmount,
                 betHistory,

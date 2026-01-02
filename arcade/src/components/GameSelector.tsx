@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
     TowerControl,
@@ -47,55 +47,78 @@ interface GameSelectorProps {
 
 export function GameSelector({ onClose }: GameSelectorProps) {
     const router = useRouter();
-    const [isSelecting, setIsSelecting] = useState(true);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [selectedGame, setSelectedGame] = useState<Game | null>(null);
     const [showMessage, setShowMessage] = useState(false);
-    const [speed, setSpeed] = useState(50); // milliseconds between changes
+    const [phase, setPhase] = useState<'spinning' | 'slowing' | 'done'>('spinning');
 
-    // Slot machine animation
+    // Use refs to avoid dependency issues
+    const iterationRef = useRef(0);
+    const targetIndexRef = useRef(Math.floor(Math.random() * games.length));
+    const hasStartedRef = useRef(false);
+
     useEffect(() => {
-        if (!isSelecting) return;
+        // Prevent double execution in StrictMode
+        if (hasStartedRef.current) return;
+        hasStartedRef.current = true;
 
-        const targetIndex = Math.floor(Math.random() * games.length);
-        let iterations = 0;
-        const minIterations = 15; // Minimum spins before slowing down
-        const maxIterations = minIterations + 10 + Math.floor(Math.random() * 5);
+        const targetIndex = targetIndexRef.current;
+        const totalSpins = 20 + Math.floor(Math.random() * 10); // 20-30 total spins
 
-        const interval = setInterval(() => {
-            setCurrentIndex(prev => (prev + 1) % games.length);
-            iterations++;
+        // Phase 1: Fast spinning (first 15 spins at 80ms each)
+        const fastSpinCount = 15;
+        // Phase 2: Slowing down (remaining spins with increasing delay)
 
-            // Slow down as we approach the end
-            if (iterations >= minIterations) {
-                const progress = (iterations - minIterations) / (maxIterations - minIterations);
-                const newSpeed = 50 + Math.pow(progress, 2) * 400; // Exponential slowdown
-                setSpeed(newSpeed);
-            }
+        let currentIteration = 0;
+        let currentIdx = 0;
 
-            // Stop at the random target
-            if (iterations >= maxIterations) {
-                clearInterval(interval);
-                const finalGame = games[targetIndex];
+        const runAnimation = () => {
+            currentIteration++;
+            currentIdx = (currentIdx + 1) % games.length;
+            setCurrentIndex(currentIdx);
+
+            if (currentIteration >= totalSpins) {
+                // Animation complete - land on target
                 setCurrentIndex(targetIndex);
-                setSelectedGame(finalGame);
-                setIsSelecting(false);
+                setSelectedGame(games[targetIndex]);
+                setPhase('done');
 
-                // Show the message
+                // Show message after a brief pause
                 setTimeout(() => {
                     setShowMessage(true);
-                }, 300);
+                }, 400);
 
-                // Navigate after message fades
+                // Navigate after message displays
                 setTimeout(() => {
-                    router.push(finalGame.path);
+                    router.push(games[targetIndex].path);
                     onClose();
-                }, 2500);
-            }
-        }, speed);
+                }, 2200);
 
-        return () => clearInterval(interval);
-    }, [isSelecting, speed, router, onClose]);
+                return; // Stop animation
+            }
+
+            // Calculate delay for next iteration
+            let delay: number;
+            if (currentIteration < fastSpinCount) {
+                // Fast phase
+                delay = 80;
+            } else {
+                // Slowing phase - exponentially increase delay
+                const slowProgress = (currentIteration - fastSpinCount) / (totalSpins - fastSpinCount);
+                delay = 80 + Math.pow(slowProgress, 1.5) * 400;
+
+                if (currentIteration === fastSpinCount) {
+                    setPhase('slowing');
+                }
+            }
+
+            setTimeout(runAnimation, delay);
+        };
+
+        // Start animation after a brief delay
+        setTimeout(runAnimation, 100);
+
+    }, []); // Empty dependency array - runs once on mount
 
     return (
         <div className={styles.overlay}>
@@ -124,7 +147,7 @@ export function GameSelector({ onClose }: GameSelectorProps) {
                 </div>
 
                 {/* Selecting indicator */}
-                {isSelecting && (
+                {phase !== 'done' && (
                     <div className={styles.selectingText}>
                         <span>Selecting your fate...</span>
                     </div>

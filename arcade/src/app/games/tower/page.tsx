@@ -1,10 +1,13 @@
 'use client';
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { useGame } from '@/lib/game-context';
 import { useSound } from '@/lib/sounds';
 import { GAME_CONFIG } from '@/lib/constants';
 import { TowerControl, Dice6, Bomb, Skull } from '@/components/icons';
+import { GameModeSelector } from '@/components/GameModeSelector';
+import { DemoLimitOverlay } from '@/components/DemoLimitOverlay';
 import styles from './page.module.css';
 
 // Tower configuration
@@ -35,8 +38,25 @@ interface TileState {
 }
 
 export default function TowerGame() {
-    const { effectiveBalance, betAmount, setBetAmount, canBet, addBetRecord, betHistory } = useGame();
+    const { primaryWallet, setShowAuthFlow } = useDynamicContext();
+    const {
+        effectiveBalance,
+        betAmount,
+        setBetAmount,
+        canBet,
+        addBetRecord,
+        betHistory,
+        demoMode,
+        toggleDemoMode,
+        isDemoLimitReached,
+        getRemainingDemoPlays,
+    } = useGame();
     const { playSound } = useSound();
+
+    // Mode selection state - show selector if not signed in and not in demo
+    const [modeSelected, setModeSelected] = useState(false);
+    const showModeSelector = !primaryWallet && !demoMode && !modeSelected;
+    const showDemoLimitReached = demoMode && isDemoLimitReached('tower');
 
     const [gameState, setGameState] = useState<GameState>('idle');
     const [currentRow, setCurrentRow] = useState(-1);
@@ -184,6 +204,30 @@ export default function TowerGame() {
         const end = Math.min(TOWER_ROWS, start + VISIBLE_ROWS);
         return Array.from({ length: end - start }, (_, i) => start + i);
     }, [currentRow]);
+
+    // Handle demo mode selection
+    const handleDemoSelect = () => {
+        toggleDemoMode();
+        setModeSelected(true);
+    };
+
+    // If user needs to select mode, show the selector
+    if (showModeSelector) {
+        return (
+            <GameModeSelector
+                gameName="Tower"
+                gameIcon={<TowerControl size={64} style={{ color: 'var(--neon-cyan)' }} />}
+                onDemoSelect={handleDemoSelect}
+            />
+        );
+    }
+
+    // If demo limit reached, show overlay
+    if (showDemoLimitReached) {
+        return (
+            <DemoLimitOverlay gameName="Tower" onSignIn={() => setShowAuthFlow?.(true)} />
+        );
+    }
 
     return (
         <div className={styles.container}>

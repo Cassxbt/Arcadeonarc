@@ -1,0 +1,210 @@
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.95);
+    backdrop-filter: blur(15px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.container {
+    text-align: center;
+    max-width: 500px;
+    padding: var(--space-2xl);
+}
+
+.gameIcon {
+    margin-bottom: var(--space-lg);
+    filter: drop-shadow(0 0 30px currentColor);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+.title {
+    font-family: var(--font-pixel);
+    font-size: 2rem;
+    color: var(--text-primary);
+    text-shadow: 0 0 20px var(--neon-cyan);
+    margin-bottom: var(--space-xs);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.subtitle {
+    font-family: var(--font-arcade);
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-xl);
+}
+
+.options {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    margin-bottom: var(--space-xl);
+}
+
+.signInOption,
+.demoOption {
+    display: flex;
+    align-items: center;
+    gap: var(--space-lg);
+    width: 100%;
+    padding: var(--space-lg) var(--space-xl);
+    background: var(--bg-card);
+    border: 3px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    text-align: left;
+}
+
+.signInOption {
+    border-color: var(--neon-green);
+}
+
+.signInOption:hover {
+    background: rgba(57, 255, 20, 0.1);
+    transform: translateX(4px);
+    box-shadow: 0 0 30px rgba(57, 255, 20, 0.3);
+}
+
+.demoOption {
+    border-color: var(--neon-cyan);
+}
+
+.demoOption:hover:not(:disabled) {
+    background: rgba(5, 217, 232, 0.1);
+    transform: translateX(4px);
+    box-shadow: 0 0 30px rgba(5, 217, 232, 0.3);
+}
+
+.demoDisabled {
+    border-color: var(--neon-pink);
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.demoDisabled:hover {
+    transform: none;
+    background: rgba(255, 42, 109, 0.05);
+}
+
+.optionIcon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-lg);
+    flex-shrink: 0;
+}
+
+.optionContent {
+    flex: 1;
+}
+
+.optionContent h3 {
+    font-family: var(--font-pixel);
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: var(--space-xs);
+}
+
+.optionContent p {
+    font-family: var(--font-arcade);
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.limitReached {
+    color: var(--neon-pink) !important;
+}
+
+.optionBadge {
+    display: flex;
+    align-items: center;
+    padding: var(--space-xs) var(--space-sm);
+    background: rgba(57, 255, 20, 0.2);
+    border: 1px solid var(--neon-green);
+    border-radius: var(--radius-md);
+    font-family: var(--font-pixel);
+    font-size: 0.5rem;
+    color: var(--neon-green);
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.demoPlays {
+    padding: var(--space-xs) var(--space-sm);
+    background: rgba(5, 217, 232, 0.2);
+    border: 1px solid var(--neon-cyan);
+    border-radius: var(--radius-md);
+    font-family: var(--font-pixel);
+    font-size: 0.625rem;
+    color: var(--neon-cyan);
+}
+
+.footer {
+    font-family: var(--font-arcade);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .container {
+        padding: var(--space-lg);
+    }
+
+    .title {
+        font-size: 1.5rem;
+    }
+
+    .options {
+        gap: var(--space-sm);
+    }
+
+    .signInOption,
+    .demoOption {
+        padding: var(--space-md);
+        gap: var(--space-md);
+    }
+
+    .optionIcon {
+        width: 48px;
+        height: 48px;
+    }
+}

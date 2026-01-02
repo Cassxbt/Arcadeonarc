@@ -1,0 +1,113 @@
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.95);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.content {
+    text-align: center;
+    max-width: 400px;
+    padding: var(--space-2xl);
+    background: var(--bg-card);
+    border: 3px solid var(--neon-pink);
+    border-radius: var(--radius-xl);
+    box-shadow: 0 0 50px rgba(255, 42, 109, 0.3);
+}
+
+.icon {
+    margin-bottom: var(--space-lg);
+    filter: drop-shadow(0 0 20px var(--neon-pink));
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+.title {
+    font-family: var(--font-pixel);
+    font-size: 1.5rem;
+    color: var(--neon-pink);
+    text-shadow: var(--glow-pink);
+    margin-bottom: var(--space-md);
+    letter-spacing: 0.05em;
+}
+
+.message {
+    font-family: var(--font-arcade);
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-md);
+}
+
+.hint {
+    font-family: var(--font-arcade);
+    font-size: 0.875rem;
+    color: var(--neon-yellow);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--space-xl);
+}
+
+.actions {
+    display: flex;
+    justify-content: center;
+    margin-bottom: var(--space-lg);
+}
+
+.signInBtn {
+    padding: var(--space-md) var(--space-2xl);
+    background: linear-gradient(180deg, var(--neon-green) 0%, #00aa00 100%);
+    color: #000;
+    border: 2px solid var(--neon-green);
+    border-radius: var(--radius-md);
+    font-family: var(--font-pixel);
+    font-size: 0.625rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    box-shadow: 0 0 15px rgba(57, 255, 20, 0.3);
+}
+
+.signInBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 25px rgba(57, 255, 20, 0.5);
+}
+
+.resetNote {
+    font-family: var(--font-arcade);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}

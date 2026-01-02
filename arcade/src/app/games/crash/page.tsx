@@ -1,16 +1,34 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { useGame } from '@/lib/game-context';
 import { useSound } from '@/lib/sounds';
 import { Bomb, Rocket, Flame, CircleDollarSign, Sparkles } from '@/components/icons';
+import { GameModeSelector } from '@/components/GameModeSelector';
+import { DemoLimitOverlay } from '@/components/DemoLimitOverlay';
 import styles from './page.module.css';
 
 type GameState = 'idle' | 'flying' | 'crashed' | 'cashedOut';
 
 export default function CrashGame() {
-    const { effectiveBalance, betAmount, setBetAmount, canBet, addBetRecord } = useGame();
+    const { primaryWallet, setShowAuthFlow } = useDynamicContext();
+    const {
+        effectiveBalance,
+        betAmount,
+        setBetAmount,
+        canBet,
+        addBetRecord,
+        demoMode,
+        toggleDemoMode,
+        isDemoLimitReached,
+    } = useGame();
     const { playSound } = useSound();
+
+    // Mode selection state
+    const [modeSelected, setModeSelected] = useState(false);
+    const showModeSelector = !primaryWallet && !demoMode && !modeSelected;
+    const showDemoLimitReached = demoMode && isDemoLimitReached('crash');
 
     const [gameState, setGameState] = useState<GameState>('idle');
     const [multiplier, setMultiplier] = useState(1.00);
@@ -125,6 +143,30 @@ export default function CrashGame() {
         if (gameState === 'flying') return;
         setBetAmount(amount);
     };
+
+    // Handle demo mode selection
+    const handleDemoSelect = () => {
+        toggleDemoMode();
+        setModeSelected(true);
+    };
+
+    // If user needs to select mode, show the selector
+    if (showModeSelector) {
+        return (
+            <GameModeSelector
+                gameName="Cannon"
+                gameIcon={<Bomb size={64} style={{ color: 'var(--neon-pink)' }} />}
+                onDemoSelect={handleDemoSelect}
+            />
+        );
+    }
+
+    // If demo limit reached, show overlay
+    if (showDemoLimitReached) {
+        return (
+            <DemoLimitOverlay gameName="Cannon" onSignIn={() => setShowAuthFlow?.(true)} />
+        );
+    }
 
     return (
         <div className={styles.container}>
