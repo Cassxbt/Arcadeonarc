@@ -31,6 +31,10 @@ import {
     Wallet,
     HelpCircle,
     BarChart3,
+    Gift,
+    CheckCircle,
+    XCircle,
+    Loader2,
     type LucideIcon,
 } from 'lucide-react';
 
@@ -66,6 +70,10 @@ export {
     Wallet,
     HelpCircle,
     BarChart3,
+    Gift,
+    CheckCircle,
+    XCircle,
+    Loader2,
     type LucideIcon,
 };
 

@@ -426,3 +426,67 @@
         font-size: 0.875rem;
     }
 }
+
+/* Connect Wallet Prompt */
+.connectPrompt {
+    padding: var(--space-3xl);
+    text-align: center;
+    background: var(--bg-card);
+    border: 3px solid var(--neon-cyan);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 0 20px rgba(5, 217, 232, 0.2);
+}
+
+.connectPrompt h3 {
+    font-family: var(--font-pixel);
+    font-size: 0.875rem;
+    color: var(--neon-cyan);
+    text-shadow: 0 0 10px var(--neon-cyan);
+    margin-bottom: var(--space-md);
+    text-transform: uppercase;
+}
+
+.connectPrompt p {
+    font-family: var(--font-arcade);
+    color: var(--text-muted);
+}
+
+/* Username column */
+.username {
+    font-family: var(--font-arcade);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* Points column */
+.points {
+    font-family: var(--font-pixel);
+    font-size: 0.625rem;
+    font-weight: 700;
+    color: var(--neon-yellow);
+    text-shadow: 0 0 8px var(--neon-yellow);
+}
+
+/* Wins column */
+.wins {
+    font-family: var(--font-arcade);
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+}
+
+/* Streak column */
+.streak {
+    font-family: var(--font-arcade);
+    color: var(--neon-orange, #ff9500);
+    font-size: 0.875rem;
+}
+
+/* Current user row highlight */
+.currentUser {
+    background: rgba(5, 217, 232, 0.15) !important;
+    border-left: 3px solid var(--neon-cyan);
+}
+
+.currentUser td {
+    color: var(--neon-cyan);
+}

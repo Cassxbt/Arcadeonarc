@@ -12,6 +12,8 @@
 .title {
     font-size: 2.5rem;
     margin-bottom: var(--space-sm);
+    color: var(--neon-pink);
+    text-shadow: var(--glow-pink);
 }
 
 .subtitle {
@@ -21,7 +23,7 @@
 
 .gameLayout {
     display: grid;
-    grid-template-columns: 280px 1fr;
+    grid-template-columns: 300px 1fr;
     gap: var(--space-xl);
 }
 
@@ -33,18 +35,32 @@
 }
 
 .card {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
+    background: linear-gradient(180deg, var(--bg-card) 0%, rgba(20, 20, 32, 0.8) 100%);
+    border: 2px solid var(--border-color);
     border-radius: var(--radius-lg);
     padding: var(--space-lg);
+    position: relative;
+    overflow: hidden;
+}
+
+.card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
+    opacity: 0.5;
 }
 
 .card h3 {
-    font-size: 0.875rem;
-    color: var(--text-muted);
+    font-size: 0.75rem;
+    color: var(--neon-cyan);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.15em;
     margin-bottom: var(--space-md);
+    font-family: var(--font-arcade);
 }
 
 .betInput,
@@ -52,9 +68,16 @@
     display: flex;
     align-items: center;
     background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
+    border: 2px solid var(--border-color);
     border-radius: var(--radius-md);
     padding: var(--space-sm) var(--space-md);
+    transition: all var(--transition-fast);
+}
+
+.betInput:focus-within,
+.autoCashout:focus-within {
+    border-color: var(--neon-cyan);
+    box-shadow: 0 0 15px rgba(5, 217, 232, 0.2);
 }
 
 .betInput {
@@ -63,8 +86,9 @@
 
 .currency,
 .multiplierLabel {
-    color: var(--text-muted);
-    font-weight: 600;
+    color: var(--neon-green);
+    font-weight: 700;
+    font-family: var(--font-arcade);
 }
 
 .currency {
@@ -73,6 +97,7 @@
 
 .multiplierLabel {
     margin-left: var(--space-sm);
+    color: var(--neon-cyan);
 }
 
 .input {
@@ -81,8 +106,8 @@
     border: none;
     color: var(--text-primary);
     font-size: 1.25rem;
-    font-weight: 600;
-    font-family: var(--font-mono);
+    font-weight: 700;
+    font-family: var(--font-arcade);
     outline: none;
 }
 
@@ -95,18 +120,21 @@
 .quickBtn {
     padding: var(--space-sm);
     background: var(--bg-tertiary);
-    border: 1px solid var(--border-color);
+    border: 2px solid var(--border-color);
     border-radius: var(--radius-sm);
     color: var(--text-secondary);
-    font-weight: 500;
+    font-weight: 600;
+    font-family: var(--font-arcade);
+    font-size: 0.75rem;
     cursor: pointer;
     transition: all var(--transition-fast);
 }
 
 .quickBtn:hover:not(:disabled) {
     background: var(--bg-card-hover);
-    border-color: var(--color-primary);
-    color: var(--text-primary);
+    border-color: var(--neon-cyan);
+    color: var(--neon-cyan);
+    box-shadow: 0 0 10px rgba(5, 217, 232, 0.3);
 }
 
 .quickBtn:disabled {
@@ -119,40 +147,91 @@
     margin-top: var(--space-md);
 }
 
+/* Premium Launch Button */
 .primaryBtn {
     width: 100%;
-    padding: var(--space-lg);
-    background: linear-gradient(135deg, var(--color-danger), #ff6b6b);
+    padding: var(--space-lg) var(--space-xl);
+    background: linear-gradient(135deg, var(--neon-pink), var(--neon-purple));
     color: white;
-    border: none;
+    border: 2px solid var(--neon-pink);
     border-radius: var(--radius-lg);
-    font-size: 1.125rem;
+    font-size: 1rem;
     font-weight: 700;
+    font-family: var(--font-arcade);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
     cursor: pointer;
     transition: all var(--transition-fast);
+    position: relative;
+    overflow: hidden;
+    box-shadow:
+        0 0 20px rgba(255, 42, 109, 0.4),
+        0 0 40px rgba(255, 42, 109, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.primaryBtn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s;
 }
 
 .primaryBtn:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+    transform: translateY(-3px);
+    box-shadow:
+        0 0 30px rgba(255, 42, 109, 0.6),
+        0 0 60px rgba(255, 42, 109, 0.4),
+        0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.primaryBtn:hover:not(:disabled)::before {
+    left: 100%;
 }
 
 .primaryBtn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+    filter: grayscale(50%);
 }
 
+/* Urgent Cashout Button */
 .cashoutBtn {
     width: 100%;
-    padding: var(--space-lg);
-    background: linear-gradient(135deg, var(--color-success), var(--color-success-light));
-    color: white;
-    border: none;
+    padding: var(--space-lg) var(--space-xl);
+    background: linear-gradient(135deg, var(--neon-green), #00cc00);
+    color: #000;
+    border: 2px solid var(--neon-green);
     border-radius: var(--radius-lg);
     font-size: 1.25rem;
-    font-weight: 700;
+    font-weight: 800;
+    font-family: var(--font-arcade);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
     cursor: pointer;
-    animation: pulseCashout 0.5s infinite;
+    animation: cashoutPulse 0.5s infinite alternate;
+    position: relative;
+    overflow: hidden;
+    box-shadow:
+        0 0 30px rgba(57, 255, 20, 0.5),
+        0 0 60px rgba(57, 255, 20, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.cashoutBtn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+    transform: translate(-50%, -50%);
+    animation: cashoutRipple 1s infinite;
 }
 
 .cashoutBtn:hover {
@@ -169,19 +248,21 @@
     padding: var(--space-lg);
     border-radius: var(--radius-lg);
     margin-top: var(--space-md);
-    animation: slideUp 0.3s ease;
+    animation: resultSlide 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .resultWin {
-    background: rgba(34, 197, 94, 0.1);
-    border: 2px solid var(--color-success);
-    color: var(--color-success);
+    background: linear-gradient(180deg, rgba(57, 255, 20, 0.15) 0%, rgba(57, 255, 20, 0.05) 100%);
+    border: 2px solid var(--neon-green);
+    color: var(--neon-green);
+    box-shadow: 0 0 30px rgba(57, 255, 20, 0.2);
 }
 
 .resultLoss {
-    background: rgba(239, 68, 68, 0.1);
-    border: 2px solid var(--color-danger);
-    color: var(--color-danger);
+    background: linear-gradient(180deg, rgba(255, 42, 109, 0.15) 0%, rgba(255, 42, 109, 0.05) 100%);
+    border: 2px solid var(--neon-pink);
+    color: var(--neon-pink);
+    box-shadow: 0 0 30px rgba(255, 42, 109, 0.2);
 }
 
 .resultEmoji {
@@ -190,176 +271,588 @@
 }
 
 .resultPayout {
-    font-family: var(--font-mono);
-    font-size: 1.5rem;
-    font-weight: 700;
+    font-family: var(--font-arcade);
+    font-size: 1.75rem;
+    font-weight: 800;
     margin-top: var(--space-sm);
+    text-shadow: 0 0 20px currentColor;
 }
 
-/* Game Area */
+/* ==========================================
+   GAME AREA - THE MAIN EVENT
+   ========================================== */
 .gameArea {
     position: relative;
-    background: #0f172a;
-    /* Darker space background */
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
+    background: linear-gradient(180deg, #0a0a15 0%, #0f172a 50%, #0a0a15 100%);
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-xl);
     overflow: hidden;
-    min-height: 400px;
+    min-height: 450px;
     display: flex;
-    align-items: flex-end;
-    /* Align rocket to bottom initially */
+    flex-direction: column;
+    align-items: center;
     justify-content: center;
-    padding-bottom: 60px;
+}
+
+/* Grid Background */
+.gameArea::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(5, 217, 232, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(5, 217, 232, 0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+}
+
+/* Gradient Overlay */
+.gameArea::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center bottom, transparent 30%, rgba(10, 10, 21, 0.8) 100%);
+    pointer-events: none;
 }
 
 /* Stars Background */
 .stars {
     position: absolute;
     width: 100%;
-    height: 100%;
+    height: 200%;
     top: 0;
     left: 0;
     pointer-events: none;
     background-image:
-        radial-gradient(1px 1px at 20px 30px, #fff, rgba(0, 0, 0, 0)),
-        radial-gradient(1px 1px at 40px 70px, #fff, rgba(0, 0, 0, 0)),
-        radial-gradient(1px 1px at 50px 160px, #fff, rgba(0, 0, 0, 0)),
-        radial-gradient(1px 1px at 90px 40px, #fff, rgba(0, 0, 0, 0)),
-        radial-gradient(1px 1px at 130px 80px, #fff, rgba(0, 0, 0, 0));
-    background-size: 200px 200px;
-    animation: starsScroll 20s linear infinite;
-    opacity: 0.5;
+        radial-gradient(2px 2px at 20px 30px, rgba(255, 255, 255, 0.8), transparent),
+        radial-gradient(2px 2px at 40px 70px, rgba(255, 255, 255, 0.6), transparent),
+        radial-gradient(1px 1px at 90px 40px, rgba(255, 255, 255, 0.9), transparent),
+        radial-gradient(2px 2px at 130px 80px, rgba(255, 255, 255, 0.5), transparent),
+        radial-gradient(1px 1px at 160px 120px, rgba(255, 255, 255, 0.7), transparent),
+        radial-gradient(2px 2px at 200px 50px, rgba(5, 217, 232, 0.6), transparent),
+        radial-gradient(1px 1px at 250px 90px, rgba(255, 255, 255, 0.8), transparent),
+        radial-gradient(2px 2px at 300px 150px, rgba(255, 42, 109, 0.5), transparent);
+    background-size: 350px 350px;
+    animation: starsScroll 30s linear infinite;
+    opacity: 0.6;
 }
 
 .starsActive {
-    animation-duration: 2s;
-    /* Fast warp speed during flight */
-    opacity: 0.8;
+    animation-duration: 1s;
+    opacity: 1;
+}
+
+/* Speed Lines */
+.speedLines {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.speedLinesActive {
+    opacity: 1;
+    background:
+        linear-gradient(180deg,
+            transparent 0%,
+            transparent 45%,
+            rgba(5, 217, 232, 0.1) 50%,
+            transparent 55%,
+            transparent 100%),
+        linear-gradient(180deg,
+            transparent 0%,
+            transparent 65%,
+            rgba(57, 255, 20, 0.05) 70%,
+            transparent 75%,
+            transparent 100%);
+    animation: speedPulse 0.1s infinite;
+}
+
+/* Trajectory Container */
+.trajectoryContainer {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+}
+
+.trajectorySvg {
+    width: 100%;
+    height: 100%;
+}
+
+.trajectoryPath {
+    fill: none;
+    stroke: url(#trajectoryGradient);
+    stroke-width: 3;
+    stroke-linecap: round;
+    filter: drop-shadow(0 0 8px var(--neon-cyan));
+    stroke-dasharray: 1000;
+    stroke-dashoffset: 1000;
+}
+
+.trajectoryPathActive {
+    animation: drawTrajectory 0.5s ease-out forwards;
+}
+
+.trajectoryGlow {
+    fill: none;
+    stroke: var(--neon-cyan);
+    stroke-width: 8;
+    stroke-linecap: round;
+    opacity: 0.2;
+    filter: blur(4px);
 }
 
 /* Rocket Container */
 .rocketContainer {
-    position: relative;
-    width: 60px;
-    height: 60px;
+    position: absolute;
     z-index: 10;
-    transition: transform 0.1s linear;
+    transition: left 0.1s linear, bottom 0.1s linear;
+    width: 100px;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.rocket {
-    font-size: 3rem;
+/* Rocket Assembly - Handles rotation of the entire group */
+.rocketAssembly {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* IDLE: Rotate -45deg to point Straight Up (↑) */
+.rocketIdle {
     transform: rotate(-45deg);
-    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3));
+}
+
+/* FLYING: Default orientation (↗). Add wobble. */
+.rocketFlying {
+    transform: rotate(0deg);
+    animation: rocketWobble 0.2s ease-in-out infinite;
+}
+
+/* Rocket Body (The Icon) */
+.rocketBody {
     position: relative;
     z-index: 2;
+    filter: drop-shadow(0 0 15px rgba(5, 217, 232, 0.6));
 }
 
-.flame {
+/* Flame Container - Positioned at the tail (Bottom-Left) */
+.flameContainer {
     position: absolute;
-    bottom: -15px;
-    left: 50%;
-    transform: translateX(-50%) rotate(135deg);
-    font-size: 1.5rem;
-    animation: thrust 0.1s infinite alternate;
-    opacity: 0;
-    transition: opacity 0.2s;
+    left: 10px;
+    bottom: 10px;
     z-index: 1;
+    transform-origin: center;
+    /* Rotate flame to point South-West (Opposite to flight) */
+    transform: rotate(-135deg);
 }
 
-.flameActive {
-    opacity: 1;
+.flameIcon {
+    animation: flameFlicker 0.1s ease-in-out infinite alternate;
 }
 
-/* Juice Effects */
-.shake {
-    animation: shake 0.5s cubic-bezier(.36, .07, .19, .97) both;
+/* Glowing Trail - Streaking behind the rocket */
+.glowTrail {
+    position: absolute;
+    width: 120px;
+    height: 40px;
+    background: linear-gradient(to right,
+            rgba(5, 217, 232, 0) 0%,
+            rgba(5, 217, 232, 0.2) 20%,
+            rgba(5, 217, 232, 0.6) 100%);
+    filter: blur(6px);
+    border-radius: 50%;
+    z-index: 0;
+    /* Align with diagonal flight path */
+    transform: rotate(45deg) translate(-50px, 0);
+    left: -40px;
+    bottom: -20px;
+    opacity: 0.7;
 }
 
+/* Cashout Success Marker - centered money bag */
+.cashoutSuccess {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 20;
+    animation: cashoutPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes cashoutPop {
+    0% {
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 0;
+    }
+
+    50% {
+        transform: translate(-50%, -50%) scale(1.2);
+    }
+
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+}
+
+/* ==========================================
+   MULTIPLIER DISPLAY - THE HERO ELEMENT
+   ========================================== */
+.multiplierDisplay {
+    position: relative;
+    z-index: 15;
+    text-align: center;
+    padding: var(--space-xl);
+}
+
+.multiplierValue {
+    font-family: var(--font-arcade);
+    font-size: 8rem;
+    font-weight: 900;
+    color: rgba(255, 255, 255, 0.15);
+    text-shadow: 0 0 40px rgba(255, 255, 255, 0.05);
+    transition: all 0.15s ease-out;
+    line-height: 1;
+    letter-spacing: -0.02em;
+}
+
+/* Active Flying State - Cyan glow */
+.multiplierFlying .multiplierValue {
+    font-size: 10rem;
+    background: linear-gradient(180deg, #ffffff 0%, var(--neon-cyan) 50%, #05a8b8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 30px rgba(5, 217, 232, 0.6));
+    animation: multiplierPulse 0.5s ease infinite;
+}
+
+/* Medium Multiplier - Yellow warning */
+.multiplierMedium .multiplierValue {
+    background: linear-gradient(180deg, #ffffff 0%, var(--neon-yellow) 50%, #d4a800 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 30px rgba(249, 240, 2, 0.6));
+}
+
+/* High Multiplier - Orange danger */
+.multiplierHigh .multiplierValue {
+    background: linear-gradient(180deg, #ffffff 0%, var(--neon-orange) 50%, #cc4400 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 30px rgba(255, 107, 53, 0.6));
+    animation: multiplierShake 0.1s infinite;
+}
+
+/* Crashed State - Red */
+.multiplierCrashed .multiplierValue {
+    font-size: 8rem;
+    background: linear-gradient(180deg, #ff6666 0%, var(--neon-pink) 50%, #aa0000 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 40px rgba(255, 42, 109, 0.8));
+}
+
+/* Cashed Out - Green victory */
+.multiplierCashedOut .multiplierValue {
+    background: linear-gradient(180deg, #ffffff 0%, var(--neon-green) 50%, #00aa00 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 40px rgba(57, 255, 20, 0.8));
+}
+
+.multiplierHint {
+    display: block;
+    color: var(--neon-green);
+    font-size: 1rem;
+    font-family: var(--font-arcade);
+    font-weight: 600;
+    margin-top: var(--space-md);
+    animation: hintPulse 0.8s infinite;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    text-shadow: 0 0 10px var(--neon-green);
+}
+
+/* Crash Explosion */
 .crashExplosion {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 5rem;
-    animation: explode 0.6s cubic-bezier(0, 0, 0.2, 1) forwards;
-    z-index: 20;
+    z-index: 25;
     pointer-events: none;
 }
 
-/* Trajectory Line */
-.trajectoryLine {
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 4px;
-    background: linear-gradient(to top,
-            rgba(59, 130, 246, 0) 0%,
-            rgba(59, 130, 246, 0.5) 50%,
-            var(--color-primary) 100%);
-    border-radius: 4px;
-    z-index: 5;
-    box-shadow: 0 0 15px var(--color-primary);
+.explosionCore {
+    font-size: 6rem;
+    animation: explodeCore 0.6s cubic-bezier(0, 0, 0.2, 1) forwards;
 }
 
-/* Multiplier Display */
-.multiplierDisplay {
+.explosionRing {
     position: absolute;
-    top: 40%;
+    top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    text-align: center;
-    z-index: 0;
+    width: 100px;
+    height: 100px;
+    border: 4px solid var(--neon-pink);
+    border-radius: 50%;
+    animation: explosionRing 0.6s ease-out forwards;
 }
 
-.multiplierValue {
-    font-family: var(--font-mono);
-    font-size: 6rem;
-    font-weight: 800;
-    color: rgba(255, 255, 255, 0.1);
-    text-shadow: 0 0 30px rgba(255, 255, 255, 0.05);
-    transition: all 0.1s linear;
+.explosionRing:nth-child(2) {
+    animation-delay: 0.1s;
+    border-color: var(--neon-orange);
 }
 
-.gameStateActive .multiplierValue {
-    color: var(--color-primary);
-    text-shadow: 0 0 40px rgba(59, 130, 246, 0.4);
-    font-size: 7rem;
+.explosionRing:nth-child(3) {
+    animation-delay: 0.2s;
+    border-color: var(--neon-yellow);
 }
 
-.multiplierCrashed .multiplierValue {
-    color: var(--color-danger);
-    text-shadow: 0 0 40px rgba(239, 68, 68, 0.5);
+/* Screen Flash on Crash */
+.screenFlash {
+    position: absolute;
+    inset: 0;
+    background: var(--neon-pink);
+    opacity: 0;
+    animation: screenFlash 0.3s ease-out;
+    pointer-events: none;
+    z-index: 30;
 }
 
-.multiplierHint {
-    display: block;
-    color: var(--text-muted);
-    font-size: 0.875rem;
-    margin-top: var(--space-sm);
-    animation: pulse 1s infinite;
+/* Shake Effect */
+.shake {
+    animation: shake 0.5s cubic-bezier(.36, .07, .19, .97) both;
 }
 
-/* Animations */
-@keyframes thrust {
-    0% {
-        transform: translateX(-50%) rotate(135deg) scale(0.8);
-        opacity: 0.7;
+/* ==========================================
+   ANIMATIONS
+   ========================================== */
+@keyframes starsScroll {
+    from {
+        transform: translateY(0);
     }
 
-    100% {
-        transform: translateX(-50%) rotate(135deg) scale(1.2);
+    to {
+        transform: translateY(-50%);
+    }
+}
+
+@keyframes speedPulse {
+    from {
+        opacity: 0.8;
+    }
+
+    to {
         opacity: 1;
     }
 }
 
-@keyframes starsScroll {
-    from {
-        background-position: 0 0;
+@keyframes drawTrajectory {
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+@keyframes rocketWobble {
+
+    0%,
+    100% {
+        transform: rotate(0deg) translate(0, 0);
     }
 
-    to {
-        background-position: 0 200px;
+    25% {
+        transform: rotate(2deg) translate(1px, -1px);
+    }
+
+    50% {
+        transform: rotate(0deg) translate(0, 0);
+    }
+
+    75% {
+        transform: rotate(-2deg) translate(-1px, 1px);
+    }
+}
+
+@keyframes flameFlicker {
+    0% {
+        transform: scale(1);
+        opacity: 0.8;
+    }
+
+    50% {
+        transform: scale(1.1);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(0.95);
+        opacity: 0.9;
+    }
+}
+
+
+
+@keyframes trailFlicker {
+    0% {
+        height: 50px;
+        opacity: 0.7;
+    }
+
+    100% {
+        height: 70px;
+        opacity: 1;
+    }
+}
+
+@keyframes markerBounce {
+
+    0%,
+    100% {
+        transform: translateX(-50%) translateY(0);
+    }
+
+    50% {
+        transform: translateX(-50%) translateY(-5px);
+    }
+}
+
+@keyframes multiplierPulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.02);
+    }
+}
+
+@keyframes multiplierShake {
+
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    25% {
+        transform: translateX(-2px);
+    }
+
+    75% {
+        transform: translateX(2px);
+    }
+}
+
+@keyframes hintPulse {
+
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.7;
+        transform: scale(0.98);
+    }
+}
+
+@keyframes cashoutPulse {
+    0% {
+        transform: scale(1);
+        box-shadow:
+            0 0 20px rgba(57, 255, 20, 0.4),
+            0 0 40px rgba(57, 255, 20, 0.2);
+    }
+
+    100% {
+        transform: scale(1.02);
+        box-shadow:
+            0 0 30px rgba(57, 255, 20, 0.6),
+            0 0 60px rgba(57, 255, 20, 0.4),
+            0 0 80px rgba(57, 255, 20, 0.2);
+    }
+}
+
+@keyframes cashoutRipple {
+    0% {
+        transform: translate(-50%, -50%) scale(0.5);
+        opacity: 0.5;
+    }
+
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0;
+    }
+}
+
+@keyframes resultSlide {
+    0% {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes explodeCore {
+    0% {
+        transform: scale(0.5);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(1.8);
+        opacity: 0.9;
+    }
+
+    100% {
+        transform: scale(2.5);
+        opacity: 0;
+    }
+}
+
+@keyframes explosionRing {
+    0% {
+        transform: translate(-50%, -50%) scale(0.3);
+        opacity: 1;
+    }
+
+    100% {
+        transform: translate(-50%, -50%) scale(4);
+        opacity: 0;
+    }
+}
+
+@keyframes screenFlash {
+    0% {
+        opacity: 0.6;
+    }
+
+    100% {
+        opacity: 0;
     }
 }
 
@@ -367,102 +860,82 @@
 
     10%,
     90% {
-        transform: translate3d(-2px, 0, 0);
+        transform: translate3d(-3px, 0, 0);
     }
 
     20%,
     80% {
-        transform: translate3d(4px, 0, 0);
+        transform: translate3d(5px, 0, 0);
     }
 
     30%,
     50%,
     70% {
-        transform: translate3d(-6px, 0, 0);
+        transform: translate3d(-8px, 0, 0);
     }
 
     40%,
     60% {
-        transform: translate3d(6px, 0, 0);
+        transform: translate3d(8px, 0, 0);
     }
 }
 
-@keyframes explode {
-    0% {
-        transform: translate(-50%, -50%) scale(0.5);
-        opacity: 1;
-    }
-
-    50% {
-        transform: translate(-50%, -50%) scale(1.5);
-        opacity: 0.8;
-    }
-
-    100% {
-        transform: translate(-50%, -50%) scale(2);
-        opacity: 0;
-    }
+/* ==========================================
+   HOW IT WORKS SECTION
+   ========================================== */
+.howItWorks {
+    margin-top: var(--space-2xl);
+    padding: var(--space-xl);
+    background: linear-gradient(180deg, var(--bg-card) 0%, transparent 100%);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
 }
 
-@keyframes pulseCashout {
-    0% {
-        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
-    }
-
-    70% {
-        box-shadow: 0 0 0 20px rgba(34, 197, 94, 0);
-    }
-
-    100% {
-        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
-    }
+.howItWorks h2 {
+    font-family: var(--font-pixel);
+    font-size: 1rem;
+    color: var(--neon-yellow);
+    text-shadow: 0 0 10px var(--neon-yellow);
+    text-align: center;
+    margin-bottom: var(--space-xl);
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
 }
 
-@keyframes slideUp {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+.rules {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-lg);
 }
 
-@keyframes pulse {
-
-    0%,
-    100% {
-        opacity: 1;
-    }
-
-    50% {
-        opacity: 0.5;
-    }
+.rule {
+    padding: var(--space-md);
+    background: rgba(20, 20, 32, 0.5);
+    border-radius: var(--radius-md);
+    border-left: 3px solid var(--neon-cyan);
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-    .container {
-        padding: var(--space-md);
-    }
+.rule h3 {
+    font-family: var(--font-arcade);
+    font-size: 0.875rem;
+    color: var(--neon-cyan);
+    margin-bottom: var(--space-sm);
+    text-transform: uppercase;
+}
 
-    .header {
-        margin-bottom: var(--space-lg);
-    }
+.rule p {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
 
-    .title {
-        font-size: 1.75rem;
-    }
-
-    .subtitle {
-        font-size: 1rem;
-    }
-
+/* ==========================================
+   RESPONSIVE
+   ========================================== */
+@media (max-width: 900px) {
     .gameLayout {
         grid-template-columns: 1fr;
-        gap: var(--space-md);
+        gap: var(--space-lg);
     }
 
     .controlPanel {
@@ -472,44 +945,53 @@
     .gameArea {
         order: 0;
         min-height: 350px;
-        padding: var(--space-lg);
     }
 
-    .card {
+    .multiplierValue {
+        font-size: 5rem;
+    }
+
+    .multiplierFlying .multiplierValue {
+        font-size: 7rem;
+    }
+
+    .rules {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
         padding: var(--space-md);
     }
 
-    .card h3 {
-        font-size: 0.75rem;
-        margin-bottom: var(--space-sm);
+    .title {
+        font-size: 1.5rem;
     }
 
-    .quickBets {
-        gap: 4px;
-        margin-bottom: var(--space-sm);
-    }
-
-    .quickBtn {
-        padding: var(--space-xs);
-        font-size: 0.875rem;
-    }
-
-    .primaryBtn,
-    .cashoutBtn {
-        padding: var(--space-md);
-        font-size: 1rem;
+    .gameArea {
+        min-height: 300px;
     }
 
     .multiplierValue {
         font-size: 4rem;
     }
 
-    .gameStateActive .multiplierValue {
+    .multiplierFlying .multiplierValue {
         font-size: 5rem;
     }
 
-    .resultWin,
-    .resultLoss {
+    .rocket {
+        font-size: 3rem;
+    }
+
+    .card {
         padding: var(--space-md);
+    }
+
+    .primaryBtn,
+    .cashoutBtn {
+        padding: var(--space-md);
+        font-size: 0.875rem;
     }
 }

@@ -23,9 +23,7 @@ interface IARCadeVault {
  */
 contract TowerGame is ReentrancyGuard, Ownable, Pausable {
     
-    // =============================================================
-    //                           CONSTANTS
-    // =============================================================
+    /* --- CONSTANTS --- */
     
     /// @notice Number of rows in the tower
     uint256 public constant TOWER_ROWS = 20;
@@ -37,9 +35,7 @@ contract TowerGame is ReentrancyGuard, Ownable, Pausable {
     /// @dev Multipliers are in basis points (10000 = 1x, 18400 = 1.84x)
     uint256[20] public MULTIPLIERS;
     
-    // =============================================================
-    //                            STORAGE
-    // =============================================================
+    /* --- STORAGE --- */
     
     /// @notice Reference to the vault contract
     IARCadeVault public immutable vault;
@@ -57,18 +53,14 @@ contract TowerGame is ReentrancyGuard, Ownable, Pausable {
     
     mapping(address => Game) public games;
     
-    // =============================================================
-    //                            EVENTS
-    // =============================================================
+    /* --- EVENTS --- */
     
     event GameStarted(address indexed player, uint256 betAmount, uint256 nonce);
     event TileRevealed(address indexed player, uint8 row, uint8 tile, bool safe);
     event GameCashedOut(address indexed player, uint8 row, uint256 multiplier, uint256 payout);
     event GameLost(address indexed player, uint8 row);
     
-    // =============================================================
-    //                            ERRORS
-    // =============================================================
+    /* --- ERRORS --- */
     
     error GameAlreadyActive();
     error NoActiveGame();
@@ -76,9 +68,7 @@ contract TowerGame is ReentrancyGuard, Ownable, Pausable {
     error InvalidTile();
     error InvalidSignature();
     
-    // =============================================================
-    //                         CONSTRUCTOR
-    // =============================================================
+    /* --- CONSTRUCTOR --- */
     
     constructor(address _vault, address _serverSigner) Ownable(msg.sender) {
         vault = IARCadeVault(_vault);
@@ -88,9 +78,7 @@ contract TowerGame is ReentrancyGuard, Ownable, Pausable {
         _calculateMultipliers();
     }
     
-    // =============================================================
-    //                       GAME FUNCTIONS
-    // =============================================================
+    /* --- GAME FUNCTIONS --- */
     
     /**
      * @notice Start a new tower game
@@ -178,9 +166,7 @@ contract TowerGame is ReentrancyGuard, Ownable, Pausable {
         emit GameCashedOut(msg.sender, game.currentRow - 1, multiplier, payout);
     }
     
-    // =============================================================
-    //                       ADMIN FUNCTIONS
-    // =============================================================
+    /* --- ADMIN FUNCTIONS --- */
     
     function setServerSigner(address _signer) external onlyOwner {
         serverSigner = _signer;
@@ -194,9 +180,7 @@ contract TowerGame is ReentrancyGuard, Ownable, Pausable {
         _unpause();
     }
     
-    // =============================================================
-    //                      INTERNAL FUNCTIONS
-    // =============================================================
+    /* --- INTERNAL FUNCTIONS --- */
     
     function _calculateMultipliers() internal {
         uint256 cumulativeProb = 10000; // Start at 100%
@@ -240,9 +224,7 @@ contract TowerGame is ReentrancyGuard, Ownable, Pausable {
         return ecrecover(hash, v, r, s) == signer;
     }
     
-    // =============================================================
-    //                       VIEW FUNCTIONS
-    // =============================================================
+    /* --- VIEW FUNCTIONS --- */
     
     function getGameState(address player) external view returns (
         bool active,

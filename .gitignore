@@ -22,6 +22,7 @@ secrets/
 private/
 *.secret
 *secret*.json
+scripts/faucet.sh
 
 # =============================================
 # INTERNAL DOCUMENTATION (NOT FOR PUBLIC)

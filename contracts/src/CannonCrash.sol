@@ -21,9 +21,7 @@ interface IARCadeVault {
  */
 contract CannonCrash is ReentrancyGuard, Ownable, Pausable {
     
-    // =============================================================
-    //                           CONSTANTS
-    // =============================================================
+    /* --- CONSTANTS --- */
     
     /// @notice Minimum crash multiplier (1.00x in basis points)
     uint256 public constant MIN_CRASH = 10000;
@@ -31,9 +29,7 @@ contract CannonCrash is ReentrancyGuard, Ownable, Pausable {
     /// @notice Maximum cash-out multiplier (100.00x in basis points)
     uint256 public constant MAX_CASHOUT = 1000000;
     
-    // =============================================================
-    //                            STORAGE
-    // =============================================================
+    /* --- STORAGE --- */
     
     /// @notice Reference to the vault contract
     IARCadeVault public immutable vault;
@@ -51,17 +47,13 @@ contract CannonCrash is ReentrancyGuard, Ownable, Pausable {
     
     mapping(address => Bet) public bets;
     
-    // =============================================================
-    //                            EVENTS
-    // =============================================================
+    /* --- EVENTS --- */
     
     event BetPlaced(address indexed player, uint256 amount, uint256 autoCashout);
     event CashedOut(address indexed player, uint256 multiplier, uint256 payout);
     event Crashed(address indexed player, uint256 crashPoint);
     
-    // =============================================================
-    //                            ERRORS
-    // =============================================================
+    /* --- ERRORS --- */
     
     error BetAlreadyActive();
     error NoBetActive();
@@ -69,18 +61,14 @@ contract CannonCrash is ReentrancyGuard, Ownable, Pausable {
     error InvalidSignature();
     error MultiplierTooHigh();
     
-    // =============================================================
-    //                         CONSTRUCTOR
-    // =============================================================
+    /* --- CONSTRUCTOR --- */
     
     constructor(address _vault, address _serverSigner) Ownable(msg.sender) {
         vault = IARCadeVault(_vault);
         serverSigner = _serverSigner;
     }
     
-    // =============================================================
-    //                       GAME FUNCTIONS
-    // =============================================================
+    /* --- GAME FUNCTIONS --- */
     
     /**
      * @notice Place a bet on the crash game
@@ -195,9 +183,7 @@ contract CannonCrash is ReentrancyGuard, Ownable, Pausable {
         }
     }
     
-    // =============================================================
-    //                       ADMIN FUNCTIONS
-    // =============================================================
+    /* --- ADMIN FUNCTIONS --- */
     
     function setServerSigner(address _signer) external onlyOwner {
         serverSigner = _signer;
@@ -211,9 +197,7 @@ contract CannonCrash is ReentrancyGuard, Ownable, Pausable {
         _unpause();
     }
     
-    // =============================================================
-    //                      INTERNAL FUNCTIONS
-    // =============================================================
+    /* --- INTERNAL FUNCTIONS --- */
     
     function _verifySignature(
         bytes32 hash,
@@ -238,9 +222,7 @@ contract CannonCrash is ReentrancyGuard, Ownable, Pausable {
         return ecrecover(hash, v, r, s) == signer;
     }
     
-    // =============================================================
-    //                       VIEW FUNCTIONS
-    // =============================================================
+    /* --- VIEW FUNCTIONS --- */
     
     function getBetState(address player) external view returns (
         bool active,

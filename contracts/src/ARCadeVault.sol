@@ -21,9 +21,7 @@ import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 contract ARCadeVault is ReentrancyGuard, Ownable, Pausable {
     using SafeERC20 for IERC20;
 
-    // =============================================================
-    //                           CONSTANTS
-    // =============================================================
+    /* --- CONSTANTS --- */
 
     /// @notice USDC token address on Arc testnet
     IERC20 public immutable USDC;
@@ -43,9 +41,7 @@ contract ARCadeVault is ReentrancyGuard, Ownable, Pausable {
     /// @notice Basis points denominator
     uint256 public constant BPS_DENOMINATOR = 10000;
 
-    // =============================================================
-    //                            STORAGE
-    // =============================================================
+    /* --- STORAGE --- */
 
     /// @notice User USDC balances in the vault
     mapping(address => uint256) public balances;
@@ -62,9 +58,7 @@ contract ARCadeVault is ReentrancyGuard, Ownable, Pausable {
     /// @notice Nonce for randomness (per user)
     mapping(address => uint256) public userNonces;
 
-    // =============================================================
-    //                            EVENTS
-    // =============================================================
+    /* --- EVENTS --- */
 
     event Deposited(address indexed user, uint256 amount);
     event Withdrawn(address indexed user, uint256 amount);
@@ -74,9 +68,7 @@ contract ARCadeVault is ReentrancyGuard, Ownable, Pausable {
     event HouseWithdrawn(address indexed to, uint256 amount);
     event EmergencyWithdraw(address indexed user, uint256 amount);
 
-    // =============================================================
-    //                            ERRORS
-    // =============================================================
+    /* --- ERRORS --- */
 
     error ZeroAmount();
     error InsufficientBalance();
@@ -88,9 +80,7 @@ contract ARCadeVault is ReentrancyGuard, Ownable, Pausable {
     error PayoutTooLarge();
     error InsufficientLiquidity();
 
-    // =============================================================
-    //                         CONSTRUCTOR
-    // =============================================================
+    /* --- CONSTRUCTOR --- */
 
     /**
      * @notice Initialize the vault with USDC token address
@@ -152,9 +142,7 @@ contract ARCadeVault is ReentrancyGuard, Ownable, Pausable {
         return balances[user];
     }
 
-    // =============================================================
-    //                       GAME FUNCTIONS
-    // =============================================================
+    /* --- GAME FUNCTIONS --- */
 
     /**
      * @notice Place a bet (called by authorized game contracts)
@@ -243,9 +231,7 @@ contract ARCadeVault is ReentrancyGuard, Ownable, Pausable {
         )));
     }
 
-    // =============================================================
-    //                       ADMIN FUNCTIONS
-    // =============================================================
+    /* --- ADMIN FUNCTIONS --- */
 
     /**
      * @notice Authorize or deauthorize a game contract

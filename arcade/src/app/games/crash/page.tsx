@@ -1,15 +1,33 @@
 'use client';
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { useGame } from '@/lib/game-context';
 import { useSound } from '@/lib/sounds';
-import { Bomb, Rocket, Flame, CircleDollarSign, Sparkles } from '@/components/icons';
+import { Bomb, Rocket, Flame, CircleDollarSign, Sparkles, Zap, Target, BarChart3 } from '@/components/icons';
 import { GameModeSelector } from '@/components/GameModeSelector';
 import { DemoLimitOverlay } from '@/components/DemoLimitOverlay';
 import styles from './page.module.css';
 
 type GameState = 'idle' | 'flying' | 'crashed' | 'cashedOut';
+
+// Determine multiplier danger level for visual feedback
+function getMultiplierLevel(multiplier: number): 'low' | 'medium' | 'high' {
+    if (multiplier >= 5) return 'high';
+    if (multiplier >= 2.5) return 'medium';
+    return 'low';
+}
+
+// Calculate straight diagonal trajectory path
+function getTrajectoryPath(multiplier: number, width: number, height: number): string {
+    const startX = width * 0.15;
+    const startY = height * 0.85;
+    const endX = startX + Math.min((multiplier - 1) * width * 0.08, width * 0.7);
+    const endY = startY - Math.min((multiplier - 1) * height * 0.08, height * 0.7);
+
+    // Straight line for diagonal trajectory
+    return `M ${startX} ${startY} L ${endX} ${endY}`;
+}
 
 export default function CrashGame() {
     const { primaryWallet, setShowAuthFlow } = useDynamicContext();
@@ -35,16 +53,30 @@ export default function CrashGame() {
     const [crashPoint, setCrashPoint] = useState(0);
     const [autoCashout, setAutoCashout] = useState<number | null>(null);
     const [cashedOutAt, setCashedOutAt] = useState<number | null>(null);
+    const [showFlash, setShowFlash] = useState(false);
 
     const animationRef = useRef<number | null>(null);
     const startTimeRef = useRef<number>(0);
+    const gameAreaRef = useRef<HTMLDivElement>(null);
+
+    // Calculate multiplier level for styling
+    const multiplierLevel = getMultiplierLevel(multiplier);
+
+    // Get multiplier display class
+    const multiplierClass = useMemo(() => {
+        if (gameState === 'crashed') return styles.multiplierCrashed;
+        if (gameState === 'cashedOut') return styles.multiplierCashedOut;
+        if (gameState === 'flying') {
+            const baseClass = styles.multiplierFlying;
+            if (multiplierLevel === 'high') return `${baseClass} ${styles.multiplierHigh}`;
+            if (multiplierLevel === 'medium') return `${baseClass} ${styles.multiplierMedium}`;
+            return baseClass;
+        }
+        return '';
+    }, [gameState, multiplierLevel]);
 
     // Generate crash point (house edge built in)
     const generateCrashPoint = useCallback(() => {
-        // This creates a distribution where:
-        // - 10% of games crash at 1.00x (instant loss)
-        // - Average multiplier is around 2x
-        // - Max around 100x (rare)
         const houseEdge = 0.10;
         const random = Math.random();
 
@@ -52,7 +84,6 @@ export default function CrashGame() {
             return 1.00;
         }
 
-        // Exponential distribution for crash point
         const e = 1 / (1 - random);
         return Math.max(1.00, Math.floor(e * 100) / 100);
     }, []);
@@ -65,6 +96,7 @@ export default function CrashGame() {
         setCrashPoint(crash);
         setMultiplier(1.00);
         setCashedOutAt(null);
+        setShowFlash(false);
         setGameState('flying');
         startTimeRef.current = Date.now();
 
@@ -98,7 +130,6 @@ export default function CrashGame() {
 
         const animate = () => {
             const elapsed = (Date.now() - startTimeRef.current) / 1000;
-            // Multiplier grows exponentially
             const newMultiplier = Math.pow(1.06, elapsed * 10);
             const roundedMultiplier = Math.floor(newMultiplier * 100) / 100;
 
@@ -114,6 +145,7 @@ export default function CrashGame() {
             if (roundedMultiplier >= crashPoint) {
                 setMultiplier(crashPoint);
                 setGameState('crashed');
+                setShowFlash(true);
                 playSound('EXPLOSION');
 
                 addBetRecord({
@@ -168,12 +200,20 @@ export default function CrashGame() {
         );
     }
 
+    // Calculate rocket position - starts at bottom-left corner, flies diagonally up-right
+    const rocketX = gameState === 'flying'
+        ? Math.min((multiplier - 1) * 12, 55)  // Move right as multiplier increases
+        : 0;
+    const rocketY = gameState === 'flying'
+        ? Math.min((multiplier - 1) * 12, 55)  // Move up as multiplier increases
+        : 0;
+
     return (
         <div className={styles.container}>
             {/* Header */}
             <div className={styles.header}>
                 <h1 className={styles.title}>
-                    <Bomb size={36} style={{ marginRight: '0.5rem', verticalAlign: 'middle', color: 'var(--neon-pink)', filter: 'drop-shadow(0 0 12px var(--neon-pink))' }} />
+                    <Bomb size={36} style={{ marginRight: '0.5rem', verticalAlign: 'middle', filter: 'drop-shadow(0 0 15px var(--neon-pink))' }} />
                     Cannon Crash
                 </h1>
                 <p className={styles.subtitle}>Watch the multiplier rise. Cash out before the BOOM!</p>
@@ -238,12 +278,14 @@ export default function CrashGame() {
                                 disabled={!canBet(betAmount)}
                                 className={styles.primaryBtn}
                             >
+                                <Rocket size={20} style={{ marginRight: '8px' }} />
                                 Launch Cannon (${betAmount})
                             </button>
                         )}
 
                         {gameState === 'flying' && (
                             <button onClick={cashOut} className={styles.cashoutBtn}>
+                                <CircleDollarSign size={20} style={{ marginRight: '8px' }} />
                                 Cash Out @ {multiplier.toFixed(2)}×
                             </button>
                         )}
@@ -253,7 +295,7 @@ export default function CrashGame() {
                     {gameState === 'cashedOut' && cashedOutAt && (
                         <div className={styles.resultWin}>
                             <span className={styles.resultEmoji}>
-                                <Sparkles size={28} style={{ color: 'var(--neon-yellow)', filter: 'drop-shadow(0 0 10px var(--neon-yellow))' }} />
+                                <Sparkles size={32} style={{ color: 'var(--neon-green)', filter: 'drop-shadow(0 0 15px var(--neon-green))' }} />
                             </span>
                             <span>Cashed out at {cashedOutAt.toFixed(2)}×</span>
                             <span className={styles.resultPayout}>+${(betAmount * cashedOutAt).toFixed(2)}</span>
@@ -263,7 +305,7 @@ export default function CrashGame() {
                     {gameState === 'crashed' && (
                         <div className={styles.resultLoss}>
                             <span className={styles.resultEmoji}>
-                                <Bomb size={28} style={{ color: 'var(--neon-pink)' }} />
+                                <Bomb size={32} style={{ filter: 'drop-shadow(0 0 15px var(--neon-pink))' }} />
                             </span>
                             <span>Crashed at {crashPoint.toFixed(2)}×</span>
                         </div>
@@ -271,51 +313,124 @@ export default function CrashGame() {
                 </div>
 
                 {/* Game Area */}
-                <div className={`${styles.gameArea} ${gameState === 'crashed' ? styles.shake : ''}`}>
+                <div
+                    ref={gameAreaRef}
+                    className={`${styles.gameArea} ${gameState === 'crashed' ? styles.shake : ''}`}
+                >
+                    {/* Screen Flash on Crash */}
+                    {showFlash && <div className={styles.screenFlash} />}
+
                     {/* Background stars */}
-                    <div className={`${styles.stars} ${gameState === 'flying' ? styles.starsActive : ''}`}></div>
+                    <div className={`${styles.stars} ${gameState === 'flying' ? styles.starsActive : ''}`} />
 
-                    {/* Rocket and Trajectory */}
-                    <div
-                        className={styles.rocketContainer}
-                        style={{
-                            transform: gameState === 'flying' || gameState === 'cashedOut'
-                                ? `translateY(-${Math.min((multiplier - 1) * 30, 250)}px)`
-                                : 'translateY(0)'
-                        }}
-                    >
-                        {/* Rocket Body */}
-                        <div className={styles.rocket}>
-                            <Rocket size={48} style={{ color: 'var(--neon-cyan)', filter: 'drop-shadow(0 0 15px var(--neon-cyan))', transform: 'rotate(-45deg)' }} />
-                        </div>
+                    {/* Speed Lines */}
+                    <div className={`${styles.speedLines} ${gameState === 'flying' && multiplier > 2 ? styles.speedLinesActive : ''}`} />
 
-                        {/* Thruster Flame */}
-                        <div className={`${styles.flame} ${gameState === 'flying' ? styles.flameActive : ''}`}>
-                            <Flame size={32} style={{ color: 'var(--neon-orange)', filter: 'drop-shadow(0 0 10px var(--neon-orange))' }} />
-                        </div>
-
-                        {/* Cashout Marker */}
-                        {gameState === 'cashedOut' && (
-                            <div className={styles.cashoutMarker}>
-                                <CircleDollarSign size={24} style={{ color: 'var(--neon-green)', filter: 'drop-shadow(0 0 8px var(--neon-green))' }} />
-                            </div>
-                        )}
+                    {/* Trajectory SVG */}
+                    <div className={styles.trajectoryContainer}>
+                        <svg className={styles.trajectorySvg} viewBox="0 0 100 100" preserveAspectRatio="none">
+                            <defs>
+                                <linearGradient id="trajectoryGradient" x1="0%" y1="100%" x2="100%" y2="0%">
+                                    <stop offset="0%" stopColor="transparent" />
+                                    <stop offset="30%" stopColor="var(--neon-cyan)" stopOpacity="0.3" />
+                                    <stop offset="100%" stopColor="var(--neon-cyan)" />
+                                </linearGradient>
+                            </defs>
+                            {(gameState === 'flying' || gameState === 'cashedOut') && (
+                                <>
+                                    <path
+                                        className={styles.trajectoryGlow}
+                                        d={getTrajectoryPath(multiplier, 100, 100)}
+                                    />
+                                    <path
+                                        className={`${styles.trajectoryPath} ${styles.trajectoryPathActive}`}
+                                        d={getTrajectoryPath(multiplier, 100, 100)}
+                                    />
+                                </>
+                            )}
+                        </svg>
                     </div>
+
+                    {/* Rocket Container - Only show when flying or idle */}
+                    {(gameState === 'idle' || gameState === 'flying') && (
+                        <div
+                            className={styles.rocketContainer}
+                            style={{
+                                left: `calc(5% + ${rocketX}%)`,
+                                bottom: `calc(20px + ${rocketY}%)`
+                            }}
+                        >
+                            {/* Rocket Assembly - rocket + flame rotate together */}
+                            <div className={`${styles.rocketAssembly} ${gameState === 'flying' ? styles.rocketFlying : styles.rocketIdle}`}>
+                                {/* Glowing Trail - extends from back of rocket when flying */}
+                                {gameState === 'flying' && (
+                                    <div className={styles.glowTrail} />
+                                )}
+
+                                {/* Flame - behind rocket, only when flying */}
+                                {gameState === 'flying' && (
+                                    <div className={styles.flameContainer}>
+                                        <Flame
+                                            size={50}
+                                            className={styles.flameIcon}
+                                            style={{
+                                                color: 'var(--neon-orange)',
+                                                filter: 'drop-shadow(0 0 15px var(--neon-orange))'
+                                            }}
+                                        />
+                                    </div>
+                                )}
+
+                                {/* Rocket Body */}
+                                <div className={styles.rocketBody}>
+                                    <Rocket
+                                        size={80}
+                                        style={{
+                                            color: 'var(--neon-cyan)',
+                                            filter: 'drop-shadow(0 0 25px var(--neon-cyan))'
+                                        }}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Money Bag - Show on successful cashout */}
+                    {gameState === 'cashedOut' && (
+                        <div className={styles.cashoutSuccess}>
+                            <CircleDollarSign
+                                size={100}
+                                style={{
+                                    color: 'var(--neon-green)',
+                                    filter: 'drop-shadow(0 0 30px var(--neon-green))'
+                                }}
+                            />
+                        </div>
+                    )}
 
                     {/* Crash Explosion */}
                     {gameState === 'crashed' && (
                         <div className={styles.crashExplosion}>
-                            <Bomb size={64} style={{ color: 'var(--neon-pink)', filter: 'drop-shadow(0 0 20px var(--neon-pink))', animation: 'pulse 0.3s ease' }} />
+                            <div className={styles.explosionRing} />
+                            <div className={styles.explosionRing} />
+                            <div className={styles.explosionRing} />
+                            <div className={styles.explosionCore}>
+                                <Bomb size={80} style={{ color: 'var(--neon-pink)', filter: 'drop-shadow(0 0 30px var(--neon-pink))' }} />
+                            </div>
                         </div>
                     )}
 
                     {/* Multiplier Display */}
-                    <div className={`${styles.multiplierDisplay} ${gameState === 'flying' ? styles.gameStateActive : ''} ${gameState === 'crashed' ? styles.multiplierCrashed : ''}`}>
+                    <div className={`${styles.multiplierDisplay} ${multiplierClass}`}>
                         <span className={styles.multiplierValue}>
                             {multiplier.toFixed(2)}×
                         </span>
                         {gameState === 'flying' && (
-                            <span className={styles.multiplierHint}>Click to cash out!</span>
+                            <span className={styles.multiplierHint}>
+                                <Zap size={16} fill="currentColor" style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />
+                                Click to cash out!
+                                <Zap size={16} fill="currentColor" style={{ display: 'inline', verticalAlign: 'middle', marginLeft: '4px' }} />
+                            </span>
                         )}
                     </div>
                 </div>
@@ -323,22 +438,38 @@ export default function CrashGame() {
 
             {/* How It Works */}
             <div className={styles.howItWorks}>
-                <h2>How It Works</h2>
+                <h2>
+                    <Zap size={24} style={{ color: 'var(--neon-yellow)', marginRight: '8px', verticalAlign: 'middle' }} />
+                    How It Works
+                    <Zap size={24} style={{ color: 'var(--neon-yellow)', marginLeft: '8px', verticalAlign: 'middle' }} />
+                </h2>
                 <div className={styles.rules}>
                     <div className={styles.rule}>
-                        <h3>Objective</h3>
+                        <h3>
+                            <Target size={18} style={{ color: 'var(--neon-cyan)', marginRight: '8px', verticalAlign: 'middle' }} />
+                            Objective
+                        </h3>
                         <p>Watch the rocket launch and the multiplier climb. Your goal is to cash out before the rocket crashes!</p>
                     </div>
                     <div className={styles.rule}>
-                        <h3>Rising Multiplier</h3>
+                        <h3>
+                            <BarChart3 size={18} style={{ color: 'var(--neon-green)', marginRight: '8px', verticalAlign: 'middle' }} />
+                            Rising Multiplier
+                        </h3>
                         <p>The multiplier starts at 1.00x and increases exponentially. The longer you wait, the more you win – if you don't crash.</p>
                     </div>
                     <div className={styles.rule}>
-                        <h3>The Crash</h3>
+                        <h3>
+                            <Bomb size={18} style={{ color: 'var(--neon-pink)', marginRight: '8px', verticalAlign: 'middle' }} />
+                            The Crash
+                        </h3>
                         <p>The rocket can crash at any moment. When it crashes, all active bets that haven't cashed out are lost.</p>
                     </div>
                     <div className={styles.rule}>
-                        <h3>Auto Cashout</h3>
+                        <h3>
+                            <Zap size={18} style={{ color: 'var(--neon-yellow)', marginRight: '8px', verticalAlign: 'middle' }} />
+                            Auto Cashout
+                        </h3>
                         <p>Set an auto-cashout multiplier to automatically secure your winnings when the target is reached.</p>
                     </div>
                 </div>
