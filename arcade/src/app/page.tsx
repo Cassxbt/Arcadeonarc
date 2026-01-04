@@ -17,6 +17,7 @@ import {
   Wallet,
 } from '@/components/icons';
 import { GameSelector } from '@/components/GameSelector';
+import { useStats } from '@/lib/useStats';
 import styles from './page.module.css';
 
 const games = [
@@ -51,6 +52,7 @@ const games = [
 
 export default function Home() {
   const [showGameSelector, setShowGameSelector] = useState(false);
+  const stats = useStats();
 
   const handleStartPlaying = () => {
     setShowGameSelector(true);
@@ -164,19 +166,19 @@ export default function Home() {
       {/* Stats */}
       <section className={styles.stats}>
         <div className={styles.stat}>
-          <div className={styles.statValue}>$0</div>
-          <div className={styles.statLabel}>Total Wagered</div>
+          <div className={styles.statValue}>${stats.totalUsdcWon.toLocaleString()}</div>
+          <div className={styles.statLabel}>Total Won</div>
         </div>
         <div className={styles.stat}>
-          <div className={styles.statValue}>0</div>
+          <div className={styles.statValue}>{stats.totalGamesPlayed.toLocaleString()}</div>
           <div className={styles.statLabel}>Games Played</div>
         </div>
         <div className={styles.stat}>
-          <div className={styles.statValue}>0</div>
-          <div className={styles.statLabel}>Players</div>
+          <div className={styles.statValue}>{stats.mostPreferredGame?.game || '-'}</div>
+          <div className={styles.statLabel}>Most Played</div>
         </div>
         <div className={styles.stat}>
-          <div className={styles.statValue}>$0</div>
+          <div className={styles.statValue}>${stats.biggestWin?.amount.toLocaleString() || '0'}</div>
           <div className={styles.statLabel}>Biggest Win</div>
         </div>
       </section>
