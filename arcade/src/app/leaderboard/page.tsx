@@ -21,7 +21,7 @@ interface LeaderboardEntry {
 
 export default function Leaderboard() {
     const { primaryWallet } = useDynamicContext();
-    const { isRegistered } = useGame();
+    useGame(); // Hook still called for side effects
     const [timeFrame, setTimeFrame] = useState<TimeFrame>('week');
     const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
     const [isLoading, setIsLoading] = useState(true);

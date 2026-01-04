@@ -7,7 +7,31 @@ import { useSound } from '@/lib/sounds';
 import { Bomb, Rocket, Flame, CircleDollarSign, Sparkles, Zap, Target, BarChart3 } from '@/components/icons';
 import { GameModeSelector } from '@/components/GameModeSelector';
 import { DemoLimitOverlay } from '@/components/DemoLimitOverlay';
+import { GameInfoPanel, InfoButton } from '@/components/GameInfoPanel';
 import styles from './page.module.css';
+
+const CRASH_GAME_RULES = [
+    {
+        icon: <Target size={20} style={{ color: 'var(--neon-cyan)' }} />,
+        title: 'Objective',
+        content: 'Watch the rocket launch and the multiplier climb. Your goal is to cash out before the rocket crashes!',
+    },
+    {
+        icon: <BarChart3 size={20} style={{ color: 'var(--neon-green)' }} />,
+        title: 'Rising Multiplier',
+        content: 'The multiplier starts at 1.00x and increases exponentially. The longer you wait, the more you win – if you don\'t crash.',
+    },
+    {
+        icon: <Bomb size={20} style={{ color: 'var(--neon-pink)' }} />,
+        title: 'The Crash',
+        content: 'The rocket can crash at any moment. When it crashes, all active bets that haven\'t cashed out are lost.',
+    },
+    {
+        icon: <Zap size={20} style={{ color: 'var(--neon-yellow)' }} />,
+        title: 'Auto Cashout',
+        content: 'Set an auto-cashout multiplier to automatically secure your winnings when the target is reached.',
+    },
+];
 
 type GameState = 'idle' | 'flying' | 'crashed' | 'cashedOut';
 
@@ -41,7 +65,7 @@ export default function CrashGame() {
         toggleDemoMode,
         isDemoLimitReached,
     } = useGame();
-    const { playSound } = useSound();
+    const { playSound, stopSound } = useSound();
 
     // Mode selection state
     const [modeSelected, setModeSelected] = useState(false);
@@ -54,6 +78,7 @@ export default function CrashGame() {
     const [autoCashout, setAutoCashout] = useState<number | null>(null);
     const [cashedOutAt, setCashedOutAt] = useState<number | null>(null);
     const [showFlash, setShowFlash] = useState(false);
+    const [showInfo, setShowInfo] = useState(false);
 
     const animationRef = useRef<number | null>(null);
     const startTimeRef = useRef<number>(0);
@@ -92,6 +117,11 @@ export default function CrashGame() {
     const startGame = useCallback(() => {
         if (!canBet(betAmount) || gameState === 'flying') return;
 
+        // Stop any lingering sounds from previous game
+        stopSound('WIN');
+        stopSound('EXPLOSION');
+        stopSound('CASH_OUT');
+
         const crash = generateCrashPoint();
         setCrashPoint(crash);
         setMultiplier(1.00);
@@ -101,7 +131,7 @@ export default function CrashGame() {
         startTimeRef.current = Date.now();
 
         playSound('CLICK');
-    }, [canBet, betAmount, gameState, generateCrashPoint, playSound]);
+    }, [canBet, betAmount, gameState, generateCrashPoint, playSound, stopSound]);
 
     // Cash out
     const cashOut = useCallback(() => {
@@ -210,12 +240,23 @@ export default function CrashGame() {
 
     return (
         <div className={styles.container}>
+            {/* Info Panel */}
+            <GameInfoPanel
+                isOpen={showInfo}
+                onClose={() => setShowInfo(false)}
+                gameName="Cannon Crash"
+                rules={CRASH_GAME_RULES}
+            />
+
             {/* Header */}
             <div className={styles.header}>
-                <h1 className={styles.title}>
-                    <Bomb size={36} style={{ marginRight: '0.5rem', verticalAlign: 'middle', filter: 'drop-shadow(0 0 15px var(--neon-pink))' }} />
-                    Cannon Crash
-                </h1>
+                <div className={styles.headerTop}>
+                    <h1 className={styles.title}>
+                        <Bomb size={36} style={{ marginRight: '0.5rem', verticalAlign: 'middle', filter: 'drop-shadow(0 0 15px var(--neon-pink))' }} />
+                        Cannon Crash
+                    </h1>
+                    <InfoButton onClick={() => setShowInfo(true)} />
+                </div>
                 <p className={styles.subtitle}>Watch the multiplier rise. Cash out before the BOOM!</p>
             </div>
 
@@ -436,44 +477,7 @@ export default function CrashGame() {
                 </div>
             </div>
 
-            {/* How It Works */}
-            <div className={styles.howItWorks}>
-                <h2>
-                    <Zap size={24} style={{ color: 'var(--neon-yellow)', marginRight: '8px', verticalAlign: 'middle' }} />
-                    How It Works
-                    <Zap size={24} style={{ color: 'var(--neon-yellow)', marginLeft: '8px', verticalAlign: 'middle' }} />
-                </h2>
-                <div className={styles.rules}>
-                    <div className={styles.rule}>
-                        <h3>
-                            <Target size={18} style={{ color: 'var(--neon-cyan)', marginRight: '8px', verticalAlign: 'middle' }} />
-                            Objective
-                        </h3>
-                        <p>Watch the rocket launch and the multiplier climb. Your goal is to cash out before the rocket crashes!</p>
-                    </div>
-                    <div className={styles.rule}>
-                        <h3>
-                            <BarChart3 size={18} style={{ color: 'var(--neon-green)', marginRight: '8px', verticalAlign: 'middle' }} />
-                            Rising Multiplier
-                        </h3>
-                        <p>The multiplier starts at 1.00x and increases exponentially. The longer you wait, the more you win – if you don't crash.</p>
-                    </div>
-                    <div className={styles.rule}>
-                        <h3>
-                            <Bomb size={18} style={{ color: 'var(--neon-pink)', marginRight: '8px', verticalAlign: 'middle' }} />
-                            The Crash
-                        </h3>
-                        <p>The rocket can crash at any moment. When it crashes, all active bets that haven't cashed out are lost.</p>
-                    </div>
-                    <div className={styles.rule}>
-                        <h3>
-                            <Zap size={18} style={{ color: 'var(--neon-yellow)', marginRight: '8px', verticalAlign: 'middle' }} />
-                            Auto Cashout
-                        </h3>
-                        <p>Set an auto-cashout multiplier to automatically secure your winnings when the target is reached.</p>
-                    </div>
-                </div>
-            </div>
+
         </div>
     );
 }

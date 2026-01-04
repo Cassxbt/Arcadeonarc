@@ -35,6 +35,7 @@ import {
     CheckCircle,
     XCircle,
     Loader2,
+    Check,
     type LucideIcon,
 } from 'lucide-react';
 
@@ -74,6 +75,7 @@ export {
     CheckCircle,
     XCircle,
     Loader2,
+    Check,
     type LucideIcon,
 };
 

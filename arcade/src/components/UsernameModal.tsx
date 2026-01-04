@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useUser, useUsernameCheck } from '@/lib/useUser';
+import { useSound } from '@/lib/sounds';
 import { Gamepad2, Gift, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import styles from './UsernameModal.module.css';
 
@@ -17,6 +18,7 @@ export function UsernameModal({ isOpen, onComplete }: UsernameModalProps) {
 
     const { registerUsername } = useUser();
     const { isChecking, isAvailable, error: checkError, checkUsername, reset } = useUsernameCheck();
+    const { playSound } = useSound();
 
     // Debounced username check
     useEffect(() => {
@@ -43,6 +45,7 @@ export function UsernameModal({ isOpen, onComplete }: UsernameModalProps) {
         const result = await registerUsername(username);
 
         if (result.success) {
+            playSound('CHIME');
             onComplete();
         } else {
             setSubmitError(result.error || 'Registration failed');
@@ -105,7 +108,7 @@ export function UsernameModal({ isOpen, onComplete }: UsernameModalProps) {
                     )}
 
                     {isAvailable && username.length >= 3 && (
-                        <p className={styles.success}>✓ Username available!</p>
+                        <p className={styles.success}><CheckCircle size={14} style={{ marginRight: '0.25rem', verticalAlign: 'middle', color: 'var(--neon-green)' }} /> Username available!</p>
                     )}
 
                     {submitError && (

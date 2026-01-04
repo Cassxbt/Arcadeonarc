@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
-import { getSupabaseClient, User } from './supabase';
+import { User } from './supabase';
 
 interface UseUserReturn {
     user: User | null;

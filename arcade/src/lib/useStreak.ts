@@ -55,7 +55,7 @@ export function useStreak(): UseStreakReturn {
     }, [fetchStreak]);
 
     // Record a play and update streak
-    const recordPlay = useCallback(async (game: 'dice' | 'tower' | 'crash') => {
+    const recordPlay = useCallback(async (_game: 'dice' | 'tower' | 'crash') => {
         if (!walletAddress) return;
 
         try {

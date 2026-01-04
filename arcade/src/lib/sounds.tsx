@@ -9,7 +9,16 @@ interface SoundContextType {
     volume: number;
     toggleSound: () => void;
     setVolume: (volume: number) => void;
-    playSound: (sound: keyof typeof SOUNDS) => void;
+    playSound: (sound: keyof typeof SOUNDS, options?: PlaySoundOptions) => void;
+    stopSound: (sound: keyof typeof SOUNDS) => void;
+    stopAllSounds: () => void;
+}
+
+interface PlaySoundOptions {
+    /** Auto-stop after this many milliseconds */
+    duration?: number;
+    /** Loop the sound (default: false) */
+    loop?: boolean;
 }
 
 const SoundContext = createContext<SoundContextType | undefined>(undefined);
@@ -20,6 +29,7 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
     const [volume, setVolumeState] = useState(0.5);
     const audioRefs = useRef<Map<string, HTMLAudioElement>>(new Map());
     const loadedSounds = useRef<Set<string>>(new Set());
+    const stopTimers = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
     // Initialize audio elements with proper error handling
     useEffect(() => {
@@ -61,12 +71,18 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
 
             return () => {
                 mounted = false;
-                audioRefs.current.forEach(audio => {
+                // Copy refs to local variables before cleanup
+                const audioMap = audioRefs.current;
+                const loadedSet = loadedSounds.current;
+                const timers = stopTimers.current;
+                audioMap.forEach(audio => {
                     audio.pause();
                     audio.src = '';
                 });
-                audioRefs.current.clear();
-                loadedSounds.current.clear();
+                audioMap.clear();
+                loadedSet.clear();
+                timers.forEach(timer => clearTimeout(timer));
+                timers.clear();
             };
         }
     }, []);
@@ -86,7 +102,36 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
         setVolumeState(Math.max(0, Math.min(1, newVolume)));
     }, []);
 
-    const playSound = useCallback((sound: keyof typeof SOUNDS) => {
+    // Stop a specific sound
+    const stopSound = useCallback((sound: keyof typeof SOUNDS) => {
+        const audio = audioRefs.current.get(sound);
+        if (audio) {
+            audio.pause();
+            audio.currentTime = 0;
+            audio.loop = false;
+        }
+        // Clear any auto-stop timer
+        const timer = stopTimers.current.get(sound);
+        if (timer) {
+            clearTimeout(timer);
+            stopTimers.current.delete(sound);
+        }
+    }, []);
+
+    // Stop all playing sounds
+    const stopAllSounds = useCallback(() => {
+        audioRefs.current.forEach((audio, key) => {
+            audio.pause();
+            audio.currentTime = 0;
+            audio.loop = false;
+        });
+        // Clear all timers
+        stopTimers.current.forEach(timer => clearTimeout(timer));
+        stopTimers.current.clear();
+    }, []);
+
+    // Play a sound with optional auto-stop
+    const playSound = useCallback((sound: keyof typeof SOUNDS, options?: PlaySoundOptions) => {
         if (!soundEnabled) return;
 
         // Only play if the sound was successfully loaded
@@ -94,15 +139,46 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
 
         const audio = audioRefs.current.get(sound);
         if (audio) {
+            // Clear any existing timer for this sound
+            const existingTimer = stopTimers.current.get(sound);
+            if (existingTimer) {
+                clearTimeout(existingTimer);
+                stopTimers.current.delete(sound);
+            }
+
+            // Set loop option
+            audio.loop = options?.loop ?? false;
+
+            // Reset and play
             audio.currentTime = 0;
             audio.play().catch(() => {
                 // Ignore autoplay errors (browser policy)
             });
+
+            // Set auto-stop timer if duration specified
+            if (options?.duration) {
+                const timer = setTimeout(() => {
+                    audio.pause();
+                    audio.currentTime = 0;
+                    audio.loop = false;
+                    stopTimers.current.delete(sound);
+                }, options.duration);
+                stopTimers.current.set(sound, timer);
+            }
         }
     }, [soundEnabled]);
 
     return (
-        <SoundContext.Provider value={{ soundEnabled, soundsReady, volume, toggleSound, setVolume, playSound }}>
+        <SoundContext.Provider value={{
+            soundEnabled,
+            soundsReady,
+            volume,
+            toggleSound,
+            setVolume,
+            playSound,
+            stopSound,
+            stopAllSounds
+        }}>
             {children}
         </SoundContext.Provider>
     );

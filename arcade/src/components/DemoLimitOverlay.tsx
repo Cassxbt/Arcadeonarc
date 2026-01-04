@@ -17,7 +17,7 @@ export function DemoLimitOverlay({ gameName, onSignIn }: DemoLimitOverlayProps) 
                 </div>
                 <h2 className={styles.title}>Demo Limit Reached</h2>
                 <p className={styles.message}>
-                    You've used all 5 demo plays for {gameName} today.
+                    You&apos;ve used all 5 demo plays for {gameName} today.
                 </p>
                 <p className={styles.hint}>
                     <Sparkles size={16} style={{ color: 'var(--neon-yellow)', marginRight: '0.5rem' }} />

@@ -1,12 +1,26 @@
 .container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: var(--space-lg);
+    height: calc(100vh - 86px);
+    width: 100%;
+    overflow: visible;
+    background: #0a0a0a;
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-md);
+    box-sizing: border-box;
 }
 
 .header {
     text-align: center;
-    margin-bottom: var(--space-xl);
+    margin-bottom: var(--space-md);
+    flex-shrink: 0;
+}
+
+.headerTop {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-md);
+    margin-bottom: var(--space-sm);
 }
 
 .title {
@@ -18,13 +32,15 @@
 
 .subtitle {
     color: var(--text-secondary);
-    font-size: 1.125rem;
+    font-size: 0.9rem;
 }
 
 .gameLayout {
     display: grid;
     grid-template-columns: 300px 1fr;
-    gap: var(--space-xl);
+    gap: var(--space-md);
+    flex: 1;
+    overflow: hidden;
 }
 
 /* Control Panel */
@@ -880,54 +896,7 @@
     }
 }
 
-/* ==========================================
-   HOW IT WORKS SECTION
-   ========================================== */
-.howItWorks {
-    margin-top: var(--space-2xl);
-    padding: var(--space-xl);
-    background: linear-gradient(180deg, var(--bg-card) 0%, transparent 100%);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-xl);
-}
 
-.howItWorks h2 {
-    font-family: var(--font-pixel);
-    font-size: 1rem;
-    color: var(--neon-yellow);
-    text-shadow: 0 0 10px var(--neon-yellow);
-    text-align: center;
-    margin-bottom: var(--space-xl);
-    text-transform: uppercase;
-    letter-spacing: 0.2em;
-}
-
-.rules {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-lg);
-}
-
-.rule {
-    padding: var(--space-md);
-    background: rgba(20, 20, 32, 0.5);
-    border-radius: var(--radius-md);
-    border-left: 3px solid var(--neon-cyan);
-}
-
-.rule h3 {
-    font-family: var(--font-arcade);
-    font-size: 0.875rem;
-    color: var(--neon-cyan);
-    margin-bottom: var(--space-sm);
-    text-transform: uppercase;
-}
-
-.rule p {
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-    line-height: 1.5;
-}
 
 /* ==========================================
    RESPONSIVE
@@ -963,6 +932,7 @@
 @media (max-width: 480px) {
     .container {
         padding: var(--space-md);
+        min-height: calc(100vh - 86px);
     }
 
     .title {

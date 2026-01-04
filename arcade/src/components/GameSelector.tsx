@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSound } from '@/lib/sounds';
 import {
     TowerControl,
     Dice6,
@@ -47,13 +48,13 @@ interface GameSelectorProps {
 
 export function GameSelector({ onClose }: GameSelectorProps) {
     const router = useRouter();
+    const { playSound, stopSound } = useSound();
     const [currentIndex, setCurrentIndex] = useState(0);
     const [selectedGame, setSelectedGame] = useState<Game | null>(null);
     const [showMessage, setShowMessage] = useState(false);
     const [phase, setPhase] = useState<'spinning' | 'slowing' | 'done'>('spinning');
 
     // Use refs to avoid dependency issues
-    const iterationRef = useRef(0);
     const targetIndexRef = useRef(Math.floor(Math.random() * games.length));
     const hasStartedRef = useRef(false);
 
@@ -64,6 +65,9 @@ export function GameSelector({ onClose }: GameSelectorProps) {
 
         const targetIndex = targetIndexRef.current;
         const totalSpins = 20 + Math.floor(Math.random() * 10); // 20-30 total spins
+
+        // Start the slot machine sound (looped)
+        playSound('SLOT_MACHINE', { loop: true });
 
         // Phase 1: Fast spinning (first 15 spins at 80ms each)
         const fastSpinCount = 15;
@@ -82,6 +86,10 @@ export function GameSelector({ onClose }: GameSelectorProps) {
                 setCurrentIndex(targetIndex);
                 setSelectedGame(games[targetIndex]);
                 setPhase('done');
+
+                // Stop the slot machine sound and play chime
+                stopSound('SLOT_MACHINE');
+                playSound('CHIME');
 
                 // Show message after a brief pause
                 setTimeout(() => {

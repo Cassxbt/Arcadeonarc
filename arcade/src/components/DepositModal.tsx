@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { useVault } from '@/lib/useVault';
 import { useGame } from '@/lib/game-context';
+import { useSound } from '@/lib/sounds';
 import { CircleDollarSign, Building2, CircleCheck } from './icons';
 import styles from './DepositModal.module.css';
 
@@ -17,6 +18,7 @@ export function DepositModal({ isOpen, onClose, mode }: DepositModalProps) {
     const { primaryWallet } = useDynamicContext();
     const { getVaultBalance, getWalletBalance, deposit, withdraw, isLoading, error } = useVault();
     const { refreshBalance } = useGame();
+    const { playSound } = useSound();
 
     const [amount, setAmount] = useState('');
     const [walletBalance, setWalletBalance] = useState(0);
@@ -54,6 +56,8 @@ export function DepositModal({ isOpen, onClose, mode }: DepositModalProps) {
 
         if (result) {
             setSuccess(true);
+            // Play appropriate sound based on mode
+            playSound(mode === 'deposit' ? 'COIN_DEPOSIT' : 'COIN_WITHDRAW');
             await refreshBalance();
             setTimeout(() => {
                 setSuccess(false);

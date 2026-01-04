@@ -30,12 +30,12 @@ export function useVault() {
             // Dynamic SDK exposes getWalletClient on the connector
             const connector = primaryWallet.connector;
             if (connector && 'getWalletClient' in connector) {
-                return await (connector as any).getWalletClient();
+                return await (connector as { getWalletClient: () => Promise<WalletClient> }).getWalletClient();
             }
 
             // Fallback: try to get signer and construct client
             if ('getSigner' in primaryWallet) {
-                const signer = await (primaryWallet as any).getSigner();
+                const signer = await (primaryWallet as { getSigner: () => Promise<WalletClient> }).getSigner();
                 // Return the signer which should be compatible with viem
                 return signer;
             }
@@ -134,9 +134,9 @@ export function useVault() {
             // Wait for confirmation
             await publicClient.waitForTransactionReceipt({ hash });
             return true;
-        } catch (err: any) {
+        } catch (err) {
             console.error('Approve failed:', err);
-            setError(err.message || 'Approval failed');
+            setError(err instanceof Error ? err.message : 'Approval failed');
             return false;
         } finally {
             setIsLoading(false);
@@ -183,9 +183,9 @@ export function useVault() {
 
             await publicClient.waitForTransactionReceipt({ hash });
             return true;
-        } catch (err: any) {
+        } catch (err) {
             console.error('Deposit failed:', err);
-            setError(err.message || 'Deposit failed');
+            setError(err instanceof Error ? err.message : 'Deposit failed');
             return false;
         } finally {
             setIsLoading(false);
@@ -224,9 +224,9 @@ export function useVault() {
 
             await publicClient.waitForTransactionReceipt({ hash });
             return true;
-        } catch (err: any) {
+        } catch (err) {
             console.error('Withdraw failed:', err);
-            setError(err.message || 'Withdrawal failed');
+            setError(err instanceof Error ? err.message : 'Withdrawal failed');
             return false;
         } finally {
             setIsLoading(false);

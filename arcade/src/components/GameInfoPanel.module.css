@@ -1,0 +1,218 @@
+/* Game Info Panel - Slide-out Panel */
+
+.infoButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: var(--bg-tertiary);
+    border: 2px solid var(--border-color);
+    border-radius: 50%;
+    color: var(--neon-cyan);
+    font-family: var(--font-arcade);
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.infoButton:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--neon-cyan);
+    box-shadow: 0 0 15px rgba(5, 217, 232, 0.4);
+    transform: scale(1.1);
+}
+
+/* Backdrop */
+.backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all var(--transition-normal);
+}
+
+.backdropVisible {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Panel */
+.panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 400px;
+    max-width: 90vw;
+    height: 100vh;
+    background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+    border-left: 2px solid var(--neon-cyan);
+    box-shadow: -10px 0 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(5, 217, 232, 0.15);
+    z-index: 1001;
+    transform: translateX(100%);
+    transition: transform var(--transition-normal) cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.panelVisible {
+    transform: translateX(0);
+}
+
+/* Panel Header */
+.panelHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-lg);
+    border-bottom: 1px solid var(--border-color);
+    background: linear-gradient(180deg, rgba(5, 217, 232, 0.1) 0%, transparent 100%);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.panelTitle {
+    font-family: var(--font-arcade);
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--neon-cyan);
+    text-shadow: 0 0 10px var(--neon-cyan);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin: 0;
+}
+
+.closeButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    font-size: 1.25rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.closeButton:hover {
+    background: rgba(255, 42, 109, 0.1);
+    border-color: var(--neon-pink);
+    color: var(--neon-pink);
+}
+
+/* Panel Content */
+.panelContent {
+    flex: 1;
+    padding: var(--space-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+}
+
+/* Rule Card */
+.ruleCard {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+    position: relative;
+    overflow: hidden;
+    transition: all var(--transition-fast);
+}
+
+.ruleCard::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--neon-green), transparent);
+    opacity: 0.6;
+}
+
+.ruleCard:hover {
+    border-color: var(--border-color-light);
+    transform: translateX(-4px);
+}
+
+.ruleIcon {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-sm);
+}
+
+.ruleTitle {
+    font-family: var(--font-arcade);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--neon-green);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0;
+}
+
+.ruleText {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    margin: 0;
+}
+
+.ruleText strong {
+    color: var(--text-primary);
+}
+
+/* Fairness Card - Special Styling */
+.fairnessCard {
+    background: linear-gradient(180deg, rgba(57, 255, 20, 0.05) 0%, transparent 100%);
+    border-color: rgba(57, 255, 20, 0.3);
+}
+
+.fairnessCard::before {
+    background: linear-gradient(90deg, transparent, var(--neon-green), transparent);
+    opacity: 0.8;
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+    .panel {
+        width: 100vw;
+        max-width: none;
+    }
+
+    .panelHeader {
+        padding: var(--space-md);
+    }
+
+    .panelTitle {
+        font-size: 1rem;
+    }
+
+    .panelContent {
+        padding: var(--space-md);
+        gap: var(--space-md);
+    }
+
+    .ruleCard {
+        padding: var(--space-md);
+    }
+
+    .ruleTitle {
+        font-size: 0.75rem;
+    }
+
+    .ruleText {
+        font-size: 0.85rem;
+    }
+}

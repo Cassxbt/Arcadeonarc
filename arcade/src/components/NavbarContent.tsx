@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useDynamicContext, DynamicWidget } from '@dynamic-labs/sdk-react-core';
 import { useTheme } from '@/lib/theme';
 import { useSound } from '@/lib/sounds';
@@ -24,7 +24,6 @@ import styles from './Navbar.module.css';
 
 export function NavbarContent() {
     const pathname = usePathname();
-    const router = useRouter();
     const { primaryWallet } = useDynamicContext();
     const { theme, toggleTheme } = useTheme();
     const { soundEnabled, toggleSound } = useSound();

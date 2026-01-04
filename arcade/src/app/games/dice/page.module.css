@@ -9,6 +9,13 @@
     margin-bottom: var(--space-xl);
 }
 
+.headerTop {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-md);
+}
+
 .title {
     font-size: 2.5rem;
     margin-bottom: var(--space-sm);

@@ -74,4 +74,9 @@ export const SOUNDS = {
   DICE_ROLL: '/sounds/dice-roll.mp3',
   EXPLOSION: '/sounds/explosion.mp3',
   CASH_OUT: '/sounds/cash-out.mp3',
+  // New sounds
+  COIN_DEPOSIT: '/sounds/coin deposit.mp3',
+  COIN_WITHDRAW: '/sounds/coin withdraw.mp3',
+  CHIME: '/sounds/chime.mp3',
+  SLOT_MACHINE: '/sounds/slot machine.mp3',
 };

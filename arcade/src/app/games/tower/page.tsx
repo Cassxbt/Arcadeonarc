@@ -5,9 +5,10 @@ import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { useGame } from '@/lib/game-context';
 import { useSound } from '@/lib/sounds';
 import { GAME_CONFIG } from '@/lib/constants';
-import { TowerControl, Dice6, Bomb, Skull } from '@/components/icons';
+import { TowerControl, Dice6, Bomb, Skull, Sparkles, Check } from '@/components/icons';
 import { GameModeSelector } from '@/components/GameModeSelector';
 import { DemoLimitOverlay } from '@/components/DemoLimitOverlay';
+import { GameInfoPanel, InfoButton, TOWER_GAME_RULES } from '@/components/GameInfoPanel';
 import styles from './page.module.css';
 
 // Tower configuration
@@ -51,7 +52,7 @@ export default function TowerGame() {
         isDemoLimitReached,
         getRemainingDemoPlays,
     } = useGame();
-    const { playSound } = useSound();
+    const { playSound, stopSound } = useSound();
 
     // Mode selection state - show selector if not signed in and not in demo
     const [modeSelected, setModeSelected] = useState(false);
@@ -64,6 +65,7 @@ export default function TowerGame() {
     const [deathPositions, setDeathPositions] = useState<number[]>([]);
     const [currentMultiplier, setCurrentMultiplier] = useState(1);
     const [isShaking, setIsShaking] = useState(false);
+    const [showInfo, setShowInfo] = useState(false);
 
     // Calculate camera offset based on current row
     // Positive value moves tower DOWN on screen.
@@ -119,11 +121,17 @@ export default function TowerGame() {
 
     const startGame = useCallback(() => {
         if (!canBet(betAmount)) return;
+
+        // Stop any lingering sounds from previous game
+        stopSound('WIN');
+        stopSound('LOSE');
+        stopSound('CASH_OUT');
+
         initializeGame();
         setGameState('playing');
         setCurrentRow(0);
         playSound('CLICK');
-    }, [betAmount, canBet, initializeGame, playSound]);
+    }, [betAmount, canBet, initializeGame, playSound, stopSound]);
 
     const handleTileClick = useCallback((rowIndex: number, tileIndex: number) => {
         if (gameState !== 'playing') return;
@@ -198,13 +206,6 @@ export default function TowerGame() {
         initializeGame();
     }, [initializeGame]);
 
-    // Render only visible rows (4 at a time, centered on current row)
-    const visibleRowIndices = useMemo(() => {
-        const start = Math.max(0, currentRow - 1);
-        const end = Math.min(TOWER_ROWS, start + VISIBLE_ROWS);
-        return Array.from({ length: end - start }, (_, i) => start + i);
-    }, [currentRow]);
-
     // Handle demo mode selection
     const handleDemoSelect = () => {
         toggleDemoMode();
@@ -231,21 +232,161 @@ export default function TowerGame() {
 
     return (
         <div className={styles.container}>
+            {/* Info Panel */}
+            <GameInfoPanel
+                isOpen={showInfo}
+                onClose={() => setShowInfo(false)}
+                gameName="Tower"
+                rules={TOWER_GAME_RULES}
+            />
+
+            {/* Header */}
+            <div className={styles.header}>
+                <div className={styles.headerContent}>
+                    <h1 className={styles.title}>
+                        <TowerControl size={32} style={{ color: 'var(--neon-cyan)', filter: 'drop-shadow(0 0 12px var(--neon-cyan))' }} />
+                        Tower
+                    </h1>
+                    <InfoButton onClick={() => setShowInfo(true)} />
+                </div>
+                <p className={styles.subtitle}>Climb the tower. Cash out or risk it all.</p>
+            </div>
+
             <div className={styles.gameLayout}>
-                {/* Left Nav */}
-                <div className={styles.leftNav}>
-                    <div className={`${styles.navIcon} ${styles.navIconActive}`}>
-                        <TowerControl size={24} style={{ color: 'var(--neon-cyan)', filter: 'drop-shadow(0 0 8px var(--neon-cyan))' }} />
+                {/* Left Panel - Controls */}
+                <div className={styles.controlPanel}>
+                    {/* Bet Amount Card */}
+                    <div className={styles.card}>
+                        <h3>Bet Amount</h3>
+                        <div className={styles.betControls}>
+                            <button
+                                className={styles.betAdjustBtn}
+                                onClick={() => setBetAmount(Math.max(0.5, betAmount - 0.5))}
+                                disabled={gameState === 'playing'}
+                            >
+                                −
+                            </button>
+                            <div className={styles.betInputWrapper}>
+                                <span className={styles.betCurrency}>$</span>
+                                <input
+                                    type="text"
+                                    value={betAmount}
+                                    onChange={(e) => {
+                                        const val = parseFloat(e.target.value);
+                                        if (!isNaN(val)) setBetAmount(val);
+                                    }}
+                                    disabled={gameState === 'playing'}
+                                    className={styles.betInput}
+                                />
+                            </div>
+                            <button
+                                className={styles.betAdjustBtn}
+                                onClick={() => setBetAmount(Math.min(100, betAmount + 0.5))}
+                                disabled={gameState === 'playing'}
+                            >
+                                +
+                            </button>
+                        </div>
+
+                        <div className={styles.quickBets}>
+                            {[1, 5, 10, 25].map(amount => (
+                                <button
+                                    key={amount}
+                                    onClick={() => setBetAmount(amount)}
+                                    disabled={gameState === 'playing'}
+                                    className={styles.quickBtn}
+                                >
+                                    ${amount}
+                                </button>
+                            ))}
+                        </div>
                     </div>
-                    <div className={styles.navIcon}>
-                        <Dice6 size={24} style={{ color: 'var(--neon-green)' }} />
+
+                    {/* Game Info Card - Shows stats during idle, multiplier during game */}
+                    <div className={styles.card}>
+                        {gameState === 'idle' && (
+                            <>
+                                <h3>Next Game</h3>
+                                <div className={styles.statsGrid}>
+                                    <div className={styles.statItem}>
+                                        <span className={styles.statLabel}>Starting Multi</span>
+                                        <span className={styles.statValue}>{MULTIPLIERS[0]}×</span>
+                                    </div>
+                                    <div className={styles.statItem}>
+                                        <span className={styles.statLabel}>Max Multi</span>
+                                        <span className={styles.statValueHighlight}>{MULTIPLIERS[TOWER_ROWS - 1]}×</span>
+                                    </div>
+                                </div>
+                            </>
+                        )}
+
+                        {gameState === 'playing' && (
+                            <>
+                                <h3>Current Game</h3>
+                                <div className={styles.multiplierDisplay}>
+                                    <span className={styles.currentMultiplier}>
+                                        {currentMultiplier.toFixed(2)}×
+                                    </span>
+                                    <span className={styles.potentialWin}>
+                                        ${(betAmount * currentMultiplier).toFixed(2)}
+                                    </span>
+                                </div>
+                            </>
+                        )}
+
+                        {(gameState === 'won' || gameState === 'lost') && (
+                            <>
+                                <h3>Result</h3>
+                                <div className={styles.resultDisplay}>
+                                    {gameState === 'won' ? (
+                                        <>
+                                            <span className={styles.resultWon}>
+                                                +${(betAmount * currentMultiplier).toFixed(2)}
+                                            </span>
+                                            <span className={styles.resultLabel}>at {currentMultiplier.toFixed(2)}×</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span className={styles.resultLost}>-${betAmount.toFixed(2)}</span>
+                                            <span className={styles.resultLabel}>Better luck next time</span>
+                                        </>
+                                    )}
+                                </div>
+                            </>
+                        )}
                     </div>
-                    <div className={styles.navIcon}>
-                        <Bomb size={24} style={{ color: 'var(--neon-pink)' }} />
-                    </div>
+
+                    {/* Action Button */}
+                    {gameState === 'idle' && (
+                        <button
+                            onClick={startGame}
+                            disabled={!canBet(betAmount)}
+                            className={styles.primaryBtn}
+                        >
+                            Play
+                        </button>
+                    )}
+
+                    {gameState === 'playing' && currentRow > 0 && (
+                        <button onClick={cashOut} className={styles.cashoutBtn}>
+                            Cash Out ${(betAmount * currentMultiplier).toFixed(2)}
+                        </button>
+                    )}
+
+                    {gameState === 'playing' && currentRow === 0 && (
+                        <button disabled className={styles.primaryBtn}>
+                            Pick a Tile
+                        </button>
+                    )}
+
+                    {(gameState === 'won' || gameState === 'lost') && (
+                        <button onClick={startGame} className={styles.primaryBtn}>
+                            Play Again
+                        </button>
+                    )}
                 </div>
 
-                {/* Game Area */}
+                {/* Center - Game Area */}
                 <div className={styles.gameArea}>
                     <div className={styles.towerViewport}>
                         <div
@@ -253,16 +394,14 @@ export default function TowerGame() {
                             style={{ transform: `translateY(${cameraOffset}px)` }}
                         >
                             {/* Render rows: Row 19 (high) at TOP, Row 0 (low) at BOTTOM */}
-                            {/* Player starts at bottom and climbs up */}
                             {[...Array(TOWER_ROWS)].map((_, idx) => {
-                                const rowIndex = TOWER_ROWS - 1 - idx; // Row 19 at top, Row 0 at bottom
+                                const rowIndex = TOWER_ROWS - 1 - idx;
                                 const tileCount = TILE_PATTERN[rowIndex];
                                 const rowTiles = tiles[rowIndex] || [];
                                 const isActive = rowIndex === currentRow;
                                 const isCompleted = rowIndex < currentRow;
                                 const multiplier = MULTIPLIERS[rowIndex];
 
-                                // Only render rows that are near the viewport (3-4 rows visible)
                                 if (Math.abs(rowIndex - currentRow) > 2 && currentRow >= 0) {
                                     return <div key={rowIndex} style={{ height: ROW_HEIGHT }} />;
                                 }
@@ -277,7 +416,7 @@ export default function TowerGame() {
                                         `}
                                     >
                                         <div className={styles.multiplier}>
-                                            {multiplier.toFixed(2)}x
+                                            {multiplier.toFixed(2)}×
                                         </div>
                                         <div className={styles.tilesWrapper}>
                                             {Array.from({ length: tileCount }, (_, tileIndex) => {
@@ -304,10 +443,15 @@ export default function TowerGame() {
                                                         disabled={!isActive || gameState !== 'playing'}
                                                         className={tileClass}
                                                     >
-                                                        {isRevealed && isDeath && (
-                                                            <Skull size={24} style={{ color: 'white' }} />
+                                                        {!isRevealed && (
+                                                            <span className={styles.tileQuestion}>?</span>
                                                         )}
-                                                        {isRevealed && !isDeath && isSelected && ''}
+                                                        {isRevealed && isDeath && (
+                                                            <Skull size={28} className={styles.skullIcon} />
+                                                        )}
+                                                        {isRevealed && !isDeath && isSelected && (
+                                                            <Check size={28} className={styles.checkIcon} />
+                                                        )}
                                                     </button>
                                                 );
                                             })}
@@ -320,9 +464,13 @@ export default function TowerGame() {
                         {/* Win Overlay */}
                         {gameState === 'won' && (
                             <div className={`${styles.overlay} ${styles.overlayWin}`}>
-                                <h2>Cashed Out</h2>
-                                <div className={styles.amount}>
-                                    ${(betAmount * currentMultiplier).toFixed(2)}
+                                <div className={styles.winContent}>
+                                    <Sparkles size={48} className={styles.winIcon} />
+                                    <h2>CASHED OUT!</h2>
+                                    <div className={styles.winMultiplier}>{currentMultiplier.toFixed(2)}×</div>
+                                    <div className={styles.winAmount}>
+                                        +${(betAmount * currentMultiplier).toFixed(2)}
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -330,13 +478,17 @@ export default function TowerGame() {
                         {/* Lose Overlay */}
                         {gameState === 'lost' && (
                             <div className={`${styles.overlay} ${styles.overlayLose}`}>
-                                <h2>BUSTED</h2>
+                                <div className={styles.loseContent}>
+                                    <Skull size={56} className={styles.loseIcon} />
+                                    <h2>BUSTED!</h2>
+                                    <div className={styles.loseAmount}>-${betAmount.toFixed(2)}</div>
+                                </div>
                             </div>
                         )}
                     </div>
                 </div>
 
-                {/* Right Sidebar */}
+                {/* Right Panel - Stats */}
                 <div className={styles.sidebar}>
                     <div className={styles.sidebarHeader}>Your Stats</div>
                     <div className={styles.statsGrid}>
@@ -372,7 +524,7 @@ export default function TowerGame() {
                                 className={`${styles.historyItem} ${bet.outcome === 'win' ? styles.historyWin : styles.historyLoss}`}
                             >
                                 <span className={styles.historyMultiplier}>
-                                    {bet.outcome === 'win' ? `${bet.multiplier.toFixed(2)}x` : 'BUST'}
+                                    {bet.outcome === 'win' ? `${bet.multiplier.toFixed(2)}×` : 'BUST'}
                                 </span>
                                 <span className={styles.historyAmount}>
                                     {bet.outcome === 'win' ? `+$${bet.payout.toFixed(2)}` : `-$${bet.betAmount.toFixed(2)}`}
@@ -380,66 +532,9 @@ export default function TowerGame() {
                             </div>
                         ))}
                         {towerHistory.length === 0 && (
-                            <div style={{ padding: '20px', textAlign: 'center', color: '#444', fontSize: '0.85rem' }}>
+                            <div className={styles.emptyHistory}>
                                 No games yet. Start playing!
                             </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* Bottom Control Panel */}
-                <div className={styles.controlPanel}>
-                    {gameState === 'playing' && currentRow >= 0 && (
-                        <div className={styles.multiplierDisplay}>
-                            <span className={styles.currentMultiplier}>
-                                {currentMultiplier.toFixed(2)}x
-                            </span>
-                            <span className={styles.potentialWin}>
-                                {(betAmount * currentMultiplier).toFixed(4)}
-                            </span>
-                        </div>
-                    )}
-
-                    <div className={styles.actionRow}>
-                        <div className={styles.betInput}>
-                            <span>$</span>
-                            <input
-                                type="number"
-                                value={betAmount}
-                                onChange={(e) => setBetAmount(Number(e.target.value))}
-                                min={0.5}
-                                max={100}
-                                step={0.5}
-                                disabled={gameState === 'playing'}
-                            />
-                        </div>
-
-                        {gameState === 'idle' && (
-                            <button
-                                onClick={startGame}
-                                disabled={!canBet(betAmount)}
-                                className={styles.primaryBtn}
-                            >
-                                Play
-                            </button>
-                        )}
-
-                        {gameState === 'playing' && currentRow > 0 && (
-                            <button onClick={cashOut} className={styles.cashoutBtn}>
-                                Cash Out
-                            </button>
-                        )}
-
-                        {gameState === 'playing' && currentRow === 0 && (
-                            <button disabled className={styles.primaryBtn}>
-                                Pick a Tile
-                            </button>
-                        )}
-
-                        {(gameState === 'won' || gameState === 'lost') && (
-                            <button onClick={startGame} className={styles.primaryBtn}>
-                                Play Again
-                            </button>
                         )}
                     </div>
                 </div>
@@ -447,3 +542,4 @@ export default function TowerGame() {
         </div>
     );
 }
+

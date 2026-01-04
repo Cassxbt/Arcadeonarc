@@ -7,6 +7,7 @@ import { useSound } from '@/lib/sounds';
 import { Dice6, Flame, Sparkles, Frown } from '@/components/icons';
 import { GameModeSelector } from '@/components/GameModeSelector';
 import { DemoLimitOverlay } from '@/components/DemoLimitOverlay';
+import { GameInfoPanel, InfoButton, DICE_GAME_RULES } from '@/components/GameInfoPanel';
 import styles from './page.module.css';
 
 type GameState = 'idle' | 'rolling' | 'won' | 'lost';
@@ -23,7 +24,7 @@ export default function DiceGame() {
         toggleDemoMode,
         isDemoLimitReached,
     } = useGame();
-    const { playSound } = useSound();
+    const { playSound, stopSound } = useSound();
 
     // Mode selection state
     const [modeSelected, setModeSelected] = useState(false);
@@ -35,6 +36,7 @@ export default function DiceGame() {
     const [rollResult, setRollResult] = useState<number | null>(null);
     const [betType, setBetType] = useState<'under' | 'over'>('under');
     const [streak, setStreak] = useState(0);
+    const [showInfo, setShowInfo] = useState(false);
 
     // Calculate win chance and multiplier
     const { winChance, multiplier } = useMemo(() => {
@@ -46,6 +48,10 @@ export default function DiceGame() {
     // Roll the dice
     const rollDice = useCallback(() => {
         if (!canBet(betAmount) || gameState === 'rolling') return;
+
+        // Stop any lingering sounds from previous game
+        stopSound('WIN');
+        stopSound('LOSE');
 
         playSound('DICE_ROLL');
         setGameState('rolling');
@@ -135,12 +141,23 @@ export default function DiceGame() {
 
     return (
         <div className={styles.container}>
+            {/* Info Panel */}
+            <GameInfoPanel
+                isOpen={showInfo}
+                onClose={() => setShowInfo(false)}
+                gameName="Dice"
+                rules={DICE_GAME_RULES}
+            />
+
             {/* Header */}
             <div className={styles.header}>
-                <h1 className={styles.title}>
-                    <Dice6 size={36} style={{ marginRight: '0.5rem', verticalAlign: 'middle', color: 'var(--neon-green)', filter: 'drop-shadow(0 0 12px var(--neon-green))' }} />
-                    Dice
-                </h1>
+                <div className={styles.headerTop}>
+                    <h1 className={styles.title}>
+                        <Dice6 size={36} style={{ marginRight: '0.5rem', verticalAlign: 'middle', color: 'var(--neon-green)', filter: 'drop-shadow(0 0 12px var(--neon-green))' }} />
+                        Dice
+                    </h1>
+                    <InfoButton onClick={() => setShowInfo(true)} />
+                </div>
                 <p className={styles.subtitle}>Set your target, roll the dice. Higher risk = higher reward.</p>
             </div>
 
@@ -322,28 +339,6 @@ export default function DiceGame() {
                 </div>
             </div>
 
-            {/* How It Works */}
-            <div className={styles.howItWorks}>
-                <h2>How It Works</h2>
-                <div className={styles.rules}>
-                    <div className={styles.rule}>
-                        <h3>Objective</h3>
-                        <p>Predict whether the next roll will be Under or Over your target number. Lower your win chance to increase your potential multiplier.</p>
-                    </div>
-                    <div className={styles.rule}>
-                        <h3>Target & Chance</h3>
-                        <p>Adjust the slider to set your target number. Your win chance and multiplier adjust automatically based on your selection.</p>
-                    </div>
-                    <div className={styles.rule}>
-                        <h3>Roll Type</h3>
-                        <p><strong>Roll Under:</strong> You win if the result is lower than your target.<br /><strong>Roll Over:</strong> You win if the result is higher than your target.</p>
-                    </div>
-                    <div className={styles.rule}>
-                        <h3>Fairness</h3>
-                        <p>The dice roll is generated using a provably fair system on the Arc testnet. Every result is mathematically verifiable.</p>
-                    </div>
-                </div>
-            </div>
         </div>
     );
 }
