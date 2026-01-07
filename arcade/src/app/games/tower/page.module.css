@@ -714,26 +714,205 @@
 @media (max-width: 768px) {
     .container {
         height: auto;
-        min-height: 100vh;
+        min-height: calc(100vh - 80px);
+        overflow-y: auto;
+        padding-bottom: calc(20px + env(safe-area-inset-bottom, 20px));
+    }
+
+    /* Hide header on mobile */
+    .header {
+        display: none;
     }
 
     .gameLayout {
         grid-template-columns: 1fr;
-        grid-template-rows: auto 400px;
+        grid-template-rows: auto auto;
+        gap: 0;
     }
 
     .controlPanel {
         order: 2;
         border-right: none;
         border-top: 1px solid var(--border-color);
+        padding: var(--space-sm);
+        gap: var(--space-xs);
     }
 
     .gameArea {
         order: 1;
+        min-height: auto;
     }
 
+    .towerViewport {
+        padding-bottom: 10px;
+    }
+
+    .towerContainer {
+        gap: 4px;
+        padding: 8px;
+    }
+
+    /* Compact rows */
+    .row {
+        gap: 8px;
+    }
+
+    /* Smaller multiplier on left */
+    .multiplier {
+        width: 40px;
+        font-size: 0.7rem;
+    }
+
+    /* Compact tiles wrapper */
+    .tilesWrapper {
+        gap: 4px;
+        padding: 6px 8px;
+        border-radius: 8px;
+    }
+
+    .rowActive .tilesWrapper {
+        border-width: 2px;
+    }
+
+    /* Much smaller tiles */
     .tile {
-        width: 56px;
-        height: 56px;
+        width: 40px;
+        height: 40px;
+        border-radius: 6px;
+    }
+
+    .tileQuestion {
+        font-size: 1rem;
+    }
+
+    .skullIcon,
+    .checkIcon {
+        width: 20px;
+        height: 20px;
+    }
+
+    /* Compact bet controls */
+    .card {
+        padding: var(--space-xs);
+    }
+
+    .card h3 {
+        font-size: 0.6rem;
+        margin-bottom: var(--space-xs);
+    }
+
+    .betControls {
+        margin-bottom: var(--space-xs);
+    }
+
+    .betAdjustBtn {
+        width: 32px;
+        font-size: 1rem;
+    }
+
+    .betInputWrapper {
+        min-height: 36px;
+    }
+
+    .betInput {
+        font-size: 1rem;
+    }
+
+    .quickBets {
+        gap: 4px;
+    }
+
+    .quickBtn {
+        padding: 4px;
+        font-size: 0.7rem;
+    }
+
+    /* Compact stats */
+    .statsGrid {
+        gap: var(--space-xs);
+    }
+
+    .statLabel {
+        font-size: 0.55rem;
+    }
+
+    .statValue,
+    .statValueHighlight {
+        font-size: 0.9rem;
+    }
+
+    /* Compact multiplier display */
+    .multiplierDisplay {
+        padding: var(--space-xs) 0;
+    }
+
+    .currentMultiplier {
+        font-size: 1.5rem;
+    }
+
+    .potentialWin {
+        font-size: 0.85rem;
+    }
+
+    /* Compact buttons */
+    .primaryBtn,
+    .cashoutBtn {
+        height: 44px;
+        font-size: 0.8rem;
+    }
+
+    /* Compact result display */
+    .resultDisplay {
+        padding: var(--space-xs) 0;
+    }
+
+    .resultWon,
+    .resultLost {
+        font-size: 1.1rem;
+    }
+
+    /* Compact overlays */
+    .winMultiplier {
+        font-size: 2rem;
+    }
+
+    .winAmount {
+        font-size: 1.1rem;
+    }
+
+    .overlayLose h2 {
+        font-size: 1.5rem;
+    }
+
+    .loseAmount {
+        font-size: 1rem;
+    }
+}
+
+/* Extra small phones */
+@media (max-width: 380px) {
+    .tile {
+        width: 36px;
+        height: 36px;
+    }
+
+    .tileQuestion {
+        font-size: 0.9rem;
+    }
+
+    .multiplier {
+        width: 35px;
+        font-size: 0.6rem;
+    }
+
+    .tilesWrapper {
+        gap: 3px;
+        padding: 4px 6px;
+    }
+
+    .skullIcon,
+    .checkIcon {
+        width: 18px;
+        height: 18px;
     }
 }
