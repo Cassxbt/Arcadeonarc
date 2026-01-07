@@ -83,20 +83,48 @@
   --font-mono: 'Orbitron', monospace;
 }
 
-/* Light theme - Keep arcade feel but lighter */
+/* Light theme - MATRIX GREEN ARCADE: Pale mint with electric green neon */
 [data-theme="light"] {
-  --bg-primary: #e8e8f0;
-  --bg-secondary: #d8d8e0;
-  --bg-tertiary: #c8c8d0;
-  --bg-card: #f0f0f8;
-  --bg-card-hover: #e0e0ea;
+  /* Pale mint arcade background - subtle green tint */
+  --bg-primary: #f5fff5;
+  --bg-secondary: #f0fff0;
+  --bg-tertiary: #e8ffe8;
+  /* Frosted glass card backgrounds */
+  --bg-card: rgba(255, 255, 255, 0.8);
+  --bg-card-hover: rgba(255, 255, 255, 0.9);
 
-  --text-primary: #0a0a12;
-  --text-secondary: #3a3a4a;
-  --text-muted: #6a6a7a;
+  /* Pure black for maximum contrast headers */
+  --text-primary: #000000;
+  --text-secondary: #0a1a0a;
+  --text-muted: #2a3a2a;
 
-  --border-color: #c0c0d0;
-  --border-color-light: #a0a0b0;
+  /* Green neon borders */
+  --border-color: rgba(57, 255, 20, 0.4);
+  --border-color-light: rgba(5, 217, 232, 0.3);
+
+  /* INTENSE glow effects - MATCHING dark mode intensity */
+  --glow-pink: 0 0 10px #ff2a6d, 0 0 20px #ff2a6d, 0 0 40px #ff2a6d;
+  --glow-cyan: 0 0 10px #05d9e8, 0 0 20px #05d9e8, 0 0 40px #05d9e8;
+  --glow-yellow: 0 0 10px #f9f002, 0 0 20px #f9f002, 0 0 40px #f9f002;
+  --glow-green: 0 0 10px #39ff14, 0 0 20px #39ff14, 0 0 40px #39ff14;
+  --glow-purple: 0 0 10px #d300c5, 0 0 20px #d300c5, 0 0 40px #d300c5;
+
+  /* Shadows with subtle green tint */
+  --shadow-sm: 0 2px 8px rgba(0, 50, 0, 0.08);
+  --shadow-md: 0 4px 16px rgba(0, 50, 0, 0.1);
+  --shadow-lg: 0 8px 32px rgba(0, 50, 0, 0.12);
+  --shadow-glow: var(--glow-green);
+  --shadow-glow-cyan: var(--glow-cyan);
+  --shadow-glow-green: var(--glow-green);
+
+  /* FULL SATURATION neon colors - green primary */
+  --neon-pink: #ff2a6d;
+  --neon-cyan: #05d9e8;
+  --neon-yellow: #f9f002;
+  --neon-green: #39ff14;
+  --neon-purple: #d300c5;
+  --neon-orange: #ff6b35;
+  --neon-blue: #01cdfe;
 }
 
 /* ===== BASE STYLES ===== */
@@ -154,6 +182,171 @@ body::after {
   background-size: 50px 50px;
   pointer-events: none;
   z-index: -1;
+}
+
+/* ===== LIGHT MODE SPECIFIC OVERRIDES ===== */
+
+/* Light mode: Subtle scanlines */
+[data-theme="light"] body::before {
+  background: repeating-linear-gradient(0deg,
+      rgba(0, 30, 0, 0.03) 0px,
+      rgba(0, 30, 0, 0.03) 1px,
+      transparent 1px,
+      transparent 2px);
+  opacity: 0.5;
+}
+
+/* Light mode: Neon GREEN grid - Matrix style */
+[data-theme="light"] body::after {
+  background-image:
+    linear-gradient(rgba(57, 255, 20, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(57, 255, 20, 0.06) 1px, transparent 1px);
+}
+
+/* Light mode: Frosted glass cards - white/translucent with blur */
+[data-theme="light"] .card,
+[data-theme="light"] .bg-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow:
+    0 8px 32px rgba(0, 30, 0, 0.08),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.9);
+}
+
+/* Light mode: h1 - INTENSE GREEN glow matching dark mode intensity */
+[data-theme="light"] h1 {
+  text-shadow:
+    0 0 10px #39ff14,
+    0 0 20px #39ff14,
+    0 0 40px #39ff14,
+    0 0 60px #39ff14;
+}
+
+/* Light mode: h2 - INTENSE cyan glow */
+[data-theme="light"] h2 {
+  text-shadow:
+    0 0 10px #05d9e8,
+    0 0 20px #05d9e8,
+    0 0 40px #05d9e8;
+}
+
+/* Light mode: Neon text classes with FULL SATURATION */
+[data-theme="light"] .neon-text-pink {
+  color: #ff2a6d;
+  text-shadow:
+    0 0 10px #ff2a6d,
+    0 0 20px #ff2a6d,
+    0 0 40px #ff2a6d;
+}
+
+[data-theme="light"] .neon-text-cyan {
+  color: #05d9e8;
+  text-shadow:
+    0 0 10px #05d9e8,
+    0 0 20px #05d9e8,
+    0 0 40px #05d9e8;
+}
+
+[data-theme="light"] .neon-text-green {
+  color: #39ff14;
+  text-shadow:
+    0 0 10px #39ff14,
+    0 0 20px #39ff14,
+    0 0 40px #39ff14;
+}
+
+[data-theme="light"] .neon-text-yellow {
+  color: #f9f002;
+  text-shadow:
+    0 0 10px #f9f002,
+    0 0 20px #f9f002,
+    0 0 40px #f9f002;
+}
+
+/* Light mode: Button enhancements - GREEN primary */
+[data-theme="light"] .btn-primary {
+  box-shadow:
+    0 0 15px rgba(57, 255, 20, 0.5),
+    0 4px 12px rgba(57, 255, 20, 0.3);
+}
+
+[data-theme="light"] .btn-secondary {
+  border-color: #00b8d4;
+  color: #00b8d4;
+  box-shadow: 0 0 10px rgba(0, 184, 212, 0.3);
+}
+
+[data-theme="light"] .btn-success {
+  box-shadow:
+    0 0 15px rgba(0, 200, 16, 0.5),
+    0 4px 12px rgba(0, 200, 16, 0.3);
+}
+
+/* Light mode: Card arcade styling */
+[data-theme="light"] .card-arcade {
+  background: linear-gradient(180deg, rgba(255, 252, 248, 0.98) 0%, rgba(245, 237, 229, 0.99) 100%);
+  border-color: #00b8d4;
+  box-shadow:
+    0 0 20px rgba(0, 184, 212, 0.25),
+    0 8px 32px rgba(26, 26, 46, 0.08);
+}
+
+/* Light mode: Input styling */
+[data-theme="light"] .input {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(180, 160, 140, 0.4);
+}
+
+[data-theme="light"] .input:focus {
+  border-color: #00b8d4;
+  box-shadow: 0 0 15px rgba(0, 184, 212, 0.3);
+}
+
+/* Light mode: Tile styling */
+[data-theme="light"] .tile {
+  background: linear-gradient(180deg, rgba(255, 252, 248, 0.95) 0%, rgba(245, 237, 229, 0.98) 100%);
+}
+
+[data-theme="light"] .tile:hover:not(.tile-revealed) {
+  background: rgba(250, 245, 240, 0.98);
+}
+
+/* Light mode: Scrollbar */
+[data-theme="light"]::-webkit-scrollbar-track {
+  background: #f5ede5;
+}
+
+[data-theme="light"]::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #e8005a, #b800a8);
+}
+
+[data-theme="light"]::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #00b8d4, #00a8e8);
+}
+
+/* Light mode: Arcade screen effect */
+[data-theme="light"] .arcade-screen {
+  background: rgba(255, 252, 248, 0.98);
+  border-color: #00b8d4;
+  box-shadow:
+    0 0 15px rgba(0, 184, 212, 0.3),
+    inset 0 0 20px rgba(0, 0, 0, 0.05);
+}
+
+/* Light mode: Token display */
+[data-theme="light"] .token-display {
+  background: rgba(255, 252, 248, 0.9);
+  border-color: #00c810;
+  box-shadow: 0 0 10px rgba(0, 200, 16, 0.2);
+}
+
+/* Light mode: Neon border effect */
+[data-theme="light"] .neon-border {
+  border-color: #e8005a;
+  box-shadow:
+    0 0 8px rgba(232, 0, 90, 0.4),
+    inset 0 0 8px rgba(232, 0, 90, 0.15);
 }
 
 /* ===== TYPOGRAPHY ===== */

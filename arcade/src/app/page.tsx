@@ -15,8 +15,11 @@ import {
   Play,
   ChevronDown,
   Wallet,
+  CircleDashed,
+  Grid3x3,
 } from '@/components/icons';
 import { GameSelector } from '@/components/GameSelector';
+import { GameCarousel } from '@/components/GameCarousel';
 import { useStats } from '@/lib/useStats';
 import styles from './page.module.css';
 
@@ -43,9 +46,27 @@ const games = [
     id: 'crash',
     name: 'Cannon',
     icon: Bomb,
-    iconColor: '#ff2a6d',
+    iconColor: '#ff6b00',
     description: 'Watch the multiplier rise. Cash out before the BOOM!',
     multiplier: 'Unlimited',
+    color: '#ff6b00',
+  },
+  {
+    id: 'wheel',
+    name: 'Wheel',
+    icon: CircleDashed,
+    iconColor: '#9d4edd',
+    description: 'Spin the wheel and land on multipliers up to 5x!',
+    multiplier: 'Up to 5x',
+    color: '#9d4edd',
+  },
+  {
+    id: 'laser',
+    name: 'Gridy Laser',
+    icon: Grid3x3,
+    iconColor: '#ff2a6d',
+    description: 'Dodge lasers on a 10×10 grid. Survive for massive multipliers!',
+    multiplier: 'Up to 95x',
     color: '#ff2a6d',
   },
 ];
@@ -91,44 +112,14 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Games Grid */}
+      {/* Games Carousel */}
       <section className={styles.gamesSection}>
         <h2 className={styles.sectionTitle}>
           <ChevronDown size={24} style={{ marginRight: '0.5rem', verticalAlign: 'middle', color: 'var(--neon-cyan)' }} />
           Select Your Game
           <ChevronDown size={24} style={{ marginLeft: '0.5rem', verticalAlign: 'middle', color: 'var(--neon-cyan)' }} />
         </h2>
-        <div className={styles.gamesGrid}>
-          {games.map((game) => {
-            const IconComponent = game.icon;
-            return (
-              <Link
-                key={game.id}
-                href={`/games/${game.id}`}
-                className={styles.gameCard}
-                style={{ '--game-color': game.color } as React.CSSProperties}
-              >
-                <div className={styles.gameEmoji}>
-                  <IconComponent
-                    size={64}
-                    style={{
-                      color: game.iconColor,
-                      filter: `drop-shadow(0 0 20px ${game.iconColor})`,
-                    }}
-                  />
-                </div>
-                <h3 className={styles.gameName}>{game.name}</h3>
-                <p className={styles.gameDescription}>{game.description}</p>
-                <div className={styles.gameMultiplier}>
-                  {game.multiplier}
-                </div>
-                <div className={styles.playButton}>
-                  Play Now →
-                </div>
-              </Link>
-            );
-          })}
-        </div>
+        <GameCarousel games={games} />
       </section>
 
       {/* Features */}

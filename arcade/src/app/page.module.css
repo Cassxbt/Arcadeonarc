@@ -577,3 +577,187 @@
     transform: translateY(-5px);
   }
 }
+
+/* ===== LIGHT MODE HOMEPAGE OVERRIDES ===== */
+
+/* Light mode: Hero section with green/cyan glow */
+:global([data-theme="light"]) .hero::before {
+  background: radial-gradient(circle,
+      rgba(57, 255, 20, 0.15) 0%,
+      rgba(5, 217, 232, 0.12) 25%,
+      rgba(57, 255, 20, 0.06) 50%,
+      transparent 70%);
+}
+
+/* Light mode: ARCADE title - PURE BLACK with INTENSE GREEN neon glow */
+:global([data-theme="light"]) .arcadeTitle {
+  color: #000000;
+  text-shadow:
+    /* Green glow layers - matching dark mode intensity */
+    0 0 10px #39ff14,
+    0 0 20px #39ff14,
+    0 0 40px #39ff14,
+    0 0 80px #39ff14,
+    /* Subtle cyan edge */
+    2px 2px 20px #05d9e8,
+    -2px -2px 20px #05d9e8;
+}
+
+/* Light mode: Subtitle - INTENSE cyan glow */
+:global([data-theme="light"]) .subtitle {
+  color: #000000;
+  text-shadow:
+    0 0 10px #05d9e8,
+    0 0 20px #05d9e8,
+    0 0 40px #05d9e8;
+}
+
+/* Light mode: Section title - vibrant with green glow */
+:global([data-theme="light"]) .sectionTitle {
+  color: #000000;
+  text-shadow:
+    0 0 10px #39ff14,
+    0 0 20px #39ff14,
+    0 0 40px #39ff14;
+}
+
+/* Light mode: Game cards - FROSTED GLASS with GREEN/CYAN neon borders */
+:global([data-theme="light"]) .gameCard {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 3px solid transparent;
+  border-image: linear-gradient(135deg, #39ff14, #05d9e8, #39ff14) 1;
+  box-shadow:
+    0 8px 32px rgba(0, 30, 0, 0.1),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+}
+
+:global([data-theme="light"]) .gameCard:hover {
+  border-image: linear-gradient(135deg, #39ff14, #f9f002, #05d9e8) 1;
+  box-shadow:
+    0 0 30px rgba(57, 255, 20, 0.5),
+    0 0 60px rgba(57, 255, 20, 0.3),
+    0 20px 40px rgba(0, 30, 0, 0.15);
+  transform: translateY(-4px);
+}
+
+/* Light mode: Game card titles - bold with green glow */
+:global([data-theme="light"]) .gameCard h3 {
+  color: #000000;
+  text-shadow:
+    0 0 10px #39ff14,
+    0 0 20px #39ff14;
+}
+
+/* Light mode: Features section - green→cyan→green dividers */
+:global([data-theme="light"]) .features::before {
+  background: linear-gradient(90deg, transparent, #39ff14, #05d9e8, #39ff14, transparent);
+  height: 3px;
+}
+
+:global([data-theme="light"]) .features::after {
+  background: linear-gradient(90deg, transparent, #05d9e8, #39ff14, #05d9e8, transparent);
+  height: 3px;
+}
+
+/* Light mode: Feature items - VIBRANT colors */
+:global([data-theme="light"]) .feature h4 {
+  color: #000000;
+  text-shadow:
+    0 0 10px currentColor,
+    0 0 20px currentColor;
+}
+
+/* Light mode: Stats section - FROSTED GLASS with GREEN accents */
+:global([data-theme="light"]) .stat {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 2px solid rgba(57, 255, 20, 0.3);
+  box-shadow: 0 4px 20px rgba(0, 30, 0, 0.08);
+}
+
+:global([data-theme="light"]) .stat:hover {
+  border-color: #39ff14;
+  box-shadow:
+    0 0 20px #39ff14,
+    0 0 40px rgba(57, 255, 20, 0.5);
+}
+
+/* Light mode: Stat values - VIBRANT GREEN */
+:global([data-theme="light"]) .statValue {
+  color: #39ff14;
+  text-shadow:
+    0 0 10px #39ff14,
+    0 0 20px #39ff14;
+}
+
+:global([data-theme="light"]) .statLabel {
+  color: #000000;
+}
+
+/* Light mode: Footer divider - green→cyan gradient */
+:global([data-theme="light"]) .footer::before {
+  background: linear-gradient(90deg, transparent, #39ff14, #05d9e8, #39ff14, transparent);
+  height: 3px;
+}
+
+/* Light mode: Footer text - readable dark */
+:global([data-theme="light"]) .footer {
+  color: #0a1a0a;
+}
+
+:global([data-theme="light"]) .footer a {
+  color: #39ff14;
+  text-shadow: 0 0 10px rgba(57, 255, 20, 0.5);
+}
+
+:global([data-theme="light"]) .footer a:hover {
+  text-shadow: 0 0 15px #39ff14, 0 0 30px #39ff14;
+}
+
+/* Light mode: Feature section - VIBRANT GREEN icons and titles */
+:global([data-theme="light"]) .featureIcon {
+  filter: drop-shadow(0 0 15px #39ff14) drop-shadow(0 0 30px #39ff14);
+}
+
+:global([data-theme="light"]) .feature h3 {
+  color: #39ff14;
+  text-shadow:
+    0 0 10px #39ff14,
+    0 0 20px #39ff14,
+    0 0 40px #39ff14;
+}
+
+:global([data-theme="light"]) .feature p {
+  color: #0a1a0a;
+}
+
+/* Light mode: Play Now buttons - vibrant green */
+:global([data-theme="light"]) .playNowBtn {
+  border-color: #39ff14;
+  color: #39ff14;
+  text-shadow: 0 0 10px #39ff14;
+  box-shadow: 0 0 15px rgba(57, 255, 20, 0.4);
+}
+
+:global([data-theme="light"]) .playNowBtn:hover {
+  background: rgba(57, 255, 20, 0.15);
+  box-shadow: 0 0 20px #39ff14, 0 0 40px rgba(57, 255, 20, 0.6);
+}
+
+/* Light mode: Multiplier badges - vibrant yellow */
+:global([data-theme="light"]) .multiplier {
+  color: #f9f002;
+  text-shadow: 0 0 10px #f9f002, 0 0 20px #f9f002;
+  border-color: rgba(249, 240, 2, 0.5);
+}
+
+/* Light mode: Game names - bold dark with green glow */
+:global([data-theme="light"]) .gameName {
+  color: #000000;
+  text-shadow:
+    0 0 10px rgba(57, 255, 20, 0.6),
+    0 0 20px rgba(57, 255, 20, 0.4);
+}

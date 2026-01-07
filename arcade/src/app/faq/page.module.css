@@ -247,3 +247,45 @@
         height: 40px;
     }
 }
+
+/* ===== LIGHT MODE FAQ OVERRIDES ===== */
+
+/* Light mode: Title */
+:global([data-theme="light"]) .title {
+    color: #00b8d4;
+    text-shadow:
+        0 0 10px rgba(0, 184, 212, 0.6),
+        0 0 20px rgba(0, 184, 212, 0.4),
+        0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Light mode: FAQ items */
+:global([data-theme="light"]) .faqItem {
+    background: rgba(255, 252, 248, 0.95);
+    backdrop-filter: blur(8px);
+}
+
+:global([data-theme="light"]) .faqItem:hover {
+    border-color: #00b8d4;
+}
+
+/* Light mode: FAQ header */
+:global([data-theme="light"]) .faqHeader:hover {
+    background: rgba(245, 237, 229, 0.9);
+}
+
+:global([data-theme="light"]) .faqHeaderOpen {
+    background: rgba(245, 237, 229, 0.9);
+}
+
+/* Light mode: FAQ icon */
+:global([data-theme="light"]) .faqIcon {
+    background: rgba(255, 252, 248, 0.9);
+}
+
+/* Light mode: Coming soon notice */
+:global([data-theme="light"]) .comingSoon {
+    background: rgba(200, 168, 0, 0.1);
+    border-color: #c8a800;
+    color: #c8a800;
+}

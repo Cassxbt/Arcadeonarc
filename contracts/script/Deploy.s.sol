@@ -6,6 +6,8 @@ import {ARCadeVault} from "../src/ARCadeVault.sol";
 import {TowerGame} from "../src/TowerGame.sol";
 import {DiceGame} from "../src/DiceGame.sol";
 import {CannonCrash} from "../src/CannonCrash.sol";
+import {WheelGame} from "../src/WheelGame.sol";
+import {GridyLaser} from "../src/GridyLaser.sol";
 
 contract DeployARCade is Script {
     address constant USDC = 0x3600000000000000000000000000000000000000;
@@ -32,10 +34,18 @@ contract DeployARCade is Script {
         CannonCrash crash = new CannonCrash(address(vault), deployer);
         console.log("Crash:", address(crash));
         
+        WheelGame wheel = new WheelGame(address(vault), deployer);
+        console.log("Wheel:", address(wheel));
+        
+        GridyLaser laser = new GridyLaser(address(vault), deployer);
+        console.log("Laser:", address(laser));
+        
         // Authorize games
         vault.setGameAuthorization(address(tower), true);
         vault.setGameAuthorization(address(dice), true);
         vault.setGameAuthorization(address(crash), true);
+        vault.setGameAuthorization(address(wheel), true);
+        vault.setGameAuthorization(address(laser), true);
         
         vm.stopBroadcast();
     }

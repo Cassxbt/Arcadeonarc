@@ -543,3 +543,132 @@
         opacity: 0.7;
     }
 }
+
+/* ===== LIGHT MODE NAVBAR OVERRIDES ===== */
+
+/* Light mode: Rainbow bar - green→cyan→green gradient */
+:global([data-theme="light"]) .navbar::before {
+    background: linear-gradient(90deg, #39ff14, #05d9e8, #39ff14, #05d9e8, #39ff14);
+    background-size: 200% 100%;
+}
+
+/* Light mode: FROSTED GLASS navbar - white translucent with blur + GREEN accents */
+:global([data-theme="light"]) .navbar {
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 2px solid rgba(57, 255, 20, 0.4);
+    box-shadow:
+        0 4px 30px rgba(0, 30, 0, 0.1),
+        0 0 20px rgba(57, 255, 20, 0.2);
+}
+
+/* Light mode: Logo text - ELECTRIC GREEN with intense glow */
+:global([data-theme="light"]) .logoText {
+    color: #39ff14;
+    text-shadow:
+        0 0 10px #39ff14,
+        0 0 20px #39ff14,
+        0 0 40px #39ff14;
+}
+
+/* Light mode: Nav links - dark for readability */
+:global([data-theme="light"]) .navLink {
+    color: #0a1a0a;
+}
+
+:global([data-theme="light"]) .navLink:hover {
+    color: #05d9e8;
+    border-color: #05d9e8;
+    text-shadow: 0 0 10px #05d9e8, 0 0 20px #05d9e8;
+}
+
+:global([data-theme="light"]) .navLinkActive {
+    color: #39ff14;
+    border-color: #39ff14;
+    background: rgba(57, 255, 20, 0.1);
+    text-shadow: 0 0 10px #39ff14, 0 0 20px #39ff14;
+}
+
+/* Light mode: Balance display - vibrant green */
+:global([data-theme="light"]) .balance {
+    background: rgba(255, 255, 255, 0.9);
+    border: 2px solid #39ff14;
+    box-shadow: 0 0 15px #39ff14, 0 0 30px rgba(57, 255, 20, 0.4);
+}
+
+:global([data-theme="light"]) .balanceAmount {
+    color: #39ff14;
+    text-shadow: 0 0 10px #39ff14, 0 0 20px #39ff14;
+}
+
+/* Light mode: Icon buttons - frosted glass */
+:global([data-theme="light"]) .iconBtn {
+    background: rgba(255, 255, 255, 0.85);
+    color: #0a1a0a;
+    border-color: rgba(57, 255, 20, 0.3);
+}
+
+:global([data-theme="light"]) .iconBtn:hover {
+    border-color: #05d9e8;
+    box-shadow: 0 0 15px #05d9e8;
+    color: #05d9e8;
+}
+
+/* Light mode: Deposit button - intense green glow */
+:global([data-theme="light"]) .depositBtn {
+    box-shadow: 0 0 15px #39ff14, 0 0 30px #39ff14, 0 0 45px rgba(57, 255, 20, 0.4);
+}
+
+/* Light mode: Withdraw button - cyan accent */
+:global([data-theme="light"]) .withdrawBtn {
+    color: #05d9e8;
+    border-color: #05d9e8;
+}
+
+:global([data-theme="light"]) .withdrawBtn:hover {
+    background: rgba(5, 217, 232, 0.1);
+    box-shadow: 0 0 15px #05d9e8;
+}
+
+/* Light mode: Mobile drawer - frosted glass with green accent */
+:global([data-theme="light"]) .mobileDrawerContent {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-left: 2px solid #39ff14;
+    box-shadow: -10px 0 40px rgba(57, 255, 20, 0.2);
+}
+
+/* Light mode: Mobile balance - frosted */
+:global([data-theme="light"]) .mobileBalance {
+    background: rgba(255, 255, 255, 0.9);
+}
+
+/* Light mode: Mobile nav links */
+:global([data-theme="light"]) .mobileNavLink {
+    color: #0a1a0a;
+}
+
+:global([data-theme="light"]) .mobileNavLink:hover {
+    background: rgba(5, 217, 232, 0.1);
+    border-color: #05d9e8;
+    color: #05d9e8;
+}
+
+:global([data-theme="light"]) .mobileNavLinkActive {
+    background: rgba(57, 255, 20, 0.1);
+    border-color: #39ff14;
+    color: #39ff14;
+}
+
+/* Light mode: Mobile control buttons */
+:global([data-theme="light"]) .mobileControlBtn {
+    background: rgba(255, 255, 255, 0.9);
+    color: #0a1a0a;
+}
+
+:global([data-theme="light"]) .mobileControlBtn:hover {
+    border-color: #05d9e8;
+    color: #05d9e8;
+}

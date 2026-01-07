@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { privateKeyToAccount } from 'viem/accounts';
 import { keccak256, encodePacked } from 'viem';
 
-const SIGNER_PRIVATE_KEY = process.env.SIGNER_PRIVATE_KEY || '0x96a6d7e2771e9f3e05fea88c2631f818e9e5d511b9e918088defac7f7af9c961';
+// Server signer private key - MUST be set in environment variables
+const SIGNER_PRIVATE_KEY = process.env.SIGNER_PRIVATE_KEY;
+if (!SIGNER_PRIVATE_KEY) {
+    throw new Error('SIGNER_PRIVATE_KEY environment variable is required');
+}
 const signer = privateKeyToAccount(SIGNER_PRIVATE_KEY as `0x${string}`);
 
 // Store active games' crash points (in production, use Redis or DB)

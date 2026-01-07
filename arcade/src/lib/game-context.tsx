@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { createPublicClient, http, formatUnits } from 'viem';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
-import { useDemoLimits } from './useDemoLimits';
+import { useDemoLimits, GameType } from './useDemoLimits';
 import { useUser } from './useUser';
 import { useStreak } from './useStreak';
 import { arcTestnet, CONTRACTS } from './constants';
@@ -27,10 +27,10 @@ interface GameContextType {
     toggleDemoMode: () => void;
 
     // Demo limits
-    canPlayDemo: (game: 'tower' | 'dice' | 'crash') => boolean;
-    getRemainingDemoPlays: (game: 'tower' | 'dice' | 'crash') => number;
-    recordDemoPlay: (game: 'tower' | 'dice' | 'crash') => boolean;
-    isDemoLimitReached: (game: 'tower' | 'dice' | 'crash') => boolean;
+    canPlayDemo: (game: GameType) => boolean;
+    getRemainingDemoPlays: (game: GameType) => number;
+    recordDemoPlay: (game: GameType) => boolean;
+    isDemoLimitReached: (game: GameType) => boolean;
 
     // Bet amount
     betAmount: number;
@@ -59,7 +59,7 @@ interface GameContextType {
 export interface BetRecord {
     id: string;
     timestamp: Date;
-    game: 'tower' | 'dice' | 'crash';
+    game: GameType;
     betAmount: number;
     outcome: 'win' | 'loss';
     multiplier: number;
@@ -150,27 +150,60 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         setBetAmountState(Math.max(0.5, Math.min(100, amount)));
     }, []);
 
-    // Record game to Supabase (for real money games when registered)
+    // Record game to Supabase AND settle on-chain (for real money games when registered)
     const recordGameToServer = useCallback(async (record: Omit<BetRecord, 'id' | 'timestamp'>) => {
-        if (!primaryWallet?.address || !isRegistered || demoMode) return;
+        if (!primaryWallet?.address || demoMode) return;
 
+        // 1. Record stats to Supabase (only if registered)
+        if (isRegistered) {
+            try {
+                await fetch('/api/games', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        wallet: primaryWallet.address.toLowerCase(),
+                        game: record.game,
+                        bet_amount: record.betAmount,
+                        payout: record.payout,
+                        multiplier: record.multiplier,
+                        won: record.outcome === 'win',
+                    }),
+                });
+            } catch (error) {
+                console.error('Failed to record game stats:', error);
+            }
+        }
+
+        // 2. Settle on-chain to update vault balance
         try {
-            await fetch('/api/games', {
+            const response = await fetch('/api/game/settle', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    wallet: primaryWallet.address.toLowerCase(),
-                    game: record.game,
-                    bet_amount: record.betAmount,
+                    userAddress: primaryWallet.address,
+                    betAmount: record.betAmount,
                     payout: record.payout,
-                    multiplier: record.multiplier,
+                    game: record.game,
                     won: record.outcome === 'win',
                 }),
             });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                console.error('Settlement failed:', result.error);
+                // Note: Game already played, settlement failed but UI shows old balance
+                // User will need to refresh or wait for next successful settlement
+            } else {
+                console.log('Settlement successful:', result);
+            }
         } catch (error) {
-            console.error('Failed to record game:', error);
+            console.error('Failed to settle game:', error);
         }
-    }, [primaryWallet?.address, isRegistered, demoMode]);
+
+        // 3. Refresh the displayed balance from vault
+        await refreshBalance();
+    }, [primaryWallet?.address, isRegistered, demoMode, refreshBalance]);
 
     // Add bet record (also records demo play if in demo mode)
     const addBetRecord = useCallback((record: Omit<BetRecord, 'id' | 'timestamp'>) => {

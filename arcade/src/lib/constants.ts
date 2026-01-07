@@ -28,6 +28,8 @@ export const CONTRACTS = {
   TOWER_GAME: '0x7d1F094C8B48cBb7E9a017059eeC5a33eD4c243f' as `0x${string}`,
   DICE_GAME: '0xB91ddfe1567c38B259f417604755Dc58cdf73f0C' as `0x${string}`,
   CANNON_CRASH: '0x09e1bC3c33aa0A7e0a68cec3c00C44FD4E2dd5Db' as `0x${string}`,
+  WHEEL_GAME: '0x5907775345715b9F0ac1b00027Cd96B8fEE1e850' as `0x${string}`,
+  GRIDY_LASER: '0xcBdff4f22bb291067EF9E36E2202c4d736739579' as `0x${string}`,
 };
 
 // Game Configuration

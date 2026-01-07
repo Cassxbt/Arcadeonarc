@@ -6,6 +6,8 @@ import {ARCadeVault} from "../src/ARCadeVault.sol";
 import {TowerGame} from "../src/TowerGame.sol";
 import {DiceGame} from "../src/DiceGame.sol";
 import {CannonCrash} from "../src/CannonCrash.sol";
+import {WheelGame} from "../src/WheelGame.sol";
+import {GridyLaser} from "../src/GridyLaser.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
@@ -434,5 +436,242 @@ contract DiceGameTest is Test {
         // In basis points: ~18400
         assertTrue(multiplier > 18000 && multiplier < 19000);
         assertTrue(payout > 18_000_000 && payout < 19_000_000);
+    }
+}
+
+/**
+ * @title WheelGameTest
+ * @notice Tests for WheelGame - 20-segment wheel with multipliers 0x to 5x
+ */
+contract WheelGameTest is Test {
+    MockUSDC public usdc;
+    ARCadeVault public vault;
+    WheelGame public wheel;
+    
+    address public owner = address(1);
+    address public serverSigner;
+    uint256 public serverSignerPk = 0x12345;
+    address public user1 = address(2);
+    
+    function setUp() public {
+        serverSigner = vm.addr(serverSignerPk);
+        
+        vm.startPrank(owner);
+        usdc = new MockUSDC();
+        vault = new ARCadeVault(address(usdc));
+        wheel = new WheelGame(address(vault), serverSigner);
+        
+        // Authorize wheel game
+        vault.setGameAuthorization(address(wheel), true);
+        vm.stopPrank();
+        
+        // Setup user
+        usdc.mint(user1, 1000_000_000); // 1000 USDC
+        vm.prank(user1);
+        usdc.approve(address(vault), type(uint256).max);
+        vm.prank(user1);
+        vault.deposit(100_000_000); // 100 USDC
+    }
+    
+    function test_SegmentMultipliers() public view {
+        // Check segment 0 (loss)
+        assertEq(wheel.getSegmentMultiplier(0), 0);
+        
+        // Check segment 1 (1.5x)
+        assertEq(wheel.getSegmentMultiplier(1), 15000);
+        
+        // Check segment 14 (5x jackpot)
+        assertEq(wheel.getSegmentMultiplier(14), 50000);
+        
+        // Check segment 7 (3x)
+        assertEq(wheel.getSegmentMultiplier(7), 30000);
+    }
+    
+    function test_GetAllMultipliers() public view {
+        uint256[20] memory multipliers = wheel.getAllMultipliers();
+        
+        // Count 0x segments (should be 4)
+        uint256 zeroCount = 0;
+        for (uint256 i = 0; i < 20; i++) {
+            if (multipliers[i] == 0) zeroCount++;
+        }
+        assertEq(zeroCount, 4);
+    }
+    
+    function test_Spin_WithValidSignature() public {
+        uint256 betAmount = 10_000_000; // 10 USDC
+        uint8 segmentResult = 1; // 1.5x multiplier
+        
+        // Get expected nonce (should be 1 for first bet)
+        uint256 expectedNonce = 1;
+        
+        // Create signature
+        bytes32 messageHash = keccak256(abi.encodePacked(
+            user1,
+            expectedNonce,
+            segmentResult
+        ));
+        bytes32 ethSignedHash = keccak256(abi.encodePacked(
+            "\x19Ethereum Signed Message:\n32",
+            messageHash
+        ));
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(serverSignerPk, ethSignedHash);
+        bytes memory signature = abi.encodePacked(r, s, v);
+        
+        // Fund vault for payouts
+        usdc.mint(address(vault), 50_000_000);
+        
+        // Execute spin
+        vm.prank(user1);
+        wheel.spin(betAmount, segmentResult, signature);
+        
+        // Check balance increased (1.5x payout = 15 USDC)
+        // Started with 100, bet 10, won 15 = 105
+        assertEq(vault.balances(user1), 105_000_000);
+    }
+    
+    function test_Spin_Loss() public {
+        uint256 betAmount = 10_000_000; // 10 USDC
+        uint8 segmentResult = 0; // 0x (loss)
+        
+        uint256 expectedNonce = 1;
+        
+        bytes32 messageHash = keccak256(abi.encodePacked(
+            user1,
+            expectedNonce,
+            segmentResult
+        ));
+        bytes32 ethSignedHash = keccak256(abi.encodePacked(
+            "\x19Ethereum Signed Message:\n32",
+            messageHash
+        ));
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(serverSignerPk, ethSignedHash);
+        bytes memory signature = abi.encodePacked(r, s, v);
+        
+        vm.prank(user1);
+        wheel.spin(betAmount, segmentResult, signature);
+        
+        // Check balance decreased (lost 10 USDC)
+        assertEq(vault.balances(user1), 90_000_000);
+    }
+    
+    function test_Spin_Jackpot() public {
+        uint256 betAmount = 10_000_000; // 10 USDC
+        uint8 segmentResult = 14; // 5x (jackpot)
+        
+        uint256 expectedNonce = 1;
+        
+        bytes32 messageHash = keccak256(abi.encodePacked(
+            user1,
+            expectedNonce,
+            segmentResult
+        ));
+        bytes32 ethSignedHash = keccak256(abi.encodePacked(
+            "\x19Ethereum Signed Message:\n32",
+            messageHash
+        ));
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(serverSignerPk, ethSignedHash);
+        bytes memory signature = abi.encodePacked(r, s, v);
+        
+        // Fund vault for big payout
+        usdc.mint(address(vault), 100_000_000);
+        
+        vm.prank(user1);
+        wheel.spin(betAmount, segmentResult, signature);
+        
+        // Check balance (5x payout = 50 USDC)
+        // Started with 100, bet 10, won 50 = 140
+        assertEq(vault.balances(user1), 140_000_000);
+    }
+    
+    function test_Spin_RevertInvalidSegment() public {
+        uint256 betAmount = 10_000_000;
+        uint8 segmentResult = 20; // Invalid (only 0-19 valid)
+        
+        bytes memory dummySignature = new bytes(65);
+        
+        vm.expectRevert(WheelGame.InvalidSegment.selector);
+        vm.prank(user1);
+        wheel.spin(betAmount, segmentResult, dummySignature);
+    }
+}
+
+/**
+ * @title GridyLaserTest
+ * @notice Tests for GridyLaser - 10x10 grid survival game with column/row lasers
+ */
+contract GridyLaserTest is Test {
+    MockUSDC public usdc;
+    ARCadeVault public vault;
+    GridyLaser public laser;
+    
+    address public owner = address(1);
+    address public serverSigner;
+    uint256 public serverSignerPk = 0x12345;
+    address public user1 = address(2);
+    
+    function setUp() public {
+        serverSigner = vm.addr(serverSignerPk);
+        
+        vm.startPrank(owner);
+        usdc = new MockUSDC();
+        vault = new ARCadeVault(address(usdc));
+        laser = new GridyLaser(address(vault), serverSigner);
+        
+        // Authorize laser game
+        vault.setGameAuthorization(address(laser), true);
+        vm.stopPrank();
+        
+        // Setup user
+        usdc.mint(user1, 1000_000_000);
+        vm.prank(user1);
+        usdc.approve(address(vault), type(uint256).max);
+        vm.prank(user1);
+        vault.deposit(100_000_000);
+    }
+    
+    function test_StartGame() public {
+        vm.prank(user1);
+        laser.startGame(10_000_000);
+        
+        (bool active, uint256 betAmount, uint8 currentTurn, , , ) = laser.getGameState(user1);
+        assertTrue(active);
+        assertEq(betAmount, 10_000_000);
+        assertEq(currentTurn, 0);
+    }
+    
+    function test_StartGame_RevertIfAlreadyActive() public {
+        vm.startPrank(user1);
+        laser.startGame(10_000_000);
+        
+        vm.expectRevert(GridyLaser.GameAlreadyActive.selector);
+        laser.startGame(10_000_000);
+        vm.stopPrank();
+    }
+    
+    function test_MultiplierProgression() public view {
+        // Check first few multipliers are reasonable
+        uint256 mult0 = laser.getMultiplier(0);
+        uint256 mult5 = laser.getMultiplier(5);
+        uint256 mult17 = laser.getMultiplier(17);
+        
+        assertTrue(mult0 > 10000); // > 1x
+        assertTrue(mult5 > mult0); // Higher turns = higher multiplier
+        assertTrue(mult17 > 500000); // Should be approaching 95x (~950000 bps)
+    }
+    
+    function test_CashOut_RevertMustSurviveOneTurn() public {
+        vm.startPrank(user1);
+        laser.startGame(10_000_000);
+        
+        vm.expectRevert(GridyLaser.MustSurviveOneTurn.selector);
+        laser.cashOut();
+        vm.stopPrank();
+    }
+    
+    function test_GridSizeConstants() public view {
+        assertEq(laser.GRID_SIZE(), 10);
+        assertEq(laser.MAX_TURNS(), 18);
+        assertEq(laser.HOUSE_EDGE_BPS(), 400); // 4%
     }
 }

@@ -1,0 +1,354 @@
+/* ===== CAROUSEL CONTAINER ===== */
+.carouselContainer {
+    position: relative;
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: var(--space-2xl) 0;
+    perspective: 1200px;
+    perspective-origin: 50% 50%;
+}
+
+/* ===== CAROUSEL TRACK ===== */
+.carouselTrack {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 450px;
+    transform-style: preserve-3d;
+    cursor: grab;
+    user-select: none;
+}
+
+.carouselTrack:active {
+    cursor: grabbing;
+}
+
+/* ===== CARD WRAPPER ===== */
+.cardWrapper {
+    position: absolute;
+    width: 320px;
+    transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transform-style: preserve-3d;
+    will-change: transform, opacity, filter;
+}
+
+.cardWrapper:not(.cardActive) {
+    cursor: pointer;
+}
+
+/* ===== GAME CARD ===== */
+.gameCard {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: var(--space-2xl) var(--space-xl);
+    background: linear-gradient(180deg,
+            rgba(20, 25, 35, 0.95) 0%,
+            rgba(10, 15, 25, 0.98) 100%);
+    border: 3px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    position: relative;
+    overflow: hidden;
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+}
+
+/* Rainbow top bar */
+.gameCard::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg,
+            var(--game-color, var(--neon-cyan)),
+            var(--neon-yellow),
+            var(--game-color, var(--neon-cyan)));
+    opacity: 0.8;
+}
+
+/* ===== CARD GLOW EFFECT ===== */
+.cardGlow {
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at center,
+            var(--game-color, var(--neon-cyan)) 0%,
+            transparent 50%);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
+    z-index: -1;
+}
+
+.cardActive .gameCard {
+    border-color: var(--game-color, var(--neon-cyan));
+    box-shadow:
+        0 0 40px rgba(5, 217, 232, 0.3),
+        0 20px 60px rgba(0, 0, 0, 0.5),
+        inset 0 0 30px rgba(5, 217, 232, 0.05);
+}
+
+.cardActive .cardGlow {
+    opacity: 0.15;
+}
+
+/* ===== GAME ICON ===== */
+.gameIcon {
+    margin-bottom: var(--space-lg);
+    animation: iconFloat 3s ease-in-out infinite;
+}
+
+.cardActive .gameIcon {
+    animation: iconPulse 2s ease-in-out infinite;
+}
+
+@keyframes iconFloat {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-8px);
+    }
+}
+
+@keyframes iconPulse {
+
+    0%,
+    100% {
+        transform: translateY(0) scale(1);
+        filter: drop-shadow(0 0 30px var(--game-color, var(--neon-cyan)));
+    }
+
+    50% {
+        transform: translateY(-10px) scale(1.05);
+        filter: drop-shadow(0 0 50px var(--game-color, var(--neon-cyan)));
+    }
+}
+
+/* ===== GAME NAME ===== */
+.gameName {
+    font-family: var(--font-pixel);
+    font-size: 1rem;
+    color: var(--text-primary);
+    margin-bottom: var(--space-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    text-shadow: 0 0 15px var(--game-color, var(--neon-cyan));
+}
+
+/* ===== GAME DESCRIPTION ===== */
+.gameDescription {
+    font-family: var(--font-arcade);
+    color: var(--text-secondary);
+    margin-bottom: var(--space-lg);
+    line-height: 1.6;
+    font-size: 0.875rem;
+    max-width: 280px;
+}
+
+/* ===== MULTIPLIER BADGE ===== */
+.gameMultiplier {
+    font-family: var(--font-pixel);
+    font-size: 0.75rem;
+    color: var(--neon-green);
+    text-shadow: 0 0 10px var(--neon-green);
+    margin-bottom: var(--space-lg);
+    padding: var(--space-xs) var(--space-lg);
+    background: rgba(57, 255, 20, 0.1);
+    border: 2px solid var(--neon-green);
+    border-radius: var(--radius-full);
+}
+
+/* ===== PLAY BUTTON ===== */
+.playButton {
+    padding: var(--space-sm) var(--space-xl);
+    background: linear-gradient(180deg, var(--neon-pink), #cc0044);
+    border: 2px solid var(--neon-pink);
+    border-radius: var(--radius-md);
+    font-family: var(--font-pixel);
+    font-size: 0.625rem;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    box-shadow: 0 0 20px var(--neon-pink);
+    animation: playPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes playPulse {
+
+    0%,
+    100% {
+        box-shadow: 0 0 20px var(--neon-pink);
+        transform: scale(1);
+    }
+
+    50% {
+        box-shadow: 0 0 30px var(--neon-pink), 0 0 50px var(--neon-pink);
+        transform: scale(1.02);
+    }
+}
+
+/* ===== NAVIGATION BUTTONS ===== */
+.navButton {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 20;
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(10, 15, 25, 0.9);
+    border: 2px solid var(--neon-cyan);
+    border-radius: 50%;
+    color: var(--neon-cyan);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 15px rgba(5, 217, 232, 0.3);
+}
+
+.navButton:hover {
+    background: rgba(5, 217, 232, 0.2);
+    box-shadow: 0 0 25px var(--neon-cyan);
+    transform: translateY(-50%) scale(1.1);
+}
+
+.navButtonLeft {
+    left: 0;
+}
+
+.navButtonRight {
+    right: 0;
+}
+
+/* ===== DOTS INDICATOR ===== */
+.dotsContainer {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-md);
+    margin-top: var(--space-xl);
+}
+
+.dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid var(--border-color);
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.dot:hover {
+    border-color: var(--dot-color, var(--neon-cyan));
+    box-shadow: 0 0 10px var(--dot-color, var(--neon-cyan));
+}
+
+.dotActive {
+    background: var(--dot-color, var(--neon-cyan));
+    border-color: var(--dot-color, var(--neon-cyan));
+    box-shadow: 0 0 15px var(--dot-color, var(--neon-cyan));
+    transform: scale(1.2);
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .carouselContainer {
+        padding: var(--space-lg) 0;
+    }
+
+    .carouselTrack {
+        min-height: 400px;
+    }
+
+    .cardWrapper {
+        width: 280px;
+    }
+
+    .navButton {
+        width: 44px;
+        height: 44px;
+    }
+
+    .navButtonLeft {
+        left: -8px;
+    }
+
+    .navButtonRight {
+        right: -8px;
+    }
+
+    .gameIcon svg {
+        width: 60px !important;
+        height: 60px !important;
+    }
+
+    .gameName {
+        font-size: 0.875rem;
+    }
+
+    .gameDescription {
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .cardWrapper {
+        width: 260px;
+    }
+
+    .navButton {
+        display: none;
+    }
+
+    .gameDescription {
+        display: none;
+    }
+}
+
+/* ===== LIGHT MODE ===== */
+:global([data-theme="light"]) .gameCard {
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(12px);
+    border-color: rgba(57, 255, 20, 0.3);
+}
+
+:global([data-theme="light"]) .cardActive .gameCard {
+    border-color: var(--game-color, #39ff14);
+    box-shadow:
+        0 0 40px rgba(57, 255, 20, 0.4),
+        0 20px 60px rgba(0, 0, 0, 0.15);
+}
+
+:global([data-theme="light"]) .gameName {
+    color: #000;
+}
+
+:global([data-theme="light"]) .gameDescription {
+    color: #333;
+}
+
+:global([data-theme="light"]) .navButton {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: #39ff14;
+    color: #39ff14;
+}
+
+:global([data-theme="light"]) .navButton:hover {
+    background: rgba(57, 255, 20, 0.15);
+}
+
+:global([data-theme="light"]) .dot {
+    border-color: #ccc;
+}

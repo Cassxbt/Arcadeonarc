@@ -5,17 +5,22 @@ import { useState, useCallback, useEffect } from 'react';
 const DEMO_STORAGE_KEY = 'arcadeDemoPlays';
 const MAX_PLAYS_PER_DAY = 5;
 
+// Game type including new games
+export type GameType = 'tower' | 'dice' | 'crash' | 'wheel' | 'laser';
+
 export interface DemoLimits {
     tower: { count: number; date: string };
     dice: { count: number; date: string };
     crash: { count: number; date: string };
+    wheel: { count: number; date: string };
+    laser: { count: number; date: string };
 }
 
 export interface DemoLimitState {
-    canPlay: (game: 'tower' | 'dice' | 'crash') => boolean;
-    getRemainingPlays: (game: 'tower' | 'dice' | 'crash') => number;
-    recordPlay: (game: 'tower' | 'dice' | 'crash') => boolean;
-    isLimitReached: (game: 'tower' | 'dice' | 'crash') => boolean;
+    canPlay: (game: GameType) => boolean;
+    getRemainingPlays: (game: GameType) => number;
+    recordPlay: (game: GameType) => boolean;
+    isLimitReached: (game: GameType) => boolean;
 }
 
 function getToday(): string {
@@ -27,6 +32,8 @@ function getDefaultLimits(): DemoLimits {
         tower: { count: 0, date: getToday() },
         dice: { count: 0, date: getToday() },
         crash: { count: 0, date: getToday() },
+        wheel: { count: 0, date: getToday() },
+        laser: { count: 0, date: getToday() },
     };
 }
 
@@ -49,6 +56,8 @@ function loadLimits(): DemoLimits {
             tower: parsed.tower?.date === today ? parsed.tower : { count: 0, date: today },
             dice: parsed.dice?.date === today ? parsed.dice : { count: 0, date: today },
             crash: parsed.crash?.date === today ? parsed.crash : { count: 0, date: today },
+            wheel: parsed.wheel?.date === today ? parsed.wheel : { count: 0, date: today },
+            laser: parsed.laser?.date === today ? parsed.laser : { count: 0, date: today },
         };
 
         return updated;
@@ -70,7 +79,7 @@ export function useDemoLimits(): DemoLimitState {
         setLimits(loadLimits());
     }, []);
 
-    const canPlay = useCallback((game: 'tower' | 'dice' | 'crash'): boolean => {
+    const canPlay = useCallback((game: GameType): boolean => {
         const gameLimit = limits?.[game];
         if (!gameLimit?.date) return true; // If no data, allow play
 
@@ -84,7 +93,7 @@ export function useDemoLimits(): DemoLimitState {
         return (gameLimit.count || 0) < MAX_PLAYS_PER_DAY;
     }, [limits]);
 
-    const getRemainingPlays = useCallback((game: 'tower' | 'dice' | 'crash'): number => {
+    const getRemainingPlays = useCallback((game: GameType): number => {
         const gameLimit = limits?.[game];
         if (!gameLimit?.date) return MAX_PLAYS_PER_DAY; // If no data, all plays available
 
@@ -98,11 +107,11 @@ export function useDemoLimits(): DemoLimitState {
         return Math.max(0, MAX_PLAYS_PER_DAY - (gameLimit.count || 0));
     }, [limits]);
 
-    const isLimitReached = useCallback((game: 'tower' | 'dice' | 'crash'): boolean => {
+    const isLimitReached = useCallback((game: GameType): boolean => {
         return !canPlay(game);
     }, [canPlay]);
 
-    const recordPlay = useCallback((game: 'tower' | 'dice' | 'crash'): boolean => {
+    const recordPlay = useCallback((game: GameType): boolean => {
         const today = getToday();
         const currentLimit = limits?.[game] || { count: 0, date: today };
 

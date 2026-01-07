@@ -25,6 +25,8 @@ import {
     Flame,
     Rocket,
     ChevronDown,
+    ChevronLeft,
+    ChevronRight,
     Play,
     Link,
     Medal,
@@ -36,6 +38,8 @@ import {
     XCircle,
     Loader2,
     Check,
+    CircleDashed,
+    Grid3x3,
     type LucideIcon,
 } from 'lucide-react';
 
@@ -65,6 +69,8 @@ export {
     Flame,
     Rocket,
     ChevronDown,
+    ChevronLeft,
+    ChevronRight,
     Play,
     Link,
     Medal,
@@ -76,6 +82,8 @@ export {
     XCircle,
     Loader2,
     Check,
+    CircleDashed,
+    Grid3x3,
     type LucideIcon,
 };
 

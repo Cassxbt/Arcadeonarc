@@ -94,6 +94,20 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
         });
     }, [volume]);
 
+    // Stop all sounds when sound is disabled
+    useEffect(() => {
+        if (!soundEnabled) {
+            audioRefs.current.forEach((audio) => {
+                audio.pause();
+                audio.currentTime = 0;
+                audio.loop = false;
+            });
+            // Clear all auto-stop timers
+            stopTimers.current.forEach(timer => clearTimeout(timer));
+            stopTimers.current.clear();
+        }
+    }, [soundEnabled]);
+
     const toggleSound = useCallback(() => {
         setSoundEnabled(prev => !prev);
     }, []);

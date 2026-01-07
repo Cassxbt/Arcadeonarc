@@ -7,6 +7,8 @@ import {
     TowerControl,
     Dice6,
     Bomb,
+    CircleDashed,
+    Grid3x3,
 } from './icons';
 import styles from './GameSelector.module.css';
 
@@ -39,6 +41,20 @@ const games: Game[] = [
         icon: <Bomb size={48} />,
         color: 'var(--neon-pink)',
         path: '/games/crash',
+    },
+    {
+        id: 'wheel',
+        name: 'Wheel',
+        icon: <CircleDashed size={48} />,
+        color: 'var(--neon-purple)',
+        path: '/games/wheel',
+    },
+    {
+        id: 'laser',
+        name: 'Laser',
+        icon: <Grid3x3 size={48} />,
+        color: 'var(--neon-pink)',
+        path: '/games/laser',
     },
 ];
 

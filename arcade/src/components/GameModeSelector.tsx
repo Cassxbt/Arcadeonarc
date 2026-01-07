@@ -2,6 +2,7 @@
 
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { useGame } from '@/lib/game-context';
+import { GameType } from '@/lib/useDemoLimits';
 import { Lock, Play, Sparkles, Wallet } from './icons';
 import styles from './GameModeSelector.module.css';
 
@@ -15,7 +16,7 @@ export function GameModeSelector({ gameName, gameIcon, onDemoSelect }: GameModeS
     const { setShowAuthFlow } = useDynamicContext();
     const { getRemainingDemoPlays, isDemoLimitReached } = useGame();
 
-    const gameId = gameName.toLowerCase() as 'tower' | 'dice' | 'crash';
+    const gameId = gameName.toLowerCase().replace(/\s+/g, '') as GameType;
     const remainingPlays = getRemainingDemoPlays(gameId);
     const limitReached = isDemoLimitReached(gameId);
 

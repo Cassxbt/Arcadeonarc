@@ -36,7 +36,7 @@ export function DynamicProvider({ children }: DynamicProviderProps) {
                     evmNetworks,
                 },
                 appName: 'ARCade',
-                appLogoUrl: '/logo.png',
+                appLogoUrl: 'https://arcadeonarc.fun/favicon.ico',
             }}
         >
             {children}

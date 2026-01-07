@@ -9,11 +9,14 @@ export const VAULT_ABI = parseAbi([
     'function houseBalance() view returns (uint256)',
     'function getVaultStats() view returns (uint256 totalDeposited, uint256 houseBalance, uint256 vaultBalance)',
     'function userNonces(address user) view returns (uint256)',
+    'function authorizedGames(address game) view returns (bool)',
 
     // Write functions
     'function deposit(uint256 amount)',
     'function withdraw(uint256 amount)',
     'function emergencyWithdraw()',
+    'function placeBet(address user, uint256 amount) returns (uint256 nonce)',
+    'function settleBet(address user, uint256 betAmount, uint256 payout)',
 
     // Events
     'event Deposited(address indexed user, uint256 amount)',

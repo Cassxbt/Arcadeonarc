@@ -48,7 +48,8 @@
     right: 0;
     width: 400px;
     max-width: 90vw;
-    height: 100vh;
+    max-height: 100vh;
+    height: auto;
     background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
     border-left: 2px solid var(--neon-cyan);
     box-shadow: -10px 0 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(5, 217, 232, 0.15);
