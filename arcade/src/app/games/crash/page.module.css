@@ -422,10 +422,11 @@
 }
 
 /* Rocket Container */
+/* Rocket Container */
 .rocketContainer {
     position: absolute;
     z-index: 10;
-    transition: left 0.1s linear, bottom 0.1s linear;
+    /* transition removed to prevent visual lag vs SVG trajectory */
     width: 100px;
     height: 100px;
     display: flex;
@@ -499,7 +500,7 @@
 /* Cashout Success Marker - centered money bag */
 .cashoutSuccess {
     position: absolute;
-    top: 50%;
+    top: 20%;
     left: 50%;
     transform: translate(-50%, -50%);
     z-index: 20;

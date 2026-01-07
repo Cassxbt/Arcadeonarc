@@ -8,6 +8,7 @@ import { useUser } from './useUser';
 import { useStreak } from './useStreak';
 import { arcTestnet, CONTRACTS } from './constants';
 import { VAULT_ABI } from './abi';
+import { signRequest } from './sign-request';
 
 // Create public client for reading vault balance (created once, outside component)
 const publicClient = createPublicClient({
@@ -169,36 +170,34 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
                         won: record.outcome === 'win',
                     }),
                 });
-            } catch (error) {
-                console.error('Failed to record game stats:', error);
+            } catch {
+                // Stats recording is non-critical, continue silently
             }
         }
 
-        // 2. Settle on-chain to update vault balance
+        // 2. Settle on-chain with signed request
         try {
+            const settlementData = {
+                userAddress: primaryWallet.address,
+                betAmount: record.betAmount,
+                payout: record.payout,
+                game: record.game,
+                won: record.outcome === 'win',
+            };
+
+            const signedRequest = await signRequest(settlementData);
+
             const response = await fetch('/api/game/settle', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    userAddress: primaryWallet.address,
-                    betAmount: record.betAmount,
-                    payout: record.payout,
-                    game: record.game,
-                    won: record.outcome === 'win',
-                }),
+                body: JSON.stringify(signedRequest),
             });
 
-            const result = await response.json();
-
             if (!response.ok) {
-                console.error('Settlement failed:', result.error);
-                // Note: Game already played, settlement failed but UI shows old balance
-                // User will need to refresh or wait for next successful settlement
-            } else {
-                console.log('Settlement successful:', result);
+                // Settlement failed - balance will refresh on next action
             }
-        } catch (error) {
-            console.error('Failed to settle game:', error);
+        } catch {
+            // Network error - balance will be stale until next refresh
         }
 
         // 3. Refresh the displayed balance from vault

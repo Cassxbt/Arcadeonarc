@@ -28,8 +28,7 @@ const WHEEL_GAME_RULES = [
     },
 ];
 
-// Wheel segment configuration (20 segments) - more balanced with 8 losses (40%)
-// Based on Stake's wheel which has more gray segments
+// Wheel segment configuration (20 segments) - balanced with 8 losses (40%)
 const SEGMENTS = [
     { multiplier: 0, color: '#5a5a5a' },      // Gray (loss)
     { multiplier: 1.5, color: '#39ff14' },    // Green

@@ -559,7 +559,7 @@
         border-width: 1px;
     }
 
-    /* Horizontal thermometer at top like reference */
+    /* Horizontal thermometer at top */
     .thermometer {
         order: 1;
         flex-direction: row;

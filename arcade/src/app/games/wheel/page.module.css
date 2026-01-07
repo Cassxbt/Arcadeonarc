@@ -369,7 +369,7 @@
         width: min(100%, 280px);
     }
 
-    /* Horizontal legend like Stake reference */
+    /* Horizontal legend */
     .legend {
         display: flex;
         flex-wrap: nowrap;

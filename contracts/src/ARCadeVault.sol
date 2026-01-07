@@ -91,9 +91,6 @@ contract ARCadeVault is ReentrancyGuard, Ownable, Pausable {
         USDC = IERC20(_usdc);
     }
 
-    // =============================================================
-    //                       USER FUNCTIONS
-    // =============================================================
 
     /**
      * @notice Deposit USDC into the vault
@@ -298,9 +295,6 @@ contract ARCadeVault is ReentrancyGuard, Ownable, Pausable {
         emit EmergencyWithdraw(msg.sender, amount);
     }
 
-    // =============================================================
-    //                       VIEW FUNCTIONS
-    // =============================================================
 
     /**
      * @notice Check if vault has enough liquidity to cover potential payouts

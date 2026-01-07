@@ -84,47 +84,62 @@
 }
 
 /* Light theme - MATRIX GREEN ARCADE: Pale mint with electric green neon */
+/* Light theme - PREMIUM CYBER-CLEAN: Apple-esque Pro Mode */
 [data-theme="light"] {
-  /* Pale mint arcade background - subtle green tint */
-  --bg-primary: #f5fff5;
-  --bg-secondary: #f0fff0;
-  --bg-tertiary: #e8ffe8;
-  /* Frosted glass card backgrounds */
-  --bg-card: rgba(255, 255, 255, 0.8);
-  --bg-card-hover: rgba(255, 255, 255, 0.9);
+  /* Clean, crisp backgrounds */
+  --bg-primary: #FAFAFA;
+  /* Very subtle off-white */
+  --bg-secondary: #F3F4F6;
+  /* Light gray for inputs/subtle areas */
+  --bg-tertiary: #FFFFFF;
+  /* Pure white */
+  /* Solid cards with high opacity */
+  --bg-card: #FFFFFF;
+  --bg-card-hover: #F9FAFB;
 
-  /* Pure black for maximum contrast headers */
-  --text-primary: #000000;
-  --text-secondary: #0a1a0a;
-  --text-muted: #2a3a2a;
+  /* High Contrast Typography - Inter/Grotesque style */
+  --text-primary: #0F172A;
+  /* Slate 900 - Deep, rich black */
+  --text-secondary: #334155;
+  /* Slate 700 - Professional gray */
+  --text-muted: #64748B;
+  /* Slate 500 - Muted but readable */
 
-  /* Green neon borders */
-  --border-color: rgba(57, 255, 20, 0.4);
-  --border-color-light: rgba(5, 217, 232, 0.3);
+  /* Crisp Borders - No neon fuzz */
+  --border-color: #E2E8F0;
+  /* Slate 200 */
+  --border-color-light: #F1F5F9;
+  /* Slate 100 */
 
-  /* INTENSE glow effects - MATCHING dark mode intensity */
-  --glow-pink: 0 0 10px #ff2a6d, 0 0 20px #ff2a6d, 0 0 40px #ff2a6d;
-  --glow-cyan: 0 0 10px #05d9e8, 0 0 20px #05d9e8, 0 0 40px #05d9e8;
-  --glow-yellow: 0 0 10px #f9f002, 0 0 20px #f9f002, 0 0 40px #f9f002;
-  --glow-green: 0 0 10px #39ff14, 0 0 20px #39ff14, 0 0 40px #39ff14;
-  --glow-purple: 0 0 10px #d300c5, 0 0 20px #d300c5, 0 0 40px #d300c5;
+  /* Shadows - "Lickable" Interface (Apple/Vercel style) */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 
-  /* Shadows with subtle green tint */
-  --shadow-sm: 0 2px 8px rgba(0, 50, 0, 0.08);
-  --shadow-md: 0 4px 16px rgba(0, 50, 0, 0.1);
-  --shadow-lg: 0 8px 32px rgba(0, 50, 0, 0.12);
-  --shadow-glow: var(--glow-green);
-  --shadow-glow-cyan: var(--glow-cyan);
-  --shadow-glow-green: var(--glow-green);
+  /* Retained but refined accents - "Electric" but sharp */
+  /* Instead of diffuse glow, we use sharp distinct colors */
+  --shadow-glow: 0 0 0 0 transparent;
+  /* Disable global text blurs in light mode */
+  --shadow-glow-cyan: 0 4px 14px 0 rgba(14, 165, 233, 0.3);
+  /* Actionable glow */
+  --shadow-glow-green: 0 4px 14px 0 rgba(16, 185, 129, 0.3);
+  /* Success glow */
 
-  /* FULL SATURATION neon colors - green primary */
-  --neon-pink: #ff2a6d;
-  --neon-cyan: #05d9e8;
-  --neon-yellow: #f9f002;
-  --neon-green: #39ff14;
-  --neon-purple: #d300c5;
-  --neon-orange: #ff6b35;
-  --neon-blue: #01cdfe;
+  /* Refined Neon Palette for Light Mode (Darker/Richer for visibility) */
+  --neon-pink: #DB2777;
+  /* Pink 600 */
+  --neon-cyan: #0284C7;
+  /* Sky 600 */
+  --neon-yellow: #CA8A04;
+  /* Yellow 600 - Readable on white */
+  --neon-green: #059669;
+  /* Emerald 600 - Readable on white */
+  --neon-purple: #9333EA;
+  /* Purple 600 */
+  --neon-orange: #EA580C;
+  /* Orange 600 */
+  --neon-blue: #2563EB;
+  /* Blue 600 */
 }
 
 /* ===== BASE STYLES ===== */
@@ -187,20 +202,19 @@ body::after {
 /* ===== LIGHT MODE SPECIFIC OVERRIDES ===== */
 
 /* Light mode: Subtle scanlines */
+/* Light mode: Clean professional backdrop */
 [data-theme="light"] body::before {
-  background: repeating-linear-gradient(0deg,
-      rgba(0, 30, 0, 0.03) 0px,
-      rgba(0, 30, 0, 0.03) 1px,
-      transparent 1px,
-      transparent 2px);
-  opacity: 0.5;
+  /* Remove scanlines for cleanliness */
+  display: none;
 }
 
-/* Light mode: Neon GREEN grid - Matrix style */
+/* Light mode: Subtle engineering grid */
 [data-theme="light"] body::after {
   background-image:
-    linear-gradient(rgba(57, 255, 20, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(57, 255, 20, 0.06) 1px, transparent 1px);
+    linear-gradient(#E2E8F0 1px, transparent 1px),
+    linear-gradient(90deg, #E2E8F0 1px, transparent 1px);
+  background-size: 40px 40px;
+  opacity: 0.5;
 }
 
 /* Light mode: Frosted glass cards - white/translucent with blur */
@@ -215,53 +229,31 @@ body::after {
 }
 
 /* Light mode: h1 - INTENSE GREEN glow matching dark mode intensity */
-[data-theme="light"] h1 {
-  text-shadow:
-    0 0 10px #39ff14,
-    0 0 20px #39ff14,
-    0 0 40px #39ff14,
-    0 0 60px #39ff14;
+/* Light mode: Crisp Typography - No Blurs */
+[data-theme="light"] h1,
+[data-theme="light"] h2,
+[data-theme="light"] h3,
+[data-theme="light"] .neon-text-pink,
+[data-theme="light"] .neon-text-cyan,
+[data-theme="light"] .neon-text-green,
+[data-theme="light"] .neon-text-yellow {
+  text-shadow: none;
 }
 
-/* Light mode: h2 - INTENSE cyan glow */
-[data-theme="light"] h2 {
-  text-shadow:
-    0 0 10px #05d9e8,
-    0 0 20px #05d9e8,
-    0 0 40px #05d9e8;
-}
-
-/* Light mode: Neon text classes with FULL SATURATION */
 [data-theme="light"] .neon-text-pink {
-  color: #ff2a6d;
-  text-shadow:
-    0 0 10px #ff2a6d,
-    0 0 20px #ff2a6d,
-    0 0 40px #ff2a6d;
+  color: var(--neon-pink);
 }
 
 [data-theme="light"] .neon-text-cyan {
-  color: #05d9e8;
-  text-shadow:
-    0 0 10px #05d9e8,
-    0 0 20px #05d9e8,
-    0 0 40px #05d9e8;
+  color: var(--neon-cyan);
 }
 
 [data-theme="light"] .neon-text-green {
-  color: #39ff14;
-  text-shadow:
-    0 0 10px #39ff14,
-    0 0 20px #39ff14,
-    0 0 40px #39ff14;
+  color: var(--neon-green);
 }
 
 [data-theme="light"] .neon-text-yellow {
-  color: #f9f002;
-  text-shadow:
-    0 0 10px #f9f002,
-    0 0 20px #f9f002,
-    0 0 40px #f9f002;
+  color: var(--neon-yellow);
 }
 
 /* Light mode: Button enhancements - GREEN primary */

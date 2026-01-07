@@ -43,13 +43,14 @@ function getMultiplierLevel(multiplier: number): 'low' | 'medium' | 'high' {
 }
 
 // Calculate straight diagonal trajectory path
-function getTrajectoryPath(multiplier: number, width: number, height: number): string {
-    const startX = width * 0.15;
-    const startY = height * 0.85;
-    const endX = startX + Math.min((multiplier - 1) * width * 0.08, width * 0.7);
-    const endY = startY - Math.min((multiplier - 1) * height * 0.08, height * 0.7);
+function getTrajectoryPath(multiplier: number): string {
+    const startX = 15;
+    const startY = 85;
+    const progress = Math.min((multiplier - 1) * 12, 70);
 
-    // Straight line for diagonal trajectory
+    const endX = startX + progress;
+    const endY = startY - progress;
+
     return `M ${startX} ${startY} L ${endX} ${endY}`;
 }
 
@@ -230,12 +231,9 @@ export default function CrashGame() {
         );
     }
 
-    // Calculate rocket position - starts at bottom-left corner, flies diagonally up-right
-    const rocketX = gameState === 'flying'
-        ? Math.min((multiplier - 1) * 12, 55)  // Move right as multiplier increases
-        : 0;
-    const rocketY = gameState === 'flying'
-        ? Math.min((multiplier - 1) * 12, 55)  // Move up as multiplier increases
+    // Calculate rocket position (synced with trajectory)
+    const rocketProgress = gameState === 'flying' || gameState === 'crashed' || gameState === 'cashedOut'
+        ? Math.min((multiplier - 1) * 12, 70)
         : 0;
 
     return (
@@ -381,11 +379,11 @@ export default function CrashGame() {
                                 <>
                                     <path
                                         className={styles.trajectoryGlow}
-                                        d={getTrajectoryPath(multiplier, 100, 100)}
+                                        d={getTrajectoryPath(multiplier)}
                                     />
                                     <path
                                         className={`${styles.trajectoryPath} ${styles.trajectoryPathActive}`}
-                                        d={getTrajectoryPath(multiplier, 100, 100)}
+                                        d={getTrajectoryPath(multiplier)}
                                     />
                                 </>
                             )}
@@ -397,8 +395,8 @@ export default function CrashGame() {
                         <div
                             className={styles.rocketContainer}
                             style={{
-                                left: `calc(5% + ${rocketX}%)`,
-                                bottom: `calc(20px + ${rocketY}%)`
+                                left: `calc(15% + ${rocketProgress}% - 10px)`, // -10px puts the flame (bottom-left of 100px box) at the point
+                                bottom: `calc(15% + ${rocketProgress}% - 10px)`
                             }}
                         >
                             {/* Rocket Assembly - rocket + flame rotate together */}

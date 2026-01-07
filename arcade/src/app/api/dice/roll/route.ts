@@ -1,17 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { privateKeyToAccount } from 'viem/accounts';
 import { keccak256, encodePacked } from 'viem';
+import { logger } from '@/lib/logger';
 
-// Server signer private key - MUST be set in environment variables
 const SIGNER_PRIVATE_KEY = process.env.SIGNER_PRIVATE_KEY;
 if (!SIGNER_PRIVATE_KEY) {
     throw new Error('SIGNER_PRIVATE_KEY environment variable is required');
 }
+
 const signer = privateKeyToAccount(SIGNER_PRIVATE_KEY as `0x${string}`);
 
-/**
- * Dice Game API - Roll dice and get result with signature
- */
 export async function POST(request: NextRequest) {
     try {
         const { userAddress, nonce, target, betUnder } = await request.json();
@@ -20,10 +18,8 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
         }
 
-        // Generate random result (1-100)
         const result = Math.floor(Math.random() * 100) + 1;
 
-        // Create message hash (must match contract)
         const messageHash = keccak256(
             encodePacked(
                 ['address', 'uint256', 'uint8', 'bool', 'uint8'],
@@ -31,21 +27,16 @@ export async function POST(request: NextRequest) {
             )
         );
 
-        // Sign with Ethereum prefix
         const signature = await signer.signMessage({
             message: { raw: messageHash },
         });
 
-        // Determine win
         const won = betUnder ? result < target : result > target;
 
-        return NextResponse.json({
-            result,
-            won,
-            signature,
-        });
-    } catch (error: any) {
-        console.error('Dice API error:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ result, won, signature });
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        logger.error('Dice roll failed', { error: message });
+        return NextResponse.json({ error: message }, { status: 500 });
     }
 }

@@ -22,28 +22,22 @@ interface IARCadeVault {
  */
 contract DiceGame is ReentrancyGuard, Ownable, Pausable {
     
-    // =============================================================
-    //                           CONSTANTS
-    // =============================================================
     
+
     /// @notice House edge in basis points (1000 = 10%)
     uint256 public constant HOUSE_EDGE_BPS = 1000;
     uint256 public constant BPS_DENOMINATOR = 10000;
     
-    // =============================================================
-    //                            STORAGE
-    // =============================================================
     
+
     /// @notice Reference to the vault contract
     IARCadeVault public immutable vault;
     
     /// @notice Server address that signs game outcomes
     address public serverSigner;
     
-    // =============================================================
-    //                            EVENTS
-    // =============================================================
     
+
     event DiceRolled(
         address indexed player,
         uint256 betAmount,
@@ -54,27 +48,21 @@ contract DiceGame is ReentrancyGuard, Ownable, Pausable {
         uint256 payout
     );
     
-    // =============================================================
-    //                            ERRORS
-    // =============================================================
     
+
     error InvalidTarget();
     error InvalidResult();
     error InvalidSignature();
     
-    // =============================================================
-    //                         CONSTRUCTOR
-    // =============================================================
     
+
     constructor(address _vault, address _serverSigner) Ownable(msg.sender) {
         vault = IARCadeVault(_vault);
         serverSigner = _serverSigner;
     }
     
-    // =============================================================
-    //                       GAME FUNCTIONS
-    // =============================================================
     
+
     /**
      * @notice Place a dice bet and resolve immediately
      * @param betAmount Amount to bet
@@ -138,10 +126,8 @@ contract DiceGame is ReentrancyGuard, Ownable, Pausable {
         emit DiceRolled(msg.sender, betAmount, target, betUnder, result, won, payout);
     }
     
-    // =============================================================
-    //                       ADMIN FUNCTIONS
-    // =============================================================
     
+
     function setServerSigner(address _signer) external onlyOwner {
         serverSigner = _signer;
     }
@@ -154,10 +140,8 @@ contract DiceGame is ReentrancyGuard, Ownable, Pausable {
         _unpause();
     }
     
-    // =============================================================
-    //                      INTERNAL FUNCTIONS
-    // =============================================================
     
+
     function _verifySignature(
         bytes32 hash,
         bytes calldata signature,
@@ -181,10 +165,8 @@ contract DiceGame is ReentrancyGuard, Ownable, Pausable {
         return ecrecover(hash, v, r, s) == signer;
     }
     
-    // =============================================================
-    //                       VIEW FUNCTIONS
-    // =============================================================
     
+
     /**
      * @notice Calculate potential payout for a bet
      * @param betAmount Bet amount

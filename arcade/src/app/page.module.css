@@ -611,185 +611,177 @@
 }
 
 /* ===== LIGHT MODE HOMEPAGE OVERRIDES ===== */
+/* Premium Cyber-Clean Aesthetic */
 
-/* Light mode: Hero section with green/cyan glow */
+/* Light mode: Hero section - Clean white with subtle mesh */
 :global([data-theme="light"]) .hero::before {
-  background: radial-gradient(circle,
-      rgba(57, 255, 20, 0.15) 0%,
-      rgba(5, 217, 232, 0.12) 25%,
-      rgba(57, 255, 20, 0.06) 50%,
-      transparent 70%);
+  background: radial-gradient(circle at 50% 50%,
+      rgba(2, 132, 199, 0.08) 0%,
+      /* Subtle Blue */
+      rgba(250, 250, 250, 0) 70%);
+  /* Seamless fade to white */
+  filter: blur(60px);
+  opacity: 0.8;
 }
 
-/* Light mode: ARCADE title - PURE BLACK with INTENSE GREEN neon glow */
+/* Light mode: ARCADE title - Solid Slate Black with gradient clip */
 :global([data-theme="light"]) .arcadeTitle {
-  color: #000000;
-  text-shadow:
-    /* Green glow layers - matching dark mode intensity */
-    0 0 10px #39ff14,
-    0 0 20px #39ff14,
-    0 0 40px #39ff14,
-    0 0 80px #39ff14,
-    /* Subtle cyan edge */
-    2px 2px 20px #05d9e8,
-    -2px -2px 20px #05d9e8;
+  color: #0F172A;
+  /* Slate 900 */
+  background: linear-gradient(135deg, #0F172A 0%, #334155 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  /* Soft shadow, no glow */
+  animation: none;
+  /* No flickering in light mode */
 }
 
-/* Light mode: Subtitle - INTENSE cyan glow */
+/* Light mode: Subtitle - Professional Slate */
 :global([data-theme="light"]) .subtitle {
-  color: #000000;
-  text-shadow:
-    0 0 10px #05d9e8,
-    0 0 20px #05d9e8,
-    0 0 40px #05d9e8;
+  color: #475569;
+  /* Slate 600 */
+  text-shadow: none;
+  font-weight: 500;
 }
 
-/* Light mode: Section title - vibrant with green glow */
+/* Light mode: Section title - Dark Slate */
 :global([data-theme="light"]) .sectionTitle {
-  color: #000000;
-  text-shadow:
-    0 0 10px #39ff14,
-    0 0 20px #39ff14,
-    0 0 40px #39ff14;
+  color: #1E293B;
+  /* Slate 800 */
+  text-shadow: none;
 }
 
-/* Light mode: Game cards - FROSTED GLASS with GREEN/CYAN neon borders */
+/* Light mode: Game cards - Clean, tactile cards (Apple/Vercel style) */
 :global([data-theme="light"]) .gameCard {
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 3px solid transparent;
-  border-image: linear-gradient(135deg, #39ff14, #05d9e8, #39ff14) 1;
+  background: #FFFFFF;
+  backdrop-filter: none;
+  border: 1px solid #E2E8F0;
+  /* Slate 200 */
   box-shadow:
-    0 8px 32px rgba(0, 30, 0, 0.1),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+    0 0 0 1px rgba(0, 0, 0, 0.02),
+    0 2px 8px rgba(0, 0, 0, 0.04);
+  /* Top rainbow bar stays but refined elsewhere if needed, currently reusing base class */
 }
 
+/* Hover state: "Lift" effect */
 :global([data-theme="light"]) .gameCard:hover {
-  border-image: linear-gradient(135deg, #39ff14, #f9f002, #05d9e8) 1;
-  box-shadow:
-    0 0 30px rgba(57, 255, 20, 0.5),
-    0 0 60px rgba(57, 255, 20, 0.3),
-    0 20px 40px rgba(0, 30, 0, 0.15);
   transform: translateY(-4px);
+  border-color: #CBD5E1;
+  /* Slate 300 */
+  box-shadow:
+    0 10px 30px -5px rgba(0, 0, 0, 0.06),
+    0 4px 10px -2px rgba(0, 0, 0, 0.02);
 }
 
-/* Light mode: Game card titles - bold with green glow */
+/* Light mode: Game card titles - Clean slate */
 :global([data-theme="light"]) .gameCard h3 {
-  color: #000000;
-  text-shadow:
-    0 0 10px #39ff14,
-    0 0 20px #39ff14;
+  color: #0F172A;
+  text-shadow: none;
 }
 
-/* Light mode: Features section - green→cyan→green dividers */
-:global([data-theme="light"]) .features::before {
-  background: linear-gradient(90deg, transparent, #39ff14, #05d9e8, #39ff14, transparent);
-  height: 3px;
-}
-
+/* Light mode: Features section - Slate divider */
+:global([data-theme="light"]) .features::before,
 :global([data-theme="light"]) .features::after {
-  background: linear-gradient(90deg, transparent, #05d9e8, #39ff14, #05d9e8, transparent);
-  height: 3px;
+  background: linear-gradient(90deg, transparent, #E2E8F0, transparent);
+  height: 1px;
 }
 
-/* Light mode: Feature items - VIBRANT colors */
+/* Light mode: Feature items - Clean colors */
 :global([data-theme="light"]) .feature h4 {
-  color: #000000;
-  text-shadow:
-    0 0 10px currentColor,
-    0 0 20px currentColor;
+  color: #1E293B;
+  text-shadow: none;
 }
 
-/* Light mode: Stats section - FROSTED GLASS with GREEN accents */
+/* Light mode: Stats section - Clean white cards */
 :global([data-theme="light"]) .stat {
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 2px solid rgba(57, 255, 20, 0.3);
-  box-shadow: 0 4px 20px rgba(0, 30, 0, 0.08);
+  background: #FFFFFF;
+  backdrop-filter: none;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 :global([data-theme="light"]) .stat:hover {
-  border-color: #39ff14;
-  box-shadow:
-    0 0 20px #39ff14,
-    0 0 40px rgba(57, 255, 20, 0.5);
+  border-color: #3B82F6;
+  /* Action Blue */
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
 }
 
-/* Light mode: Stat values - VIBRANT GREEN */
+/* Light mode: Stat values - Action Blue */
 :global([data-theme="light"]) .statValue {
-  color: #39ff14;
-  text-shadow:
-    0 0 10px #39ff14,
-    0 0 20px #39ff14;
+  color: #0284C7;
+  /* Sky 600 */
+  text-shadow: none;
 }
 
 :global([data-theme="light"]) .statLabel {
-  color: #000000;
+  color: #64748B;
 }
 
-/* Light mode: Footer divider - green→cyan gradient */
+/* Light mode: Footer divider - Slate */
 :global([data-theme="light"]) .footer::before {
-  background: linear-gradient(90deg, transparent, #39ff14, #05d9e8, #39ff14, transparent);
-  height: 3px;
+  background: linear-gradient(90deg, transparent, #E2E8F0, transparent);
+  height: 1px;
 }
 
-/* Light mode: Footer text - readable dark */
+/* Light mode: Footer text - Muted Slate */
 :global([data-theme="light"]) .footer {
-  color: #0a1a0a;
+  color: #64748B;
 }
 
 :global([data-theme="light"]) .footer a {
-  color: #39ff14;
-  text-shadow: 0 0 10px rgba(57, 255, 20, 0.5);
+  color: #0F172A;
+  text-shadow: none;
 }
 
 :global([data-theme="light"]) .footer a:hover {
-  text-shadow: 0 0 15px #39ff14, 0 0 30px #39ff14;
+  color: #0284C7;
+  text-shadow: none;
 }
 
-/* Light mode: Feature section - VIBRANT GREEN icons and titles */
+/* Light mode: Feature section - Icons */
 :global([data-theme="light"]) .featureIcon {
-  filter: drop-shadow(0 0 15px #39ff14) drop-shadow(0 0 30px #39ff14);
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+  color: #0284C7;
+  /* Fallback if icon color is inherited */
 }
 
 :global([data-theme="light"]) .feature h3 {
-  color: #39ff14;
-  text-shadow:
-    0 0 10px #39ff14,
-    0 0 20px #39ff14,
-    0 0 40px #39ff14;
+  color: #1E293B;
+  text-shadow: none;
 }
 
 :global([data-theme="light"]) .feature p {
-  color: #0a1a0a;
+  color: #64748B;
 }
 
-/* Light mode: Play Now buttons - vibrant green */
+/* Light mode: Play Now buttons - Solid Action */
 :global([data-theme="light"]) .playNowBtn {
-  border-color: #39ff14;
-  color: #39ff14;
-  text-shadow: 0 0 10px #39ff14;
-  box-shadow: 0 0 15px rgba(57, 255, 20, 0.4);
+  border-color: #0284C7;
+  color: #0284C7;
+  text-shadow: none;
+  box-shadow: none;
 }
 
 :global([data-theme="light"]) .playNowBtn:hover {
-  background: rgba(57, 255, 20, 0.15);
-  box-shadow: 0 0 20px #39ff14, 0 0 40px rgba(57, 255, 20, 0.6);
+  background: #F0F9FF;
+  /* Sky 50 */
+  box-shadow: 0 2px 4px rgba(2, 132, 199, 0.1);
 }
 
-/* Light mode: Multiplier badges - vibrant yellow */
+/* Light mode: Multiplier badges - Solid badge style */
 :global([data-theme="light"]) .multiplier {
-  color: #f9f002;
-  text-shadow: 0 0 10px #f9f002, 0 0 20px #f9f002;
-  border-color: rgba(249, 240, 2, 0.5);
+  color: #B45309;
+  /* Amber 700 */
+  background: #FEF3C7;
+  /* Amber 100 */
+  text-shadow: none;
+  border-color: transparent;
 }
 
-/* Light mode: Game names - bold dark with green glow */
+/* Light mode: Game names - Clean Slate */
 :global([data-theme="light"]) .gameName {
-  color: #000000;
-  text-shadow:
-    0 0 10px rgba(57, 255, 20, 0.6),
-    0 0 20px rgba(57, 255, 20, 0.4);
+  color: #0F172A;
+  text-shadow: none;
 }

@@ -402,83 +402,101 @@
 
 /* Responsive */
 @media (max-width: 768px) {
+
+    /* Fixed viewport - NO page scroll */
     .container {
-        padding: var(--space-md);
+        height: calc(100vh - 80px);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        padding: var(--space-sm);
     }
 
+    /* Hide header on mobile */
     .header {
-        margin-bottom: var(--space-lg);
-    }
-
-    .title {
-        font-size: 1.75rem;
-    }
-
-    .subtitle {
-        font-size: 1rem;
+        display: none;
     }
 
     .gameLayout {
-        grid-template-columns: 1fr;
-        gap: var(--space-md);
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-sm);
+        overflow: hidden;
     }
 
     .controlPanel {
         order: 1;
+        flex-shrink: 0;
+        gap: var(--space-xs);
     }
 
     .gameArea {
         order: 0;
-        padding: var(--space-lg);
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        padding: var(--space-md);
+        gap: var(--space-md);
     }
 
     .card {
-        padding: var(--space-md);
+        padding: var(--space-sm);
     }
 
     .card h3 {
-        font-size: 0.75rem;
-        margin-bottom: var(--space-sm);
+        font-size: 0.65rem;
+        margin-bottom: var(--space-xs);
+    }
+
+    .betInput {
+        padding: var(--space-xs) var(--space-sm);
+        margin-bottom: var(--space-xs);
+    }
+
+    .input {
+        font-size: 1rem;
     }
 
     .quickBets {
         gap: 4px;
-        margin-bottom: var(--space-sm);
+        margin-bottom: var(--space-xs);
     }
 
     .quickBtn,
     .actionBtn {
-        padding: var(--space-xs);
-        font-size: 0.875rem;
+        padding: 6px 4px;
+        font-size: 0.75rem;
     }
 
     .betTypeBtn {
-        padding: var(--space-sm);
-        font-size: 0.875rem;
+        padding: var(--space-xs);
+        font-size: 0.8rem;
     }
 
     .statsGrid {
-        gap: var(--space-sm);
+        gap: var(--space-xs);
     }
 
     .statLabel {
-        font-size: 0.7rem;
+        font-size: 0.6rem;
     }
 
     .statValue,
     .statValueHighlight,
     .statValueSuccess,
     .statValueStreak {
-        font-size: 1rem;
+        font-size: 0.95rem;
     }
 
     .rollBtn {
         padding: var(--space-md);
-        font-size: 1rem;
+        font-size: 0.9rem;
+        min-height: 44px;
     }
 
     .sliderContainer {
-        padding: var(--space-lg) var(--space-sm);
+        padding: var(--space-md) var(--space-xs);
     }
 
     .sliderLabels {
@@ -486,18 +504,22 @@
     }
 
     .diceBox {
-        width: 100px;
-        height: 100px;
+        width: 90px;
+        height: 90px;
     }
 
     .diceValue {
-        font-size: 2.5rem;
+        font-size: 2.25rem;
+    }
+
+    .diceResult {
+        gap: var(--space-md);
     }
 
     .resultWin,
     .resultLoss {
         padding: var(--space-sm) var(--space-md);
-        font-size: 0.875rem;
+        font-size: 0.85rem;
     }
 
     .resultEmoji {

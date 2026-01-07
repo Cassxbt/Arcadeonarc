@@ -1,17 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createPublicClient, createWalletClient, http, parseUnits } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
+import { createHmac } from 'crypto';
 import { arcTestnet, CONTRACTS } from '@/lib/constants';
 import { VAULT_ABI } from '@/lib/abi';
+import { logger } from '@/lib/logger';
 
-// Server signer private key - MUST be set in environment variables
 const SIGNER_PRIVATE_KEY = process.env.SIGNER_PRIVATE_KEY;
+const API_SECRET = process.env.API_SIGNING_SECRET || 'dev-secret-change-in-production';
+
 if (!SIGNER_PRIVATE_KEY) {
     throw new Error('SIGNER_PRIVATE_KEY environment variable is required');
 }
+
 const signerAccount = privateKeyToAccount(SIGNER_PRIVATE_KEY as `0x${string}`);
 
-// Create clients
 const publicClient = createPublicClient({
     chain: arcTestnet,
     transport: http(),
@@ -23,69 +26,95 @@ const walletClient = createWalletClient({
     account: signerAccount,
 });
 
-/**
- * Game Settlement API
- * 
- * This endpoint is called after each game to settle bets on-chain.
- * The signer wallet must be authorized on the vault contract.
- * 
- * Flow:
- * 1. Frontend plays game (instant, no tx)
- * 2. Frontend calls this API with result
- * 3. Backend calls vault.placeBet() to deduct bet
- * 4. Backend calls vault.settleBet() to credit winnings or take house cut
- * 5. Frontend refreshes balance
- * 
- * This atomic operation ensures the bet is properly deducted and settled in one go.
- */
-export async function POST(request: NextRequest) {
-    try {
-        const {
-            userAddress,
-            betAmount,
-            payout,
-            game,
-            won
-        } = await request.json();
+// Rate limiter
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT = 20;
+const RATE_WINDOW = 60 * 1000;
 
-        // Validate required fields
+function checkRateLimit(ip: string): boolean {
+    const now = Date.now();
+    const entry = rateLimitMap.get(ip);
+
+    if (!entry || now > entry.resetAt) {
+        rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_WINDOW });
+        return true;
+    }
+
+    if (entry.count >= RATE_LIMIT) return false;
+    entry.count++;
+    return true;
+}
+
+function getClientIp(request: NextRequest): string {
+    return request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+        || request.headers.get('x-real-ip')
+        || 'unknown';
+}
+
+function verifySignature(payload: object, signature: string, timestamp: number): boolean {
+    const now = Date.now();
+    const maxAge = 5 * 60 * 1000; // 5 minutes
+
+    if (now - timestamp > maxAge) return false;
+
+    const payloadStr = JSON.stringify(payload);
+    const expected = createHmac('sha256', API_SECRET).update(payloadStr).digest('hex');
+    return signature === expected;
+}
+
+export async function POST(request: NextRequest) {
+    const clientIp = getClientIp(request);
+
+    if (!checkRateLimit(clientIp)) {
+        logger.warn('Rate limit exceeded', { ip: clientIp });
+        return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    }
+
+    try {
+        const body = await request.json();
+
+        // Strict enforcement: Request must be signed
+        if (!body.signature || !body.payload) {
+            logger.warn('Unsigned settlement request rejected', { ip: clientIp });
+            return NextResponse.json({ error: 'Request must be signed' }, { status: 401 });
+        }
+
+        // Verify signature
+        if (!verifySignature(body.payload, body.signature, body.payload.timestamp)) {
+            logger.warn('Invalid signature', { ip: clientIp });
+            return NextResponse.json({ error: 'Invalid or expired signature' }, { status: 401 });
+        }
+
+        const payload: { userAddress: string; betAmount: number; payout: number; game: string; won: boolean; timestamp?: number } = body.payload;
+
+        const { userAddress, betAmount, payout, game, won } = payload;
+
         if (!userAddress || betAmount === undefined || payout === undefined) {
             return NextResponse.json(
-                { error: 'Missing required fields: userAddress, betAmount, payout' },
+                { error: 'Missing required fields' },
                 { status: 400 }
             );
         }
 
-        // Validate address format
         if (!/^0x[a-fA-F0-9]{40}$/.test(userAddress)) {
             return NextResponse.json(
-                { error: 'Invalid wallet address format' },
+                { error: 'Invalid address format' },
                 { status: 400 }
             );
         }
 
-        // Validate amounts
-        if (betAmount <= 0) {
+        if (betAmount <= 0 || payout < 0) {
             return NextResponse.json(
-                { error: 'Bet amount must be positive' },
+                { error: 'Invalid bet or payout amount' },
                 { status: 400 }
             );
         }
 
-        if (payout < 0) {
-            return NextResponse.json(
-                { error: 'Payout cannot be negative' },
-                { status: 400 }
-            );
-        }
-
-        // Convert to USDC decimals (6)
         const betAmountWei = parseUnits(betAmount.toString(), 6);
         const payoutWei = parseUnits(payout.toString(), 6);
 
-        console.log(`[Settle] User: ${userAddress}, Bet: ${betAmount}, Payout: ${payout}, Game: ${game}, Won: ${won}`);
+        logger.info('Processing settlement', { userAddress, betAmount, payout, game, won });
 
-        // Check if signer is authorized on vault
         const isAuthorized = await publicClient.readContract({
             address: CONTRACTS.ARCADE_VAULT,
             abi: VAULT_ABI,
@@ -94,18 +123,13 @@ export async function POST(request: NextRequest) {
         });
 
         if (!isAuthorized) {
-            console.error(`[Settle] Signer ${signerAccount.address} is NOT authorized on vault`);
+            logger.error('Signer not authorized', { signer: signerAccount.address });
             return NextResponse.json(
-                {
-                    error: 'Signer not authorized on vault',
-                    signerAddress: signerAccount.address,
-                    hint: 'Call vault.setGameAuthorization(signerAddress, true) from the vault owner'
-                },
+                { error: 'Signer not authorized on vault' },
                 { status: 403 }
             );
         }
 
-        // Check user has sufficient balance before proceeding
         const userBalance = await publicClient.readContract({
             address: CONTRACTS.ARCADE_VAULT,
             abi: VAULT_ABI,
@@ -120,8 +144,6 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Step 1: Call placeBet to deduct the bet amount from user
-        console.log(`[Settle] Step 1: Placing bet of ${betAmount} USDC`);
         const placeBetHash = await walletClient.writeContract({
             address: CONTRACTS.ARCADE_VAULT,
             abi: VAULT_ABI,
@@ -129,21 +151,18 @@ export async function POST(request: NextRequest) {
             args: [userAddress as `0x${string}`, betAmountWei],
         });
 
-        // Wait for placeBet confirmation
         const placeBetReceipt = await publicClient.waitForTransactionReceipt({ hash: placeBetHash });
 
         if (placeBetReceipt.status !== 'success') {
-            console.error(`[Settle] placeBet reverted: ${placeBetHash}`);
+            logger.error('placeBet reverted', { txHash: placeBetHash });
             return NextResponse.json(
                 { error: 'Failed to place bet', txHash: placeBetHash },
                 { status: 500 }
             );
         }
 
-        console.log(`[Settle] placeBet confirmed: ${placeBetHash}`);
+        logger.debug('placeBet confirmed', { txHash: placeBetHash });
 
-        // Step 2: Call settleBet to credit winnings or take house cut
-        console.log(`[Settle] Step 2: Settling with payout ${payout} USDC`);
         const settleBetHash = await walletClient.writeContract({
             address: CONTRACTS.ARCADE_VAULT,
             abi: VAULT_ABI,
@@ -151,11 +170,15 @@ export async function POST(request: NextRequest) {
             args: [userAddress as `0x${string}`, betAmountWei, payoutWei],
         });
 
-        // Wait for settleBet confirmation
         const settleBetReceipt = await publicClient.waitForTransactionReceipt({ hash: settleBetHash });
 
         if (settleBetReceipt.status === 'success') {
-            console.log(`[Settle] Settlement complete. Block: ${settleBetReceipt.blockNumber}`);
+            logger.info('Settlement complete', {
+                block: Number(settleBetReceipt.blockNumber),
+                userAddress,
+                betAmount,
+                payout
+            });
             return NextResponse.json({
                 success: true,
                 placeBetTxHash: placeBetHash,
@@ -167,50 +190,29 @@ export async function POST(request: NextRequest) {
                 won,
             });
         } else {
-            console.error(`[Settle] settleBet reverted: ${settleBetHash}`);
+            logger.error('settleBet reverted', { txHash: settleBetHash });
             return NextResponse.json(
-                { error: 'Settlement transaction reverted', txHash: settleBetHash },
+                { error: 'Settlement reverted', txHash: settleBetHash },
                 { status: 500 }
             );
         }
-    } catch (error: any) {
-        console.error('[Settle] Error:', error);
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        logger.error('Settlement failed', { error: message });
 
-        // Handle specific error cases
-        if (error.message?.includes('InsufficientBalance')) {
-            return NextResponse.json(
-                { error: 'User has insufficient balance in vault' },
-                { status: 400 }
-            );
+        if (message.includes('InsufficientBalance')) {
+            return NextResponse.json({ error: 'Insufficient balance' }, { status: 400 });
+        }
+        if (message.includes('UnauthorizedGame')) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+        }
+        if (message.includes('BetTooSmall')) {
+            return NextResponse.json({ error: 'Bet below minimum' }, { status: 400 });
+        }
+        if (message.includes('BetTooLarge')) {
+            return NextResponse.json({ error: 'Bet above maximum' }, { status: 400 });
         }
 
-        if (error.message?.includes('UnauthorizedGame')) {
-            return NextResponse.json(
-                {
-                    error: 'Signer not authorized to settle bets',
-                    signerAddress: signerAccount.address,
-                },
-                { status: 403 }
-            );
-        }
-
-        if (error.message?.includes('BetTooSmall')) {
-            return NextResponse.json(
-                { error: 'Bet amount below minimum (0.5 USDC)' },
-                { status: 400 }
-            );
-        }
-
-        if (error.message?.includes('BetTooLarge')) {
-            return NextResponse.json(
-                { error: 'Bet amount above maximum (100 USDC)' },
-                { status: 400 }
-            );
-        }
-
-        return NextResponse.json(
-            { error: error.message || 'Settlement failed' },
-            { status: 500 }
-        );
+        return NextResponse.json({ error: message }, { status: 500 });
     }
 }
