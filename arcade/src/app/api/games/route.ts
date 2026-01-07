@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
         const walletLower = wallet.toLowerCase();
 
         // Validate game type
-        if (!['dice', 'tower', 'crash'].includes(game)) {
+        if (!['dice', 'tower', 'crash', 'wheel', 'laser'].includes(game)) {
             return NextResponse.json({ error: 'Invalid game type' }, { status: 400 });
         }
 

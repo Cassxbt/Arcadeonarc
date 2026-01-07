@@ -5,7 +5,7 @@ import Link from 'next/link';
 import {
   TowerControl,
   Dice6,
-  Bomb,
+  Rocket,
   Zap,
   Target,
   DollarSign,
@@ -16,6 +16,7 @@ import {
   ChevronDown,
   Wallet,
   CircleDashed,
+  FerrisWheel,
   Grid3x3,
 } from '@/components/icons';
 import { GameSelector } from '@/components/GameSelector';
@@ -45,7 +46,7 @@ const games = [
   {
     id: 'crash',
     name: 'Cannon',
-    icon: Bomb,
+    icon: Rocket,
     iconColor: '#ff6b00',
     description: 'Watch the multiplier rise. Cash out before the BOOM!',
     multiplier: 'Unlimited',
@@ -54,7 +55,7 @@ const games = [
   {
     id: 'wheel',
     name: 'Wheel',
-    icon: CircleDashed,
+    icon: FerrisWheel,
     iconColor: '#9d4edd',
     description: 'Spin the wheel and land on multipliers up to 5x!',
     multiplier: 'Up to 5x',

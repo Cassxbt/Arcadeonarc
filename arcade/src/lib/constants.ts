@@ -81,4 +81,8 @@ export const SOUNDS = {
   COIN_WITHDRAW: '/sounds/coin withdraw.mp3',
   CHIME: '/sounds/chime.mp3',
   SLOT_MACHINE: '/sounds/slot machine.mp3',
+  // Game-specific sounds
+  WHEEL_SPIN: '/sounds/wheel-spin.mp3',
+  LASER_ZAP: '/sounds/laser-zap.mp3',
 };
+

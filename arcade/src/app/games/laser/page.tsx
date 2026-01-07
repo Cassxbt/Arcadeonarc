@@ -76,7 +76,7 @@ export default function LaserGame() {
         toggleDemoMode,
         isDemoLimitReached,
     } = useGame();
-    const { playSound } = useSound();
+    const { playSound, stopSound } = useSound();
 
     // Mode selection state
     const [modeSelected, setModeSelected] = useState(false);
@@ -106,6 +106,12 @@ export default function LaserGame() {
     // Start game
     const startGame = useCallback(() => {
         if (!canBet(betAmount) || gameState === 'playing') return;
+
+        // Stop any lingering sounds from previous game
+        stopSound('WIN');
+        stopSound('EXPLOSION');
+        stopSound('LASER_ZAP');
+
         playSound('CLICK');
         setGameState('playing');
         setShowSkullOverlay(false);
@@ -117,7 +123,7 @@ export default function LaserGame() {
             animatingType: null,
             lastSelectedCell: null,
         });
-    }, [canBet, betAmount, gameState, playSound]);
+    }, [canBet, betAmount, gameState, playSound, stopSound]);
 
     // Handle cell click
     const handleCellClick = useCallback((row: number, col: number) => {
@@ -134,7 +140,7 @@ export default function LaserGame() {
             animatingType: isColumnAttack ? 'column' : 'row',
             lastSelectedCell: { row, col },
         }));
-        playSound('CLICK');
+        playSound('LASER_ZAP');
 
         setTimeout(() => {
             const playerPosition = isColumnAttack ? col : row;

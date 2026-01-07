@@ -5,7 +5,9 @@ import {
     HelpCircle,
     TowerControl,
     Dice6,
-    Bomb,
+    Rocket,
+    FerrisWheel,
+    Grid3x3,
     ChevronDown,
     Target,
     Zap,
@@ -69,7 +71,7 @@ const faqSections: FAQSection[] = [
     {
         id: 'cannon',
         title: 'How to Play Cannon (Crash)',
-        icon: <Bomb size={24} style={{ color: 'var(--neon-pink)' }} />,
+        icon: <Rocket size={24} style={{ color: '#ff6b00' }} />,
         content: (
             <div className={styles.faqContent}>
                 <p><strong>Objective:</strong> Cash out before the cannon explodes! The multiplier rises exponentially — but crash at any moment!</p>
@@ -84,6 +86,56 @@ const faqSections: FAQSection[] = [
                 <h4>Crash Probability:</h4>
                 <p>The crash point is randomly determined each round. Higher multipliers are exponentially less likely.</p>
                 <p className={styles.formula}>~10% crash at 1.00x (instant) | Max payout: 100x</p>
+            </div>
+        ),
+    },
+    {
+        id: 'wheel',
+        title: 'How to Play Wheel',
+        icon: <FerrisWheel size={24} style={{ color: 'var(--neon-purple)' }} />,
+        content: (
+            <div className={styles.faqContent}>
+                <p><strong>Objective:</strong> Spin the wheel and hope it lands on a high multiplier to win big!</p>
+                <h4>How It Works:</h4>
+                <ol>
+                    <li>Place your bet (0.5 - 100 USDC)</li>
+                    <li>Click SPIN to start the wheel</li>
+                    <li>The wheel has 20 segments with different multipliers</li>
+                    <li>Wait for the wheel to stop on your segment</li>
+                    <li>Win instantly if it lands on a multiplier!</li>
+                </ol>
+                <h4>Segment Distribution:</h4>
+                <ul>
+                    <li><strong>0x (Loss):</strong> 8 segments (40%)</li>
+                    <li><strong>1.5x:</strong> 4 segments (20%)</li>
+                    <li><strong>1.8x:</strong> 3 segments (15%)</li>
+                    <li><strong>2x:</strong> 2 segments (10%)</li>
+                    <li><strong>3x:</strong> 2 segments (10%)</li>
+                    <li><strong>5x (Jackpot):</strong> 1 segment (5%)</li>
+                </ul>
+            </div>
+        ),
+    },
+    {
+        id: 'laser',
+        title: 'How to Play Gridy Laser',
+        icon: <Grid3x3 size={24} style={{ color: 'var(--neon-pink)' }} />,
+        content: (
+            <div className={styles.faqContent}>
+                <p><strong>Objective:</strong> Dodge lasers on a shrinking 10×10 grid. Survive as many rounds as possible!</p>
+                <h4>How It Works:</h4>
+                <ol>
+                    <li>Place your bet (0.5 - 100 USDC)</li>
+                    <li>Click any cell on the grid to dodge the laser</li>
+                    <li>Odd turns destroy a COLUMN, even turns destroy a ROW</li>
+                    <li>If your cell is in the destroyed row/column, you lose!</li>
+                    <li>Survive to increase your multiplier</li>
+                    <li>Cash out anytime after surviving at least one round</li>
+                </ol>
+                <h4>Multiplier Ladder:</h4>
+                <p>The multiplier increases exponentially as you survive more turns:</p>
+                <p className={styles.formula}>Turn 1: 1.06x → Turn 10: 3.83x → Turn 18: 95.9x</p>
+                <p>The grid shrinks after each attack, making survival progressively riskier!</p>
             </div>
         ),
     },

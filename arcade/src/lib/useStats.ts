@@ -4,14 +4,16 @@ import { useState, useEffect, useCallback } from 'react';
 import { createPublicClient, http, formatUnits, parseAbiItem } from 'viem';
 import { arcTestnet, CONTRACTS } from './constants';
 
+export type GameType = 'tower' | 'dice' | 'crash' | 'wheel' | 'laser';
+
 export interface PlatformStats {
     biggestWin: {
         amount: number;
         player: string;
-        game: 'tower' | 'dice' | 'crash';
+        game: GameType;
     } | null;
     mostPreferredGame: {
-        game: 'tower' | 'dice' | 'crash';
+        game: GameType;
         count: number;
         percentage: number;
     } | null;
@@ -21,6 +23,8 @@ export interface PlatformStats {
         tower: number;
         dice: number;
         crash: number;
+        wheel: number;
+        laser: number;
     };
     isLoading: boolean;
     error: string | null;
@@ -38,13 +42,20 @@ const DICE_ROLLED_EVENT = parseAbiItem('event DiceRolled(address indexed player,
 const CRASH_CASHOUT_EVENT = parseAbiItem('event CashedOut(address indexed player, uint256 multiplier, uint256 payout)');
 const CRASH_BET_PLACED = parseAbiItem('event BetPlaced(address indexed player, uint256 amount, uint256 autoCashout)');
 
+// Wheel events
+const WHEEL_SPUN_EVENT = parseAbiItem('event WheelSpun(address indexed player, uint256 betAmount, uint8 segment, uint256 multiplier, uint256 payout)');
+
+// Laser events
+const LASER_STARTED = parseAbiItem('event GameStarted(address indexed player, uint256 betAmount, uint256 nonce)');
+const LASER_CASHOUT_EVENT = parseAbiItem('event GameCashedOut(address indexed player, uint8 turn, uint256 multiplier, uint256 payout)');
+
 export function useStats(): PlatformStats {
     const [stats, setStats] = useState<PlatformStats>({
         biggestWin: null,
         mostPreferredGame: null,
         totalUsdcWon: 0,
         totalGamesPlayed: 0,
-        gameCounts: { tower: 0, dice: 0, crash: 0 },
+        gameCounts: { tower: 0, dice: 0, crash: 0, wheel: 0, laser: 0 },
         isLoading: true,
         error: null,
     });
@@ -54,7 +65,7 @@ export function useStats(): PlatformStats {
             setStats(prev => ({ ...prev, isLoading: true, error: null }));
 
             // Fetch events from each game contract
-            const [towerCashouts, towerStarts, diceRolls, crashCashouts, crashBets] = await Promise.all([
+            const [towerCashouts, towerStarts, diceRolls, crashCashouts, crashBets, wheelSpins, laserCashouts, laserStarts] = await Promise.all([
                 client.getLogs({
                     address: CONTRACTS.TOWER_GAME,
                     event: TOWER_CASHOUT_EVENT,
@@ -82,6 +93,26 @@ export function useStats(): PlatformStats {
                 client.getLogs({
                     address: CONTRACTS.CANNON_CRASH,
                     event: CRASH_BET_PLACED,
+                    fromBlock: BigInt(0),
+                    toBlock: 'latest',
+                }).catch(() => []),
+                // Wheel events
+                client.getLogs({
+                    address: CONTRACTS.WHEEL_GAME,
+                    event: WHEEL_SPUN_EVENT,
+                    fromBlock: BigInt(0),
+                    toBlock: 'latest',
+                }).catch(() => []),
+                // Laser events
+                client.getLogs({
+                    address: CONTRACTS.GRIDY_LASER,
+                    event: LASER_CASHOUT_EVENT,
+                    fromBlock: BigInt(0),
+                    toBlock: 'latest',
+                }).catch(() => []),
+                client.getLogs({
+                    address: CONTRACTS.GRIDY_LASER,
+                    event: LASER_STARTED,
                     fromBlock: BigInt(0),
                     toBlock: 'latest',
                 }).catch(() => []),
@@ -135,14 +166,46 @@ export function useStats(): PlatformStats {
                 }
             }
 
+            // Process Wheel spins (payout > 0 means win)
+            for (const log of wheelSpins) {
+                const payout = Number(formatUnits(log.args.payout as bigint, 6));
+                if (payout > 0) {
+                    totalUsdcWon += payout;
+
+                    if (!biggestWin || payout > biggestWin.amount) {
+                        biggestWin = {
+                            amount: payout,
+                            player: log.args.player as string,
+                            game: 'wheel',
+                        };
+                    }
+                }
+            }
+
+            // Process Laser cashouts
+            for (const log of laserCashouts) {
+                const payout = Number(formatUnits(log.args.payout as bigint, 6));
+                totalUsdcWon += payout;
+
+                if (!biggestWin || payout > biggestWin.amount) {
+                    biggestWin = {
+                        amount: payout,
+                        player: log.args.player as string,
+                        game: 'laser',
+                    };
+                }
+            }
+
             // Count games played
             const gameCounts = {
                 tower: towerStarts.length,
                 dice: diceRolls.length,
                 crash: crashBets.length,
+                wheel: wheelSpins.length,
+                laser: laserStarts.length,
             };
 
-            const totalGamesPlayed = gameCounts.tower + gameCounts.dice + gameCounts.crash;
+            const totalGamesPlayed = gameCounts.tower + gameCounts.dice + gameCounts.crash + gameCounts.wheel + gameCounts.laser;
 
             // Determine most preferred game
             let mostPreferredGame: PlatformStats['mostPreferredGame'] = null;
@@ -151,7 +214,7 @@ export function useStats(): PlatformStats {
                     a[1] > b[1] ? a : b
                 );
                 mostPreferredGame = {
-                    game: maxGame[0] as 'tower' | 'dice' | 'crash',
+                    game: maxGame[0] as GameType,
                     count: maxGame[1],
                     percentage: Math.round((maxGame[1] / totalGamesPlayed) * 100),
                 };

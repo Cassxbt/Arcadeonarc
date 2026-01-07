@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { useGame } from '@/lib/game-context';
 import { useSound } from '@/lib/sounds';
-import { Bomb, Rocket, Flame, CircleDollarSign, Sparkles, Zap, Target, BarChart3 } from '@/components/icons';
+import { Rocket, Flame, CircleDollarSign, Sparkles, Zap, Target, BarChart3 } from '@/components/icons';
 import { GameModeSelector } from '@/components/GameModeSelector';
 import { DemoLimitOverlay } from '@/components/DemoLimitOverlay';
 import { GameInfoPanel, InfoButton } from '@/components/GameInfoPanel';
@@ -22,7 +22,7 @@ const CRASH_GAME_RULES = [
         content: 'The multiplier starts at 1.00x and increases exponentially. The longer you wait, the more you win – if you don\'t crash.',
     },
     {
-        icon: <Bomb size={20} style={{ color: 'var(--neon-pink)' }} />,
+        icon: <Rocket size={20} style={{ color: '#ff6b00' }} />,
         title: 'The Crash',
         content: 'The rocket can crash at any moment. When it crashes, all active bets that haven\'t cashed out are lost.',
     },
@@ -217,7 +217,7 @@ export default function CrashGame() {
         return (
             <GameModeSelector
                 gameName="Cannon"
-                gameIcon={<Bomb size={64} style={{ color: 'var(--neon-pink)' }} />}
+                gameIcon={<Rocket size={64} style={{ color: '#ff6b00' }} />}
                 onDemoSelect={handleDemoSelect}
             />
         );
@@ -252,7 +252,7 @@ export default function CrashGame() {
             <div className={styles.header}>
                 <div className={styles.headerTop}>
                     <h1 className={styles.title}>
-                        <Bomb size={36} style={{ marginRight: '0.5rem', verticalAlign: 'middle', filter: 'drop-shadow(0 0 15px var(--neon-pink))' }} />
+                        <Rocket size={36} style={{ marginRight: '0.5rem', verticalAlign: 'middle', filter: 'drop-shadow(0 0 15px #ff6b00)' }} />
                         Cannon Crash
                     </h1>
                     <InfoButton onClick={() => setShowInfo(true)} />
@@ -346,7 +346,7 @@ export default function CrashGame() {
                     {gameState === 'crashed' && (
                         <div className={styles.resultLoss}>
                             <span className={styles.resultEmoji}>
-                                <Bomb size={32} style={{ filter: 'drop-shadow(0 0 15px var(--neon-pink))' }} />
+                                <Rocket size={32} style={{ filter: 'drop-shadow(0 0 15px #ff6b00)' }} />
                             </span>
                             <span>Crashed at {crashPoint.toFixed(2)}×</span>
                         </div>
@@ -456,7 +456,7 @@ export default function CrashGame() {
                             <div className={styles.explosionRing} />
                             <div className={styles.explosionRing} />
                             <div className={styles.explosionCore}>
-                                <Bomb size={80} style={{ color: 'var(--neon-pink)', filter: 'drop-shadow(0 0 30px var(--neon-pink))' }} />
+                                <Rocket size={80} style={{ color: '#ff6b00', filter: 'drop-shadow(0 0 30px #ff6b00)' }} />
                             </div>
                         </div>
                     )}

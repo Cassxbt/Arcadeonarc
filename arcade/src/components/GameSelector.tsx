@@ -6,8 +6,8 @@ import { useSound } from '@/lib/sounds';
 import {
     TowerControl,
     Dice6,
-    Bomb,
-    CircleDashed,
+    Rocket,
+    FerrisWheel,
     Grid3x3,
 } from './icons';
 import styles from './GameSelector.module.css';
@@ -38,14 +38,14 @@ const games: Game[] = [
     {
         id: 'crash',
         name: 'Cannon',
-        icon: <Bomb size={48} />,
+        icon: <Rocket size={48} />,
         color: 'var(--neon-pink)',
         path: '/games/crash',
     },
     {
         id: 'wheel',
         name: 'Wheel',
-        icon: <CircleDashed size={48} />,
+        icon: <FerrisWheel size={48} />,
         color: 'var(--neon-purple)',
         path: '/games/wheel',
     },

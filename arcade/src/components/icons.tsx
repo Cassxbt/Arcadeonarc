@@ -39,6 +39,7 @@ import {
     Loader2,
     Check,
     CircleDashed,
+    FerrisWheel,
     Grid3x3,
     type LucideIcon,
 } from 'lucide-react';
@@ -83,6 +84,7 @@ export {
     Loader2,
     Check,
     CircleDashed,
+    FerrisWheel,
     Grid3x3,
     type LucideIcon,
 };

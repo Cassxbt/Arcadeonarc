@@ -1,14 +1,16 @@
 'use client';
 
-import { useStats } from '@/lib/useStats';
+import { useStats, GameType } from '@/lib/useStats';
 import {
     BarChart3,
     Trophy,
     TowerControl,
     Dice6,
-    Bomb,
+    Rocket,
     DollarSign,
     Zap,
+    FerrisWheel,
+    Grid3x3,
 } from '@/components/icons';
 import styles from './page.module.css';
 
@@ -16,22 +18,28 @@ function formatAddress(address: string): string {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
 
-function getGameIcon(game: 'tower' | 'dice' | 'crash') {
+function getGameIcon(game: GameType) {
     switch (game) {
         case 'tower':
             return <TowerControl size={32} style={{ color: 'var(--neon-cyan)' }} />;
         case 'dice':
             return <Dice6 size={32} style={{ color: 'var(--neon-green)' }} />;
         case 'crash':
-            return <Bomb size={32} style={{ color: 'var(--neon-pink)' }} />;
+            return <Rocket size={32} style={{ color: '#ff6b00' }} />;
+        case 'wheel':
+            return <FerrisWheel size={32} style={{ color: 'var(--neon-yellow)' }} />;
+        case 'laser':
+            return <Grid3x3 size={32} style={{ color: 'var(--neon-pink)' }} />;
     }
 }
 
-function getGameName(game: 'tower' | 'dice' | 'crash'): string {
+function getGameName(game: GameType): string {
     switch (game) {
         case 'tower': return 'Tower';
         case 'dice': return 'Dice';
         case 'crash': return 'Cannon';
+        case 'wheel': return 'Wheel';
+        case 'laser': return 'Laser';
     }
 }
 
@@ -147,8 +155,16 @@ export default function StatsPage() {
                                     <span>{stats.gameCounts.dice}</span>
                                 </div>
                                 <div className={styles.breakdownItem}>
-                                    <Bomb size={16} style={{ color: 'var(--neon-pink)' }} />
+                                    <Rocket size={16} style={{ color: '#ff6b00' }} />
                                     <span>{stats.gameCounts.crash}</span>
+                                </div>
+                                <div className={styles.breakdownItem}>
+                                    <FerrisWheel size={16} style={{ color: 'var(--neon-yellow)' }} />
+                                    <span>{stats.gameCounts.wheel}</span>
+                                </div>
+                                <div className={styles.breakdownItem}>
+                                    <Grid3x3 size={16} style={{ color: 'var(--neon-pink)' }} />
+                                    <span>{stats.gameCounts.laser}</span>
                                 </div>
                             </div>
                         </>

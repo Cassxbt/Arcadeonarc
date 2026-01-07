@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo, useRef } from 'react';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { useGame } from '@/lib/game-context';
 import { useSound } from '@/lib/sounds';
-import { CircleDashed, Target, BarChart3 } from '@/components/icons';
+import { FerrisWheel, Target, BarChart3 } from '@/components/icons';
 import { GameModeSelector } from '@/components/GameModeSelector';
 import { DemoLimitOverlay } from '@/components/DemoLimitOverlay';
 import { GameInfoPanel, InfoButton } from '@/components/GameInfoPanel';
@@ -22,34 +22,35 @@ const WHEEL_GAME_RULES = [
         content: 'The wheel has 20 segments with multipliers: 0x (loss), 1.5x, 1.8x, 2x, 3x, and 5x!',
     },
     {
-        icon: <CircleDashed size={20} style={{ color: 'var(--neon-purple)' }} />,
+        icon: <FerrisWheel size={20} style={{ color: 'var(--neon-purple)' }} />,
         title: 'Simple Gameplay',
         content: 'Just place your bet and spin. No decisions to make - pure luck!',
     },
 ];
 
-// Wheel segment configuration (20 segments) - matching spec exactly
+// Wheel segment configuration (20 segments) - more balanced with 8 losses (40%)
+// Based on Stake's wheel which has more gray segments
 const SEGMENTS = [
-    { multiplier: 0, color: '#5a5a5a' },      // Gray
+    { multiplier: 0, color: '#5a5a5a' },      // Gray (loss)
     { multiplier: 1.5, color: '#39ff14' },    // Green
+    { multiplier: 0, color: '#5a5a5a' },      // Gray (loss)
     { multiplier: 1.8, color: '#66ff33' },    // Light Green
-    { multiplier: 1.5, color: '#39ff14' },
-    { multiplier: 0, color: '#5a5a5a' },
+    { multiplier: 0, color: '#5a5a5a' },      // Gray (loss)
     { multiplier: 2, color: '#ffdd00' },      // Yellow
-    { multiplier: 1.5, color: '#39ff14' },
+    { multiplier: 1.5, color: '#39ff14' },    // Green
+    { multiplier: 0, color: '#5a5a5a' },      // Gray (loss)
     { multiplier: 3, color: '#ff9500' },      // Orange
-    { multiplier: 1.8, color: '#66ff33' },
-    { multiplier: 1.5, color: '#39ff14' },
-    { multiplier: 0, color: '#5a5a5a' },
-    { multiplier: 1.5, color: '#39ff14' },
-    { multiplier: 2, color: '#ffdd00' },
-    { multiplier: 1.8, color: '#66ff33' },
+    { multiplier: 1.5, color: '#39ff14' },    // Green
+    { multiplier: 0, color: '#5a5a5a' },      // Gray (loss)
+    { multiplier: 1.8, color: '#66ff33' },    // Light Green
+    { multiplier: 0, color: '#5a5a5a' },      // Gray (loss)
+    { multiplier: 2, color: '#ffdd00' },      // Yellow
     { multiplier: 5, color: '#9d4edd' },      // Purple (Jackpot)
-    { multiplier: 1.5, color: '#39ff14' },
-    { multiplier: 0, color: '#5a5a5a' },
-    { multiplier: 2, color: '#ffdd00' },
-    { multiplier: 3, color: '#ff9500' },
-    { multiplier: 1.8, color: '#66ff33' },
+    { multiplier: 1.5, color: '#39ff14' },    // Green
+    { multiplier: 0, color: '#5a5a5a' },      // Gray (loss)
+    { multiplier: 1.8, color: '#66ff33' },    // Light Green
+    { multiplier: 0, color: '#5a5a5a' },      // Gray (loss)
+    { multiplier: 3, color: '#ff9500' },      // Orange
 ];
 
 type GameState = 'idle' | 'spinning' | 'result';
@@ -66,7 +67,7 @@ export default function WheelGame() {
         toggleDemoMode,
         isDemoLimitReached,
     } = useGame();
-    const { playSound } = useSound();
+    const { playSound, stopSound } = useSound();
 
     // Mode selection state
     const [modeSelected, setModeSelected] = useState(false);
@@ -93,11 +94,19 @@ export default function WheelGame() {
 
     // Spin the wheel
     const spinWheel = useCallback(() => {
-        if (!canBet(betAmount) || gameState === 'spinning') return;
+        if (!canBet(betAmount) || gameState !== 'idle') return;
+
+        // Stop any lingering sounds from previous game
+        stopSound('WIN');
+        stopSound('LOSE');
+        stopSound('WHEEL_SPIN');
 
         playSound('CLICK');
         setGameState('spinning');
         setResultSegment(null);
+
+        // Start the wheel spin sound (looped for duration of spin)
+        playSound('WHEEL_SPIN', { loop: true });
 
         // Generate random segment (0-19)
         const targetSegment = Math.floor(Math.random() * 20);
@@ -114,6 +123,9 @@ export default function WheelGame() {
 
         // After spin animation completes (5 seconds)
         setTimeout(() => {
+            // Stop the wheel spin sound
+            stopSound('WHEEL_SPIN');
+
             const segment = SEGMENTS[targetSegment];
             setResultSegment(targetSegment);
             setGameState('result');
@@ -146,7 +158,7 @@ export default function WheelGame() {
                 setGameState('idle');
             }, 2000);
         }, 5000);
-    }, [canBet, betAmount, gameState, currentRotation, playSound, addBetRecord]);
+    }, [canBet, betAmount, gameState, currentRotation, playSound, stopSound, addBetRecord]);
 
     // Quick bet handlers
     const handleQuickBet = (amount: number) => {
@@ -175,7 +187,7 @@ export default function WheelGame() {
         return (
             <GameModeSelector
                 gameName="Wheel"
-                gameIcon={<CircleDashed size={64} style={{ color: 'var(--neon-purple)' }} />}
+                gameIcon={<FerrisWheel size={64} style={{ color: 'var(--neon-purple)' }} />}
                 onDemoSelect={handleDemoSelect}
             />
         );
@@ -202,7 +214,7 @@ export default function WheelGame() {
             <div className={styles.header}>
                 <div className={styles.headerTop}>
                     <h1 className={styles.title}>
-                        <CircleDashed size={32} className={styles.titleIcon} />
+                        <FerrisWheel size={32} className={styles.titleIcon} />
                         WHEEL
                     </h1>
                     <InfoButton onClick={() => setShowInfo(true)} />
@@ -269,7 +281,7 @@ export default function WheelGame() {
                     {/* Spin Button */}
                     <button
                         onClick={spinWheel}
-                        disabled={!canBet(betAmount) || gameState === 'spinning'}
+                        disabled={!canBet(betAmount) || gameState !== 'idle'}
                         className={styles.spinBtn}
                     >
                         {gameState === 'spinning' ? 'SPINNING...' : `SPIN ($${betAmount})`}
@@ -371,7 +383,7 @@ export default function WheelGame() {
                                 </div>
                             ) : (
                                 <div className={styles.idleCenter}>
-                                    <CircleDashed size={48} className={styles.centerIcon} />
+                                    <FerrisWheel size={48} className={styles.centerIcon} />
                                 </div>
                             )}
                         </div>
@@ -380,10 +392,10 @@ export default function WheelGame() {
                     {/* Professional Legend */}
                     <div className={styles.legend}>
                         {[
-                            { mult: '0x', color: '#5a5a5a', count: 4 },
-                            { mult: '1.5x', color: '#39ff14', count: 6 },
-                            { mult: '1.8x', color: '#66ff33', count: 4 },
-                            { mult: '2x', color: '#ffdd00', count: 3 },
+                            { mult: '0x', color: '#5a5a5a', count: 8 },
+                            { mult: '1.5x', color: '#39ff14', count: 4 },
+                            { mult: '1.8x', color: '#66ff33', count: 3 },
+                            { mult: '2x', color: '#ffdd00', count: 2 },
                             { mult: '3x', color: '#ff9500', count: 2 },
                             { mult: '5x', color: '#9d4edd', count: 1 },
                         ].map(item => (
