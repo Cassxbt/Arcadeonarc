@@ -41,6 +41,7 @@ import {
     CircleDashed,
     FerrisWheel,
     Grid3x3,
+    X,
     type LucideIcon,
 } from 'lucide-react';
 
@@ -86,6 +87,7 @@ export {
     CircleDashed,
     FerrisWheel,
     Grid3x3,
+    X,
     type LucideIcon,
 };
 

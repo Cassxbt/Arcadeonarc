@@ -19,6 +19,7 @@ import {
     Moon,
     Twitter,
     MessageCircle,
+    X,
 } from './icons';
 import styles from './Navbar.module.css';
 
@@ -189,82 +190,91 @@ export function NavbarContent() {
                 </div>
             </nav>
 
-            {/* Mobile Drawer */}
-            <div className={`${styles.mobileDrawer} ${mobileMenuOpen ? styles.mobileDrawerOpen : ''}`}>
-                <div className={styles.mobileDrawerBackdrop} onClick={() => setMobileMenuOpen(false)} />
-                <div className={styles.mobileDrawerContent}>
-                    {/* Mobile Balance */}
-                    <div className={styles.mobileBalance}>
+            {/* Full-Screen Mobile Menu Overlay */}
+            <div className={`${styles.mobileOverlay} ${mobileMenuOpen ? styles.mobileOverlayOpen : ''}`}>
+                {/* Frosted backdrop */}
+                <div className={styles.mobileBackdrop} onClick={() => setMobileMenuOpen(false)} />
+
+                {/* Menu Content */}
+                <div className={styles.mobileMenuContent}>
+                    {/* Close Button */}
+                    <button
+                        className={styles.closeBtn}
+                        onClick={() => setMobileMenuOpen(false)}
+                        aria-label="Close menu"
+                    >
+                        <X size={28} />
+                    </button>
+
+                    {/* Balance Card */}
+                    <div className={`${styles.mobileBalanceCard} ${styles.menuItem} ${styles.menuItem1}`}>
                         <span className={styles.balanceLabel}>USDC</span>
-                        <span className={styles.mobileBalanceAmount}>
+                        <span className={styles.mobileBalanceValue}>
                             ${displayBalance.toFixed(2)}
                         </span>
                     </div>
 
-                    {/* Mobile Navigation */}
-                    <nav className={styles.mobileNav}>
+                    {/* Primary Navigation */}
+                    <nav className={styles.mobileNavSection}>
                         <Link
                             href="/faq"
-                            className={`${styles.mobileNavLink} ${isActiveLink('/faq') ? styles.mobileNavLinkActive : ''}`}
+                            className={`${styles.mobileMenuItem} ${styles.menuItem} ${styles.menuItem2} ${isActiveLink('/faq') ? styles.mobileMenuItemActive : ''}`}
                         >
-                            <span className={styles.mobileNavIcon}>
-                                <HelpCircle size={24} style={{ color: 'var(--neon-cyan)' }} />
+                            <span className={styles.menuItemIcon}>
+                                <HelpCircle size={24} />
                             </span>
-                            FAQ
+                            <span className={styles.menuItemText}>FAQ</span>
                         </Link>
                         <Link
                             href="/stats"
-                            className={`${styles.mobileNavLink} ${isActiveLink('/stats') ? styles.mobileNavLinkActive : ''}`}
+                            className={`${styles.mobileMenuItem} ${styles.menuItem} ${styles.menuItem3} ${isActiveLink('/stats') ? styles.mobileMenuItemActive : ''}`}
                         >
-                            <span className={styles.mobileNavIcon}>
-                                <BarChart3 size={24} style={{ color: 'var(--neon-green)' }} />
+                            <span className={styles.menuItemIcon}>
+                                <BarChart3 size={24} />
                             </span>
-                            Stats
+                            <span className={styles.menuItemText}>Stats</span>
                         </Link>
                         <Link
                             href="/leaderboard"
-                            className={`${styles.mobileNavLink} ${isActiveLink('/leaderboard') ? styles.mobileNavLinkActive : ''}`}
+                            className={`${styles.mobileMenuItem} ${styles.menuItem} ${styles.menuItem4} ${isActiveLink('/leaderboard') ? styles.mobileMenuItemActive : ''}`}
                         >
-                            <span className={styles.mobileNavIcon}>
-                                <Trophy size={24} style={{ color: 'var(--neon-yellow)' }} />
+                            <span className={styles.menuItemIcon}>
+                                <Trophy size={24} />
                             </span>
-                            Leaderboard
+                            <span className={styles.menuItemText}>Leaderboard</span>
                         </Link>
                     </nav>
 
-                    {/* Mobile Controls */}
-                    <div className={styles.mobileControls}>
+                    {/* Controls Row */}
+                    <div className={`${styles.mobileControlsRow} ${styles.menuItem} ${styles.menuItem5}`}>
                         <button
                             onClick={toggleSound}
-                            className={styles.mobileControlBtn}
+                            className={styles.mobileControlItem}
                         >
-                            <span>
-                                {soundEnabled ? (
-                                    <Volume2 size={20} style={{ color: 'var(--neon-cyan)' }} />
-                                ) : (
-                                    <VolumeX size={20} style={{ color: 'var(--neon-cyan)' }} />
-                                )}
-                            </span>
-                            {soundEnabled ? 'Sound On' : 'Sound Off'}
+                            {soundEnabled ? (
+                                <Volume2 size={22} />
+                            ) : (
+                                <VolumeX size={22} />
+                            )}
+                            <span>{soundEnabled ? 'Sound On' : 'Sound Off'}</span>
                         </button>
+                        <div className={styles.controlDivider} />
                         <button
                             onClick={toggleTheme}
-                            className={styles.mobileControlBtn}
+                            className={styles.mobileControlItem}
                         >
-                            <span>
-                                {theme === 'dark' ? (
-                                    <Sun size={20} style={{ color: 'var(--neon-cyan)' }} />
-                                ) : (
-                                    <Moon size={20} style={{ color: 'var(--neon-cyan)' }} />
-                                )}
-                            </span>
-                            {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+                            {theme === 'dark' ? (
+                                <Sun size={22} />
+                            ) : (
+                                <Moon size={22} />
+                            )}
+                            <span>{theme === 'dark' ? 'Light' : 'Dark'}</span>
                         </button>
                     </div>
 
-                    {/* Mobile Wallet Actions */}
+                    {/* Wallet Actions */}
                     {primaryWallet && (
-                        <div className={styles.mobileWalletActions}>
+                        <div className={`${styles.mobileWalletRow} ${styles.menuItem} ${styles.menuItem6}`}>
                             <button onClick={openDeposit} className={styles.mobileDepositBtn}>
                                 Deposit
                             </button>
@@ -274,20 +284,18 @@ export function NavbarContent() {
                         </div>
                     )}
 
-                    {/* Mobile Social Links */}
-                    <div className={styles.mobileSocials}>
-                        <a href="https://twitter.com/ArcadeOnArc" target="_blank" rel="noopener noreferrer" className={styles.socialLink}>
-                            <Twitter size={18} style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} />
-                            Twitter
+                    {/* Social Links */}
+                    <div className={`${styles.mobileSocialRow} ${styles.menuItem} ${styles.menuItem7}`}>
+                        <a href="https://twitter.com/ArcadeOnArc" target="_blank" rel="noopener noreferrer" className={styles.mobileSocialLink}>
+                            <Twitter size={20} />
                         </a>
-                        <a href="https://discord.com/invite/arcnetwork" target="_blank" rel="noopener noreferrer" className={styles.socialLink}>
-                            <MessageCircle size={18} style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} />
-                            Discord
+                        <a href="https://discord.com/invite/arcnetwork" target="_blank" rel="noopener noreferrer" className={styles.mobileSocialLink}>
+                            <MessageCircle size={20} />
                         </a>
                     </div>
 
-                    {/* Mobile Wallet Widget */}
-                    <div className={styles.mobileWalletWidget}>
+                    {/* Login/Wallet Widget - Bottom CTA */}
+                    <div className={`${styles.mobileWalletCTA} ${styles.menuItem} ${styles.menuItem8}`}>
                         <DynamicWidget />
                     </div>
                 </div>

@@ -904,7 +904,7 @@
 @media (max-width: 900px) {
     .gameLayout {
         grid-template-columns: 1fr;
-        gap: var(--space-lg);
+        gap: var(--space-md);
     }
 
     .controlPanel {
@@ -913,7 +913,7 @@
 
     .gameArea {
         order: 0;
-        min-height: 350px;
+        min-height: 280px;
     }
 
     .multiplierValue {
@@ -921,7 +921,7 @@
     }
 
     .multiplierFlying .multiplierValue {
-        font-size: 7rem;
+        font-size: 6rem;
     }
 
     .rules {
@@ -931,37 +931,202 @@
 
 @media (max-width: 480px) {
     .container {
-        padding: var(--space-md);
-        min-height: calc(100vh - 86px);
+        padding: var(--space-sm);
+        min-height: auto;
+        height: auto;
+        overflow-y: auto;
+        padding-bottom: calc(var(--space-xl) + env(safe-area-inset-bottom, 20px));
+    }
+
+    .header {
+        margin-bottom: var(--space-sm);
+    }
+
+    .headerTop {
+        gap: var(--space-sm);
     }
 
     .title {
-        font-size: 1.5rem;
+        font-size: 1.25rem;
+    }
+
+    .title svg {
+        width: 24px;
+        height: 24px;
+    }
+
+    .subtitle {
+        font-size: 0.75rem;
+    }
+
+    .gameLayout {
+        gap: var(--space-sm);
     }
 
     .gameArea {
-        min-height: 300px;
+        min-height: 200px;
+        max-height: 45vh;
+        border-radius: var(--radius-lg);
+    }
+
+    .multiplierDisplay {
+        padding: var(--space-md);
     }
 
     .multiplierValue {
-        font-size: 4rem;
-    }
-
-    .multiplierFlying .multiplierValue {
-        font-size: 5rem;
-    }
-
-    .rocket {
         font-size: 3rem;
     }
 
-    .card {
-        padding: var(--space-md);
+    .multiplierFlying .multiplierValue {
+        font-size: 4rem;
     }
 
+    .multiplierCrashed .multiplierValue {
+        font-size: 3rem;
+    }
+
+    .multiplierHint {
+        font-size: 0.7rem;
+        margin-top: var(--space-xs);
+    }
+
+    /* Smaller rocket for mobile */
+    .rocketContainer {
+        width: 60px;
+        height: 60px;
+    }
+
+    .rocketBody svg {
+        width: 48px;
+        height: 48px;
+    }
+
+    .flameContainer svg {
+        width: 30px;
+        height: 30px;
+    }
+
+    .glowTrail {
+        width: 80px;
+        height: 25px;
+    }
+
+    /* Compact control panel */
+    .controlPanel {
+        gap: var(--space-sm);
+    }
+
+    .card {
+        padding: var(--space-sm) var(--space-md);
+    }
+
+    .card h3 {
+        font-size: 0.65rem;
+        margin-bottom: var(--space-xs);
+    }
+
+    .betInput,
+    .autoCashout {
+        padding: var(--space-xs) var(--space-sm);
+    }
+
+    .betInput {
+        margin-bottom: var(--space-xs);
+    }
+
+    .input {
+        font-size: 1rem;
+    }
+
+    .quickBets {
+        gap: 4px;
+    }
+
+    .quickBtn {
+        padding: var(--space-xs);
+        font-size: 0.65rem;
+    }
+
+    .gameActions {
+        margin-top: var(--space-sm);
+    }
+
+    /* Ensure buttons are visible and tappable */
     .primaryBtn,
     .cashoutBtn {
         padding: var(--space-md);
-        font-size: 0.875rem;
+        font-size: 0.8rem;
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .primaryBtn svg,
+    .cashoutBtn svg {
+        width: 16px;
+        height: 16px;
+        margin-right: 6px;
+    }
+
+    /* Compact results */
+    .resultWin,
+    .resultLoss {
+        padding: var(--space-sm);
+        margin-top: var(--space-sm);
+    }
+
+    .resultEmoji {
+        font-size: 1.5rem;
+    }
+
+    .resultPayout {
+        font-size: 1.25rem;
+    }
+
+    /* Smaller explosion */
+    .explosionCore svg {
+        width: 50px;
+        height: 50px;
+    }
+
+    .explosionRing {
+        width: 60px;
+        height: 60px;
+    }
+
+    .cashoutSuccess svg {
+        width: 60px;
+        height: 60px;
+    }
+}
+
+/* Extra small screens */
+@media (max-width: 360px) {
+    .title {
+        font-size: 1.1rem;
+    }
+
+    .gameArea {
+        min-height: 180px;
+        max-height: 40vh;
+    }
+
+    .multiplierValue {
+        font-size: 2.5rem;
+    }
+
+    .multiplierFlying .multiplierValue {
+        font-size: 3rem;
+    }
+
+    .rocketContainer {
+        width: 50px;
+        height: 50px;
+    }
+
+    .rocketBody svg {
+        width: 40px;
+        height: 40px;
     }
 }

@@ -14,6 +14,8 @@ import {
   MessageCircle,
   Play,
   ChevronDown,
+  ChevronRight,
+  ChevronLeft,
   Wallet,
   CircleDashed,
   FerrisWheel,
@@ -116,9 +118,13 @@ export default function Home() {
       {/* Games Carousel */}
       <section className={styles.gamesSection}>
         <h2 className={styles.sectionTitle}>
-          <ChevronDown size={24} style={{ marginRight: '0.5rem', verticalAlign: 'middle', color: 'var(--neon-cyan)' }} />
+          <span className={styles.selectorArrowLeft}>
+            <ChevronRight size={24} />
+          </span>
           Select Your Game
-          <ChevronDown size={24} style={{ marginLeft: '0.5rem', verticalAlign: 'middle', color: 'var(--neon-cyan)' }} />
+          <span className={styles.selectorArrowRight}>
+            <ChevronLeft size={24} />
+          </span>
         </h2>
         <GameCarousel games={games} />
       </section>

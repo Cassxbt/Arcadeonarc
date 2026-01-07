@@ -1,5 +1,16 @@
 /* Global overrides and resets */
 
+/* Prevent horizontal scroll on mobile */
+html,
+body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+* {
+  box-sizing: border-box;
+}
+
 body {
   min-height: 100vh;
 }
