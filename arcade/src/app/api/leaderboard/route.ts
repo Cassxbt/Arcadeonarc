@@ -21,7 +21,6 @@ export async function GET(request: NextRequest) {
     try {
         const supabase = createServerClient();
 
-        // Get current week/year
         const now = new Date();
         const startOfYear = new Date(now.getFullYear(), 0, 1);
         const days = Math.floor((now.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
@@ -65,7 +64,6 @@ export async function GET(request: NextRequest) {
                 aggregated.set(session.wallet_address, current);
             }
 
-            // Get usernames for these wallets
             const wallets = Array.from(aggregated.keys());
             if (wallets.length > 0) {
                 const { data: users } = await supabase
@@ -75,7 +73,6 @@ export async function GET(request: NextRequest) {
 
                 const userMap = new Map(users?.map(u => [u.wallet_address, u]) || []);
 
-                // Calculate points and build leaderboard
                 const entries = wallets
                     .filter(wallet => aggregated.get(wallet)!.games_played >= 3) // Minimum 3 games
                     .map(wallet => {
@@ -175,7 +172,6 @@ export async function GET(request: NextRequest) {
 
             if (error) throw error;
 
-            // Get game stats for these users
             const wallets = users?.map(u => u.wallet_address) || [];
 
             let gameStats = new Map<string, { games_played: number; wins: number; total_won: number }>();

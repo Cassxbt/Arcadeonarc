@@ -11,10 +11,10 @@ if (!SIGNER_PRIVATE_KEY) {
 }
 const signer = privateKeyToAccount(SIGNER_PRIVATE_KEY as `0x${string}`);
 
-// Game state interface
 interface CrashGameState {
     crashPoint: number;
     startTime: number;
+    crashTime: number; // When crash will occur (for timing verification)
 }
 
 export async function POST(request: NextRequest) {
@@ -51,9 +51,16 @@ export async function POST(request: NextRequest) {
 
             crashPoint = Math.min(crashPoint, 1000000);
 
+            // Calculate when crash will occur based on multiplier formula: 1.06^(t*10)
+            // Solving for t: t = log(crashPoint/10000) / (10 * log(1.06))
+            const crashMultiplier = crashPoint / 10000;
+            const crashTimeOffset = Math.log(crashMultiplier) / (10 * Math.log(1.06)) * 1000;
+            const startTime = Date.now();
+
             await redis.set(gameKey, {
                 crashPoint,
-                startTime: Date.now(),
+                startTime,
+                crashTime: startTime + crashTimeOffset,
             } as CrashGameState, { ex: GAME_STATE_TTL });
 
             return NextResponse.json({

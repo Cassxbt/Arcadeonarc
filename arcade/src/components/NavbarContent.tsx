@@ -34,12 +34,10 @@ export function NavbarContent() {
     const [modalMode, setModalMode] = useState<'deposit' | 'withdraw'>('deposit');
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-    // Close mobile menu on route change
     useEffect(() => {
         setMobileMenuOpen(false);
     }, [pathname]);
 
-    // Prevent body scroll when mobile menu is open
     useEffect(() => {
         if (mobileMenuOpen) {
             document.body.style.overflow = 'hidden';
@@ -78,7 +76,6 @@ export function NavbarContent() {
         filter: 'drop-shadow(0 0 6px var(--neon-cyan))',
     };
 
-    // Get display balance - real balance when connected, 0 otherwise
     const displayBalance = primaryWallet ? balance : 0;
 
     return (

@@ -78,7 +78,6 @@ export default function LaserGame() {
     } = useGame();
     const { playSound, stopSound } = useSound();
 
-    // Mode selection state
     const [modeSelected, setModeSelected] = useState(false);
     const showModeSelector = !primaryWallet && !demoMode && !modeSelected;
     const showDemoLimitReached = demoMode && isDemoLimitReached('laser');
@@ -96,7 +95,6 @@ export default function LaserGame() {
     const [showSkullOverlay, setShowSkullOverlay] = useState(false);
     const [hoveredTurn, setHoveredTurn] = useState<number | null>(null);
 
-    // Calculate current multiplier
     const currentMultiplier = useMemo(() => {
         if (laserState.currentTurn === 0) return 1.00;
         const entry = FULL_MULTIPLIERS.find(m => m.turn === laserState.currentTurn);
@@ -107,7 +105,6 @@ export default function LaserGame() {
     const startGame = useCallback(() => {
         if (!canBet(betAmount) || gameState === 'playing') return;
 
-        // Stop any lingering sounds from previous game
         stopSound('WIN');
         stopSound('EXPLOSION');
         stopSound('LASER_ZAP');
@@ -125,7 +122,6 @@ export default function LaserGame() {
         });
     }, [canBet, betAmount, gameState, playSound, stopSound]);
 
-    // Handle cell click
     const handleCellClick = useCallback((row: number, col: number) => {
         if (gameState !== 'playing' || laserState.animatingIndex !== null) return;
 
@@ -177,6 +173,7 @@ export default function LaserGame() {
                     outcome: 'loss',
                     multiplier: 0,
                     payout: 0,
+                    gameParams: { survivedTurns: 0 },
                 });
             }
         }, 700);
@@ -195,6 +192,7 @@ export default function LaserGame() {
             outcome: 'win',
             multiplier: currentMultiplier,
             payout,
+            gameParams: { survivedTurns: laserState.currentTurn },
         });
     }, [gameState, laserState.currentTurn, betAmount, currentMultiplier, playSound, addBetRecord]);
 

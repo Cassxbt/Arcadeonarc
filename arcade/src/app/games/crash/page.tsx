@@ -68,7 +68,6 @@ export default function CrashGame() {
     } = useGame();
     const { playSound, stopSound } = useSound();
 
-    // Mode selection state
     const [modeSelected, setModeSelected] = useState(false);
     const showModeSelector = !primaryWallet && !demoMode && !modeSelected;
     const showDemoLimitReached = demoMode && isDemoLimitReached('crash');
@@ -84,11 +83,15 @@ export default function CrashGame() {
     const animationRef = useRef<number | null>(null);
     const startTimeRef = useRef<number>(0);
     const gameAreaRef = useRef<HTMLDivElement>(null);
+    const gameStateRef = useRef<GameState>(gameState);
 
-    // Calculate multiplier level for styling
+    // Keep gameStateRef in sync - critical for animation loop to see latest state
+    useEffect(() => {
+        gameStateRef.current = gameState;
+    }, [gameState]);
+
     const multiplierLevel = getMultiplierLevel(multiplier);
 
-    // Get multiplier display class
     const multiplierClass = useMemo(() => {
         if (gameState === 'crashed') return styles.multiplierCrashed;
         if (gameState === 'cashedOut') return styles.multiplierCashedOut;
@@ -101,10 +104,8 @@ export default function CrashGame() {
         return '';
     }, [gameState, multiplierLevel]);
 
-    // Game nonce for server communication
     const [gameNonce, setGameNonce] = useState<number>(0);
 
-    // Start game - calls server for secure crash point
     const startGame = useCallback(async () => {
         if (!canBet(betAmount) || gameState === 'flying') return;
 
@@ -159,6 +160,7 @@ export default function CrashGame() {
             outcome: 'win',
             multiplier,
             payout: betAmount * multiplier,
+            gameParams: { cashoutMultiplier: Math.floor(multiplier * 10000), crashPoint: 0 },
         });
 
         if (animationRef.current) {
@@ -166,16 +168,18 @@ export default function CrashGame() {
         }
     }, [gameState, multiplier, betAmount, playSound, addBetRecord, primaryWallet?.address, gameNonce]);
 
-    // Track if we've already checked crash this frame
     const lastCheckRef = useRef<number>(0);
 
-    // Game loop - checks with server periodically
+    // Animation loop
     useEffect(() => {
         if (gameState !== 'flying') return;
 
-        const checkInterval = 500; // Check server every 500ms
+        const checkInterval = 150; // Check server every 150ms (reduced from 500ms for better timing)
 
         const animate = async () => {
+            // Check ref for latest state - prevents animation continuing after cashout
+            if (gameStateRef.current !== 'flying') return;
+
             const elapsed = (Date.now() - startTimeRef.current) / 1000;
             const newMultiplier = Math.pow(1.06, elapsed * 10);
             const roundedMultiplier = Math.floor(newMultiplier * 100) / 100;
@@ -220,6 +224,7 @@ export default function CrashGame() {
                                 outcome: 'loss',
                                 multiplier: 0,
                                 payout: 0,
+                                gameParams: { cashoutMultiplier: 0, crashPoint: data.crashPoint },
                             });
                             return;
                         }
@@ -241,13 +246,11 @@ export default function CrashGame() {
         };
     }, [gameState, gameNonce, autoCashout, cashOut, betAmount, playSound, addBetRecord, primaryWallet?.address]);
 
-    // Quick bet handlers
     const handleQuickBet = (amount: number) => {
         if (gameState === 'flying') return;
         setBetAmount(amount);
     };
 
-    // Handle demo mode selection
     const handleDemoSelect = () => {
         toggleDemoMode();
         setModeSelected(true);
@@ -271,7 +274,6 @@ export default function CrashGame() {
         );
     }
 
-    // Calculate rocket position (synced with trajectory)
     const rocketProgress = gameState === 'flying' || gameState === 'crashed' || gameState === 'cashedOut'
         ? Math.min((multiplier - 1) * 12, 70)
         : 0;

@@ -18,7 +18,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         setMounted(true);
-        // Check for saved preference or system preference
         const savedTheme = localStorage.getItem('arcade-theme') as Theme | null;
         if (savedTheme) {
             setThemeState(savedTheme);
@@ -31,6 +30,18 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         if (mounted) {
             document.documentElement.setAttribute('data-theme', theme);
             localStorage.setItem('arcade-theme', theme);
+
+            // Force repaint for mobile Safari GPU caching
+            const forceRepaint = () => {
+                document.body.style.display = 'none';
+                // Trigger reflow
+                void document.body.offsetHeight;
+                document.body.style.display = '';
+            };
+
+            requestAnimationFrame(() => {
+                requestAnimationFrame(forceRepaint);
+            });
         }
     }, [theme, mounted]);
 
@@ -42,7 +53,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         setThemeState(newTheme);
     };
 
-    // Prevent flash during hydration
     if (!mounted) {
         return <>{children}</>;
     }

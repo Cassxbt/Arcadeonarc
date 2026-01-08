@@ -54,14 +54,11 @@ export function useStreak(): UseStreakReturn {
         fetchStreak();
     }, [fetchStreak]);
 
-    // Record a play and update streak
     const recordPlay = useCallback(async (_game: 'dice' | 'tower' | 'crash') => {
         if (!walletAddress) return;
 
         try {
-            // The streak update happens server-side when recording a game
-            // This function is called after a game is recorded
-            await fetchStreak(); // Refresh streak data
+            await fetchStreak();
         } catch (err) {
             console.error('Failed to update streak:', err);
         }
@@ -76,5 +73,4 @@ export function useStreak(): UseStreakReturn {
     };
 }
 
-// Export the multiplier function for use elsewhere
 export { getStreakMultiplier };

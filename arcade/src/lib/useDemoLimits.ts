@@ -5,7 +5,6 @@ import { useState, useCallback, useEffect } from 'react';
 const DEMO_STORAGE_KEY = 'arcadeDemoPlays';
 const MAX_PLAYS_PER_DAY = 5;
 
-// Game type including new games
 export type GameType = 'tower' | 'dice' | 'crash' | 'wheel' | 'laser';
 
 export interface DemoLimits {
@@ -51,7 +50,6 @@ function loadLimits(): DemoLimits {
         const parsed = JSON.parse(stored) as DemoLimits;
         const today = getToday();
 
-        // Reset counts for any game that has a different date
         const updated: DemoLimits = {
             tower: parsed.tower?.date === today ? parsed.tower : { count: 0, date: today },
             dice: parsed.dice?.date === today ? parsed.dice : { count: 0, date: today },
@@ -85,7 +83,6 @@ export function useDemoLimits(): DemoLimitState {
 
         const today = getToday();
 
-        // If date is different, reset count (effectively 5 plays available)
         if (gameLimit.date !== today) {
             return true;
         }
@@ -99,7 +96,6 @@ export function useDemoLimits(): DemoLimitState {
 
         const today = getToday();
 
-        // If date is different, all plays available
         if (gameLimit.date !== today) {
             return MAX_PLAYS_PER_DAY;
         }
@@ -115,7 +111,6 @@ export function useDemoLimits(): DemoLimitState {
         const today = getToday();
         const currentLimit = limits?.[game] || { count: 0, date: today };
 
-        // Reset if new day or no date
         const newCount = currentLimit.date === today ? (currentLimit.count || 0) + 1 : 1;
 
         if (newCount > MAX_PLAYS_PER_DAY) {

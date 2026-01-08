@@ -56,7 +56,6 @@ export async function POST(request: NextRequest) {
 
         const supabase = createServerClient();
 
-        // Check if wallet already registered
         const { data: existingWallet } = await supabase
             .from('users')
             .select('wallet_address')
@@ -67,7 +66,6 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Wallet already registered' }, { status: 400 });
         }
 
-        // Check if username is taken (case-insensitive)
         const { data: existingUsername } = await supabase
             .from('users')
             .select('wallet_address')
@@ -78,7 +76,6 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Username already taken' }, { status: 400 });
         }
 
-        // Create user
         const { data: newUser, error } = await supabase
             .from('users')
             .insert({
@@ -126,7 +123,6 @@ export async function PATCH(request: NextRequest) {
 
         const supabase = createServerClient();
 
-        // Get current user
         const { data: currentUser, error: fetchError } = await supabase
             .from('users')
             .select('*')
@@ -141,7 +137,6 @@ export async function PATCH(request: NextRequest) {
             return NextResponse.json({ error: 'No username changes remaining' }, { status: 400 });
         }
 
-        // Check if new username is taken
         const { data: existingUsername } = await supabase
             .from('users')
             .select('wallet_address')
@@ -153,7 +148,6 @@ export async function PATCH(request: NextRequest) {
             return NextResponse.json({ error: 'Username already taken' }, { status: 400 });
         }
 
-        // Update username
         const { data: updatedUser, error: updateError } = await supabase
             .from('users')
             .update({

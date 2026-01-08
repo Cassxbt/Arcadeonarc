@@ -4,6 +4,7 @@ import { arcTestnet, CONTRACTS } from '@/lib/constants';
 import { VAULT_ABI } from '@/lib/abi';
 import { createServerClient } from '@/lib/supabase-server';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+import { getSessionWallet } from '@/lib/session';
 
 const publicClient = createPublicClient({
     chain: arcTestnet,
@@ -23,13 +24,11 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-        const { wallet } = await request.json();
-
-        if (!wallet || !/^0x[a-fA-F0-9]{40}$/.test(wallet)) {
-            return NextResponse.json({ error: 'Invalid wallet address' }, { status: 400 });
+        // SECURITY: Get wallet from verified session
+        const wallet = await getSessionWallet(request);
+        if (!wallet) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
-
-        const walletLower = wallet.toLowerCase();
 
         // Read actual vault balance from blockchain
         const vaultBalance = await publicClient.readContract({
@@ -47,7 +46,7 @@ export async function POST(request: NextRequest) {
         const { error } = await supabase
             .from('users')
             .update({ server_balance: balanceNumber })
-            .eq('wallet_address', walletLower);
+            .eq('wallet_address', wallet);
 
         if (error) {
             console.error('Failed to sync balance:', error);

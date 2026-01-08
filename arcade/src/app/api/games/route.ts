@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+import { calculateServerPayout } from '@/lib/game-logic';
+import { getSessionWallet } from '@/lib/session';
 
 export async function POST(request: NextRequest) {
     const clientIp = getClientIp(request);
@@ -10,14 +12,18 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-        const body = await request.json();
-        const { wallet, game, bet_amount, payout, multiplier } = body;
-
-        if (!wallet || !game || bet_amount === undefined || payout === undefined) {
-            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        // SECURITY: Get wallet from verified session, not from request body
+        const wallet = await getSessionWallet(request);
+        if (!wallet) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const walletLower = wallet.toLowerCase();
+        const body = await request.json();
+        const { game, bet_amount, game_params } = body;
+
+        if (!game || bet_amount === undefined || !game_params) {
+            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        }
 
         if (!['dice', 'tower', 'crash', 'wheel', 'laser'].includes(game)) {
             return NextResponse.json({ error: 'Invalid game type' }, { status: 400 });
@@ -27,18 +33,25 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Invalid bet amount' }, { status: 400 });
         }
 
-        if (payout < 0 || payout > bet_amount * 100) {
-            return NextResponse.json({ error: 'Invalid payout value' }, { status: 400 });
+        // SECURITY FIX: Calculate payout server-side instead of trusting client
+        let serverCalculated: { payout: number; multiplier: number; won: boolean };
+        try {
+            serverCalculated = calculateServerPayout(game, bet_amount, game_params);
+        } catch (err) {
+            console.error('Payout calculation failed:', err);
+            return NextResponse.json({ error: 'Invalid game parameters' }, { status: 400 });
         }
+
+        const { payout, multiplier, won } = serverCalculated;
 
         const supabase = createServerClient();
 
         const { data, error } = await supabase.rpc('place_bet_atomic', {
-            p_wallet: walletLower,
+            p_wallet: wallet,
             p_bet_amount: bet_amount,
             p_payout: payout,
             p_game: game,
-            p_multiplier: multiplier || 0
+            p_multiplier: multiplier
         });
 
         if (error) {
@@ -61,13 +74,16 @@ export async function POST(request: NextRequest) {
             success: true,
             newBalance: result.new_balance,
             streak: result.streak,
-            won: result.won
+            won: won,
+            payout: payout,
+            multiplier: multiplier
         });
     } catch (error) {
         console.error('Error recording game:', error);
         return NextResponse.json({ error: 'Failed to record game' }, { status: 500 });
     }
 }
+
 
 export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;

@@ -808,42 +808,134 @@
     transform: translateY(-1px);
 }
 
-
-
-:global([data-theme="light"]) .mobileDrawerContent {
+/* Mobile Menu Light Mode Overrides */
+:global([data-theme="light"]) .mobileBackdrop {
     background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border-left: 2px solid #39ff14;
-    box-shadow: -10px 0 40px rgba(57, 255, 20, 0.2);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
 }
 
-:global([data-theme="light"]) .mobileBalance {
-    background: rgba(255, 255, 255, 0.9);
+:global([data-theme="light"]) .mobileMenuContent {
+    background: transparent;
 }
 
-:global([data-theme="light"]) .mobileNavLink {
-    color: #0a1a0a;
+:global([data-theme="light"]) .closeBtn {
+    background: rgba(0, 0, 0, 0.05);
+    border-color: rgba(0, 0, 0, 0.15);
+    color: #1E293B;
 }
 
-:global([data-theme="light"]) .mobileNavLink:hover {
-    background: rgba(5, 217, 232, 0.1);
-    border-color: #05d9e8;
-    color: #05d9e8;
+:global([data-theme="light"]) .closeBtn:hover {
+    background: rgba(255, 42, 109, 0.1);
+    border-color: #FF2A6D;
+    color: #FF2A6D;
 }
 
-:global([data-theme="light"]) .mobileNavLinkActive {
-    background: rgba(57, 255, 20, 0.1);
-    border-color: #39ff14;
-    color: #39ff14;
+:global([data-theme="light"]) .mobileBalanceCard {
+    background: rgba(5, 150, 105, 0.08);
+    border-color: #059669;
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.15);
 }
 
-:global([data-theme="light"]) .mobileControlBtn {
-    background: rgba(255, 255, 255, 0.9);
-    color: #0a1a0a;
+:global([data-theme="light"]) .mobileBalanceValue {
+    color: #059669;
+    text-shadow: none;
 }
 
-:global([data-theme="light"]) .mobileControlBtn:hover {
-    border-color: #05d9e8;
-    color: #05d9e8;
+:global([data-theme="light"]) .mobileMenuItem {
+    background: rgba(0, 0, 0, 0.03);
+    border-color: transparent;
+}
+
+:global([data-theme="light"]) .mobileMenuItem:hover {
+    background: rgba(0, 0, 0, 0.06);
+    border-color: #CBD5E1;
+}
+
+:global([data-theme="light"]) .mobileMenuItemActive {
+    background: rgba(255, 42, 109, 0.08);
+    border-color: #FF2A6D;
+}
+
+:global([data-theme="light"]) .menuItemIcon {
+    filter: none;
+}
+
+:global([data-theme="light"]) .mobileMenuItem:nth-child(1) .menuItemIcon {
+    color: #0891B2;
+}
+
+:global([data-theme="light"]) .mobileMenuItem:nth-child(2) .menuItemIcon {
+    color: #059669;
+}
+
+:global([data-theme="light"]) .mobileMenuItem:nth-child(3) .menuItemIcon {
+    color: #D97706;
+}
+
+:global([data-theme="light"]) .menuItemText {
+    color: #1E293B;
+    text-shadow: none;
+}
+
+:global([data-theme="light"]) .mobileMenuItemActive .menuItemText {
+    color: #FF2A6D;
+}
+
+:global([data-theme="light"]) .mobileControlsRow {
+    background: rgba(0, 0, 0, 0.03);
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
+:global([data-theme="light"]) .mobileControlItem {
+    color: #0891B2;
+}
+
+:global([data-theme="light"]) .mobileControlItem:hover {
+    background: rgba(8, 145, 178, 0.08);
+}
+
+:global([data-theme="light"]) .mobileControlItem span {
+    color: #475569;
+}
+
+:global([data-theme="light"]) .controlDivider {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+:global([data-theme="light"]) .mobileDepositBtn {
+    background: #0F172A;
+    color: #FFFFFF;
+    border-color: #0F172A;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25);
+}
+
+:global([data-theme="light"]) .mobileDepositBtn:hover {
+    background: #1E293B;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.3);
+}
+
+:global([data-theme="light"]) .mobileWithdrawBtn {
+    background: #FFFFFF;
+    color: #64748B;
+    border-color: #E2E8F0;
+}
+
+:global([data-theme="light"]) .mobileWithdrawBtn:hover {
+    background: #F8FAFC;
+    color: #1E293B;
+    border-color: #CBD5E1;
+}
+
+:global([data-theme="light"]) .mobileSocialLink {
+    background: rgba(0, 0, 0, 0.03);
+    border-color: rgba(0, 0, 0, 0.1);
+    color: #64748B;
+}
+
+:global([data-theme="light"]) .mobileSocialLink:hover {
+    background: rgba(255, 42, 109, 0.08);
+    border-color: #FF2A6D;
+    color: #FF2A6D;
+    box-shadow: 0 4px 12px rgba(255, 42, 109, 0.15);
 }

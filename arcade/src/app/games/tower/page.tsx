@@ -54,7 +54,6 @@ export default function TowerGame() {
     } = useGame();
     const { playSound, stopSound } = useSound();
 
-    // Mode selection state - show selector if not signed in and not in demo
     const [modeSelected, setModeSelected] = useState(false);
     const showModeSelector = !primaryWallet && !demoMode && !modeSelected;
     const showDemoLimitReached = demoMode && isDemoLimitReached('tower');
@@ -62,15 +61,13 @@ export default function TowerGame() {
     const [gameState, setGameState] = useState<GameState>('idle');
     const [currentRow, setCurrentRow] = useState(-1);
     const [tiles, setTiles] = useState<TileState[][]>([]);
-    const [deathPositions, setDeathPositions] = useState<number[]>([]);
+    const [revealedDeaths, setRevealedDeaths] = useState<Map<number, number>>(new Map());
     const [currentMultiplier, setCurrentMultiplier] = useState(1);
     const [isShaking, setIsShaking] = useState(false);
     const [showInfo, setShowInfo] = useState(false);
+    const [gameNonce, setGameNonce] = useState(0);
+    const [isRevealing, setIsRevealing] = useState(false);
 
-    // Calculate camera offset based on current row
-    // Positive value moves tower DOWN on screen.
-    // Player starts at bottom (Row 0). As they climb to Row 1, 2...
-    // the tower slides DOWN to keep the active row visible near the bottom.
     const cameraOffset = useMemo(() => {
         if (currentRow < 0) return 0;
         return currentRow * ROW_HEIGHT;
@@ -99,13 +96,8 @@ export default function TowerGame() {
         };
     }, [towerHistory]);
 
-    // Initialize game grid
+    // Initialize game grid - NO death positions pre-generated (server reveals per tile)
     const initializeGame = useCallback(() => {
-        const deaths = TILE_PATTERN.map(tileCount =>
-            Math.floor(Math.random() * tileCount)
-        );
-        setDeathPositions(deaths);
-
         const newTiles = TILE_PATTERN.map(tileCount =>
             Array.from({ length: tileCount }, () => ({
                 revealed: false,
@@ -114,69 +106,97 @@ export default function TowerGame() {
             }))
         );
         setTiles(newTiles);
+        setRevealedDeaths(new Map());
         setCurrentRow(-1);
         setCurrentMultiplier(1);
         setIsShaking(false);
+        setIsRevealing(false);
     }, []);
 
     const startGame = useCallback(() => {
         if (!canBet(betAmount)) return;
 
-        // Stop any lingering sounds from previous game
         stopSound('WIN');
         stopSound('LOSE');
         stopSound('CASH_OUT');
 
         initializeGame();
+        setGameNonce(Date.now());
         setGameState('playing');
         setCurrentRow(0);
         playSound('CLICK');
     }, [betAmount, canBet, initializeGame, playSound, stopSound]);
 
-    const handleTileClick = useCallback((rowIndex: number, tileIndex: number) => {
+    const handleTileClick = useCallback(async (rowIndex: number, tileIndex: number) => {
         if (gameState !== 'playing') return;
         if (rowIndex !== currentRow) return;
+        if (isRevealing) return;
 
-        const isDeath = deathPositions[rowIndex] === tileIndex;
+        setIsRevealing(true);
 
-        setTiles(prev => {
-            const newTiles = [...prev];
-            // Only reveal the clicked tile + mark as selected
-            newTiles[rowIndex] = newTiles[rowIndex].map((tile, i) => ({
-                ...tile,
-                revealed: i === tileIndex ? true : tile.revealed,
-                isSelected: i === tileIndex,
-                // On loss, reveal deaths. On win, we only reveal the clicked one here.
-                // Loss logic below handles revealing deaths if needed.
-                isDeath: deathPositions[rowIndex] === i,
-            }));
-            return newTiles;
-        });
-
-        if (isDeath) {
-            playSound('LOSE');
-            setIsShaking(true);
-            setTimeout(() => setIsShaking(false), 400);
-            setGameState('lost');
-            addBetRecord({
-                game: 'tower',
-                betAmount,
-                outcome: 'loss',
-                multiplier: 0,
-                payout: 0,
+        try {
+            // Call server for secure death tile reveal
+            const response = await fetch('/api/tower/reveal', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userAddress: primaryWallet?.address || 'demo',
+                    nonce: gameNonce,
+                    row: rowIndex,
+                    tilesInRow: TILE_PATTERN[rowIndex],
+                }),
             });
-        } else {
-            playSound('CLICK');
-            const newMultiplier = MULTIPLIERS[rowIndex];
-            setCurrentMultiplier(newMultiplier);
 
-            if (rowIndex === TOWER_ROWS - 1) {
-                cashOut();
-            } else {
-                setTimeout(() => setCurrentRow(rowIndex + 1), 300);
+            if (!response.ok) {
+                throw new Error('Failed to reveal tile');
             }
+
+            const { deathTile } = await response.json();
+            const isDeath = deathTile === tileIndex;
+
+            setRevealedDeaths(prev => new Map(prev).set(rowIndex, deathTile));
+
+            setTiles(prev => {
+                const newTiles = [...prev];
+                newTiles[rowIndex] = newTiles[rowIndex].map((tile, i) => ({
+                    ...tile,
+                    revealed: i === tileIndex || i === deathTile,
+                    isSelected: i === tileIndex,
+                    isDeath: i === deathTile,
+                }));
+                return newTiles;
+            });
+
+            if (isDeath) {
+                playSound('LOSE');
+                setIsShaking(true);
+                setTimeout(() => setIsShaking(false), 400);
+                setGameState('lost');
+                addBetRecord({
+                    game: 'tower',
+                    betAmount,
+                    outcome: 'loss',
+                    multiplier: 0,
+                    payout: 0,
+                    gameParams: { row: rowIndex },
+                });
+            } else {
+                playSound('CLICK');
+                const newMultiplier = MULTIPLIERS[rowIndex];
+                setCurrentMultiplier(newMultiplier);
+
+                if (rowIndex === TOWER_ROWS - 1) {
+                    cashOut();
+                } else {
+                    setTimeout(() => setCurrentRow(rowIndex + 1), 300);
+                }
+            }
+        } catch (error) {
+            console.error('Tile reveal error:', error);
+        } finally {
+            setIsRevealing(false);
         }
-    }, [gameState, currentRow, deathPositions, betAmount, playSound, addBetRecord]);
+    }, [gameState, currentRow, gameNonce, primaryWallet?.address, isRevealing, betAmount, playSound, addBetRecord]);
 
     const cashOut = useCallback(() => {
         if (gameState !== 'playing' || currentRow < 0) return;
@@ -190,23 +210,22 @@ export default function TowerGame() {
             outcome: 'win',
             multiplier: currentMultiplier,
             payout,
+            gameParams: { row: currentRow },
         });
 
-        // Reveal all death tiles
         setTiles(prev => prev.map((row, rowIndex) =>
             row.map((tile, tileIndex) => ({
                 ...tile,
-                revealed: true,
-                isDeath: deathPositions[rowIndex] === tileIndex,
+                revealed: revealedDeaths.has(rowIndex) ? true : tile.revealed,
+                isDeath: revealedDeaths.get(rowIndex) === tileIndex,
             }))
         ));
-    }, [gameState, currentRow, betAmount, currentMultiplier, deathPositions, playSound, addBetRecord]);
+    }, [gameState, currentRow, betAmount, currentMultiplier, revealedDeaths, playSound, addBetRecord]);
 
     useEffect(() => {
         initializeGame();
     }, [initializeGame]);
 
-    // Handle demo mode selection
     const handleDemoSelect = () => {
         toggleDemoMode();
         setModeSelected(true);

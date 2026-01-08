@@ -11,7 +11,6 @@ if (!SIGNER_PRIVATE_KEY) {
 }
 const signer = privateKeyToAccount(SIGNER_PRIVATE_KEY as `0x${string}`);
 
-// Game state interface
 interface LaserGameState {
     currentTurn: number;
     destroyedColumns: number[];

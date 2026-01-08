@@ -1,10 +1,12 @@
 'use client';
 
-import { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { useDemoLimits, GameType } from './useDemoLimits';
 import { useUser } from './useUser';
 import { useStreak } from './useStreak';
+import { getSupabaseClient } from './supabase';
+import { broadcastBalanceUpdate, subscribeToBalanceUpdates } from './cross-tab-sync';
 
 interface GameContextType {
     // Balance
@@ -56,6 +58,7 @@ export interface BetRecord {
     outcome: 'win' | 'loss';
     multiplier: number;
     payout: number;
+    gameParams?: Record<string, unknown>;
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -85,7 +88,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     // Bet history
     const [betHistory, setBetHistory] = useState<BetRecord[]>([]);
 
-    // Show username modal when wallet connects and user isn't registered
     useEffect(() => {
         if (primaryWallet && !isRegistered && !demoMode) {
             const timer = setTimeout(() => {
@@ -95,7 +97,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         }
     }, [primaryWallet, isRegistered, demoMode]);
 
-    // Fetch server balance from Supabase (via user data)
     const refreshBalance = useCallback(async () => {
         if (!primaryWallet?.address) {
             setBalance(0);
@@ -104,7 +105,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
         setIsLoading(true);
         try {
-            // Fetch user data which includes server_balance
             const response = await fetch(`/api/users?wallet=${primaryWallet.address.toLowerCase()}`);
             const data = await response.json();
 
@@ -121,7 +121,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         }
     }, [primaryWallet?.address]);
 
-    // Sync vault balance to server after deposit
     const syncBalanceAfterDeposit = useCallback(async () => {
         if (!primaryWallet?.address) return;
 
@@ -138,7 +137,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
             }
         } catch (error) {
             console.error('Failed to sync balance:', error);
-            // Fallback to regular refresh
             await refreshBalance();
         }
     }, [primaryWallet?.address, refreshBalance]);
@@ -148,11 +146,59 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
             refreshBalance();
         }
     }, [primaryWallet, isRegistered, refreshBalance]);
-
+    // Supabase Realtime + cross-tab sync
     useEffect(() => {
         if (!primaryWallet?.address || demoMode) return;
-        const interval = setInterval(refreshBalance, 30000);
-        return () => clearInterval(interval);
+
+        const walletLower = primaryWallet.address.toLowerCase();
+        const supabase = getSupabaseClient();
+        let reconnectAttempts = 0;
+        const maxReconnectAttempts = 5;
+
+        const channel = supabase
+            .channel(`balance:${walletLower}`)
+            .on(
+                'postgres_changes',
+                {
+                    event: 'UPDATE',
+                    schema: 'public',
+                    table: 'users',
+                    filter: `wallet_address=eq.${walletLower}`,
+                },
+                (payload) => {
+                    const newBalance = payload.new?.server_balance;
+                    if (typeof newBalance === 'number') {
+                        setBalance(newBalance);
+                        broadcastBalanceUpdate(newBalance);
+                    }
+                    reconnectAttempts = 0;
+                }
+            )
+            .subscribe((status) => {
+                if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+                    if (reconnectAttempts < maxReconnectAttempts) {
+                        reconnectAttempts++;
+                        // Exponential backoff reconnection
+                        setTimeout(() => {
+                            supabase.removeChannel(channel);
+                        }, 1000 * Math.pow(2, reconnectAttempts));
+                    }
+                    refreshBalance();
+                }
+            });
+
+        const unsubscribeCrossTab = subscribeToBalanceUpdates((newBalance) => {
+            setBalance(newBalance);
+        });
+
+        // Fallback: refresh every 15s in case realtime fails (reduced from 60s)
+        const fallbackInterval = setInterval(refreshBalance, 15000);
+
+        return () => {
+            supabase.removeChannel(channel);
+            unsubscribeCrossTab();
+            clearInterval(fallbackInterval);
+        };
     }, [primaryWallet?.address, demoMode, refreshBalance]);
 
     // Toggle demo mode
@@ -165,16 +211,14 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         });
     }, []);
 
-    // Set bet amount with validation
     const setBetAmount = useCallback((amount: number) => {
         setBetAmountState(Math.max(0.5, Math.min(100, amount)));
     }, []);
-
-    // Record game to server - NO blockchain calls, just API
+    // Server-side payout calculation
     const recordGameToServer = useCallback(async (record: Omit<BetRecord, 'id' | 'timestamp'>) => {
         if (!primaryWallet?.address || demoMode) return;
 
-        if (isRegistered) {
+        if (isRegistered && record.gameParams) {
             try {
                 const response = await fetch('/api/games', {
                     method: 'POST',
@@ -183,18 +227,20 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
                         wallet: primaryWallet.address.toLowerCase(),
                         game: record.game,
                         bet_amount: record.betAmount,
-                        payout: record.payout,
-                        multiplier: record.multiplier,
-                        won: record.outcome === 'win',
+                        game_params: record.gameParams,
                     }),
                 });
 
                 if (response.ok) {
                     const data = await response.json();
-                    // Update balance from server response
+                    // Use server-calculated balance (source of truth)
                     if (data.newBalance !== undefined) {
                         setBalance(data.newBalance);
+                        broadcastBalanceUpdate(data.newBalance);
                     }
+                } else {
+                    // Server rejected - refresh to get correct balance
+                    await refreshBalance();
                 }
             } catch (error) {
                 console.error('Failed to record game:', error);
@@ -223,13 +269,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
                 setDemoBalance(prev => prev - record.betAmount);
             }
         } else {
-            // Update balance optimistically for instant feedback
+            // Optimistic update
             const delta = record.outcome === 'win'
                 ? record.payout - record.betAmount
                 : -record.betAmount;
             setBalance(prev => prev + delta);
 
-            // Record to server (async, non-blocking)
             recordGameToServer(record);
         }
     }, [demoMode, demoLimits, recordGameToServer]);

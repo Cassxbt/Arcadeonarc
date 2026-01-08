@@ -51,12 +51,10 @@ export function useUser(): UseUserReturn {
         }
     }, [walletAddress]);
 
-    // Fetch user on wallet change
     useEffect(() => {
         fetchUser();
     }, [fetchUser]);
 
-    // Register a new username
     const registerUsername = useCallback(async (username: string): Promise<{ success: boolean; error?: string }> => {
         if (!walletAddress) {
             return { success: false, error: 'Wallet not connected' };
@@ -83,7 +81,6 @@ export function useUser(): UseUserReturn {
         }
     }, [walletAddress, fetchUser]);
 
-    // Update username (if changes remaining)
     const updateUsername = useCallback(async (username: string): Promise<{ success: boolean; error?: string }> => {
         if (!walletAddress) {
             return { success: false, error: 'Wallet not connected' };
@@ -125,7 +122,6 @@ export function useUser(): UseUserReturn {
     };
 }
 
-// Hook to check username availability in real-time
 export function useUsernameCheck() {
     const [isChecking, setIsChecking] = useState(false);
     const [isAvailable, setIsAvailable] = useState<boolean | null>(null);

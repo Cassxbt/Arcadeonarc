@@ -68,7 +68,6 @@ export default function WheelGame() {
     } = useGame();
     const { playSound, stopSound } = useSound();
 
-    // Mode selection state
     const [modeSelected, setModeSelected] = useState(false);
     const showModeSelector = !primaryWallet && !demoMode && !modeSelected;
     const showDemoLimitReached = demoMode && isDemoLimitReached('wheel');
@@ -79,7 +78,6 @@ export default function WheelGame() {
     const [recentResults, setRecentResults] = useState<number[]>([]);
     const [showInfo, setShowInfo] = useState(false);
 
-    // Calculate result info
     const resultInfo = useMemo(() => {
         if (resultSegment === null) return null;
         const segment = SEGMENTS[resultSegment];
@@ -95,7 +93,6 @@ export default function WheelGame() {
     const spinWheel = useCallback(() => {
         if (!canBet(betAmount) || gameState !== 'idle') return;
 
-        // Stop any lingering sounds from previous game
         stopSound('WIN');
         stopSound('LOSE');
         stopSound('WHEEL_SPIN');
@@ -110,8 +107,6 @@ export default function WheelGame() {
         // Generate random segment (0-19)
         const targetSegment = Math.floor(Math.random() * 20);
 
-        // Calculate target rotation
-        // Each segment is 18 degrees (360/20)
         const segmentAngle = 360 / 20;
         const fullSpins = 5 + Math.floor(Math.random() * 3); // 5-7 full rotations
         // Pointer is at top (0deg), adjust for segment positioning
@@ -129,7 +124,6 @@ export default function WheelGame() {
             setResultSegment(targetSegment);
             setGameState('result');
 
-            // Update recent results (keep last 3)
             setRecentResults(prev => [segment.multiplier, ...prev].slice(0, 3));
 
             if (segment.multiplier > 0) {
@@ -140,6 +134,7 @@ export default function WheelGame() {
                     outcome: 'win',
                     multiplier: segment.multiplier,
                     payout: betAmount * segment.multiplier,
+                    gameParams: { segment: targetSegment },
                 });
             } else {
                 playSound('LOSE');
@@ -149,17 +144,16 @@ export default function WheelGame() {
                     outcome: 'loss',
                     multiplier: 0,
                     payout: 0,
+                    gameParams: { segment: targetSegment },
                 });
             }
 
-            // Reset to idle after showing result
             setTimeout(() => {
                 setGameState('idle');
             }, 2000);
         }, 5000);
     }, [canBet, betAmount, gameState, currentRotation, playSound, stopSound, addBetRecord]);
 
-    // Quick bet handlers
     const handleQuickBet = (amount: number) => {
         if (gameState === 'spinning') return;
         setBetAmount(amount);
@@ -175,7 +169,6 @@ export default function WheelGame() {
         setBetAmount(Math.min(effectiveBalance, betAmount * 2));
     };
 
-    // Handle demo mode selection
     const handleDemoSelect = () => {
         toggleDemoMode();
         setModeSelected(true);

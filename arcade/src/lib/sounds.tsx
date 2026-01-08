@@ -31,7 +31,6 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
     const loadedSounds = useRef<Set<string>>(new Set());
     const stopTimers = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
-    // Initialize audio elements with proper error handling
     useEffect(() => {
         if (typeof window !== 'undefined') {
             let mounted = true;
@@ -49,8 +48,7 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
                     }, { once: true });
 
                     audio.addEventListener('error', () => {
-                        // Sound file not found - this is OK, we'll just skip it
-                        console.warn(`Sound file not found: ${src} - sounds will be disabled for this effect`);
+                        console.warn(`Sound file not found: ${src}`);
                         resolve();
                     }, { once: true });
                 });
@@ -62,7 +60,6 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
                 loadPromises.push(loadPromise);
             });
 
-            // Wait for all sounds to attempt loading
             Promise.all(loadPromises).then(() => {
                 if (mounted) {
                     setSoundsReady(true);
@@ -71,7 +68,6 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
 
             return () => {
                 mounted = false;
-                // Copy refs to local variables before cleanup
                 const audioMap = audioRefs.current;
                 const loadedSet = loadedSounds.current;
                 const timers = stopTimers.current;
@@ -87,14 +83,71 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
         }
     }, []);
 
-    // Update volume for all audio elements
+    // Mobile audio unlock - iOS/Safari blocks audio until user interaction
+    // This unlocks the audio context on first touch/click
+    const audioUnlocked = useRef(false);
+
+    useEffect(() => {
+        if (typeof window === 'undefined' || audioUnlocked.current) return;
+
+        const unlockAudio = () => {
+            if (audioUnlocked.current) return;
+
+            // Try to play and immediately pause each audio element
+            // This "unlocks" them for future playback on iOS
+            audioRefs.current.forEach(audio => {
+                const playPromise = audio.play();
+                if (playPromise) {
+                    playPromise
+                        .then(() => {
+                            audio.pause();
+                            audio.currentTime = 0;
+                        })
+                        .catch(() => {
+                            // Still locked, will try again on next interaction
+                        });
+                }
+            });
+
+            audioUnlocked.current = true;
+
+            // Also create and resume AudioContext if available (for Web Audio API)
+            try {
+                const AudioContext = window.AudioContext || (window as Window & { webkitAudioContext?: typeof window.AudioContext }).webkitAudioContext;
+                if (AudioContext) {
+                    const ctx = new AudioContext();
+                    if (ctx.state === 'suspended') {
+                        ctx.resume();
+                    }
+                }
+            } catch {
+                // AudioContext not supported
+            }
+
+            // Remove listeners after unlock
+            document.removeEventListener('touchstart', unlockAudio);
+            document.removeEventListener('touchend', unlockAudio);
+            document.removeEventListener('click', unlockAudio);
+        };
+
+        // Listen for first user interaction
+        document.addEventListener('touchstart', unlockAudio, { passive: true });
+        document.addEventListener('touchend', unlockAudio, { passive: true });
+        document.addEventListener('click', unlockAudio, { passive: true });
+
+        return () => {
+            document.removeEventListener('touchstart', unlockAudio);
+            document.removeEventListener('touchend', unlockAudio);
+            document.removeEventListener('click', unlockAudio);
+        };
+    }, [soundsReady]);
+
     useEffect(() => {
         audioRefs.current.forEach(audio => {
             audio.volume = volume;
         });
     }, [volume]);
 
-    // Stop all sounds when sound is disabled
     useEffect(() => {
         if (!soundEnabled) {
             audioRefs.current.forEach((audio) => {
@@ -102,7 +155,6 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
                 audio.currentTime = 0;
                 audio.loop = false;
             });
-            // Clear all auto-stop timers
             stopTimers.current.forEach(timer => clearTimeout(timer));
             stopTimers.current.clear();
         }
@@ -116,7 +168,6 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
         setVolumeState(Math.max(0, Math.min(1, newVolume)));
     }, []);
 
-    // Stop a specific sound
     const stopSound = useCallback((sound: keyof typeof SOUNDS) => {
         const audio = audioRefs.current.get(sound);
         if (audio) {
@@ -124,7 +175,6 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
             audio.currentTime = 0;
             audio.loop = false;
         }
-        // Clear any auto-stop timer
         const timer = stopTimers.current.get(sound);
         if (timer) {
             clearTimeout(timer);
@@ -132,44 +182,35 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
         }
     }, []);
 
-    // Stop all playing sounds
     const stopAllSounds = useCallback(() => {
         audioRefs.current.forEach((audio, key) => {
             audio.pause();
             audio.currentTime = 0;
             audio.loop = false;
         });
-        // Clear all timers
         stopTimers.current.forEach(timer => clearTimeout(timer));
         stopTimers.current.clear();
     }, []);
 
-    // Play a sound with optional auto-stop
     const playSound = useCallback((sound: keyof typeof SOUNDS, options?: PlaySoundOptions) => {
         if (!soundEnabled) return;
 
-        // Only play if the sound was successfully loaded
         if (!loadedSounds.current.has(sound)) return;
 
         const audio = audioRefs.current.get(sound);
         if (audio) {
-            // Clear any existing timer for this sound
             const existingTimer = stopTimers.current.get(sound);
             if (existingTimer) {
                 clearTimeout(existingTimer);
                 stopTimers.current.delete(sound);
             }
 
-            // Set loop option
             audio.loop = options?.loop ?? false;
-
-            // Reset and play
             audio.currentTime = 0;
             audio.play().catch(() => {
                 // Ignore autoplay errors (browser policy)
             });
 
-            // Set auto-stop timer if duration specified
             if (options?.duration) {
                 const timer = setTimeout(() => {
                     audio.pause();

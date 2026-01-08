@@ -55,7 +55,7 @@
     font-family: var(--font-pixel);
     font-size: 1.5rem;
     color: var(--neon-pink);
-    text-shadow: var(--glow-pink);
+    text-shadow: 0 0 5px var(--neon-pink), 0 0 10px var(--neon-pink);
     margin-bottom: var(--space-md);
     letter-spacing: 0.05em;
 }

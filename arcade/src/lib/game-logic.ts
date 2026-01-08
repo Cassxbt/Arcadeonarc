@@ -1,4 +1,5 @@
-'use server';
+// Server-side game logic functions
+// Used by API routes to calculate and verify payouts
 
 const HOUSE_EDGE = 0.10;
 
@@ -106,4 +107,59 @@ export function verifyGamePayout(
     const tolerance = 0.01;
     const verified = Math.abs(calculated.payout - claimedPayout) <= tolerance;
     return { verified, calculatedPayout: calculated.payout };
+}
+
+/**
+ * Calculate payout server-side based on game type and parameters.
+ * This is the source of truth - client cannot manipulate these calculations.
+ */
+export function calculateServerPayout(
+    game: string,
+    betAmount: number,
+    gameParams: Record<string, unknown>
+): { payout: number; multiplier: number; won: boolean } {
+    switch (game) {
+        case 'dice': {
+            const target = gameParams.target as number;
+            const betUnder = gameParams.betUnder as boolean;
+            const result = gameParams.result as number;
+            if (typeof target !== 'number' || typeof result !== 'number') {
+                throw new Error('Invalid dice game params');
+            }
+            return calculateDicePayout(betAmount, target, betUnder, result);
+        }
+        case 'wheel': {
+            const segment = gameParams.segment as number;
+            if (typeof segment !== 'number') {
+                throw new Error('Invalid wheel game params');
+            }
+            return calculateWheelPayout(betAmount, segment);
+        }
+        case 'tower': {
+            const row = gameParams.row as number;
+            if (typeof row !== 'number') {
+                throw new Error('Invalid tower game params');
+            }
+            const result = calculateTowerPayout(betAmount, row);
+            return { ...result, won: true };
+        }
+        case 'crash': {
+            const cashoutMultiplier = gameParams.cashoutMultiplier as number;
+            const crashPoint = gameParams.crashPoint as number;
+            if (typeof cashoutMultiplier !== 'number' || typeof crashPoint !== 'number') {
+                throw new Error('Invalid crash game params');
+            }
+            return calculateCrashPayout(betAmount, cashoutMultiplier, crashPoint);
+        }
+        case 'laser': {
+            const survivedTurns = gameParams.survivedTurns as number;
+            if (typeof survivedTurns !== 'number') {
+                throw new Error('Invalid laser game params');
+            }
+            const result = calculateLaserPayout(betAmount, survivedTurns);
+            return { ...result, won: survivedTurns > 0 };
+        }
+        default:
+            throw new Error(`Unknown game type: ${game}`);
+    }
 }

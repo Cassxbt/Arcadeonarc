@@ -26,7 +26,6 @@ export default function DiceGame() {
     } = useGame();
     const { playSound, stopSound } = useSound();
 
-    // Mode selection state
     const [modeSelected, setModeSelected] = useState(false);
     const showModeSelector = !primaryWallet && !demoMode && !modeSelected;
     const showDemoLimitReached = demoMode && isDemoLimitReached('dice');
@@ -38,7 +37,6 @@ export default function DiceGame() {
     const [streak, setStreak] = useState(0);
     const [showInfo, setShowInfo] = useState(false);
 
-    // Calculate win chance and multiplier
     const { winChance, multiplier } = useMemo(() => {
         const chance = betType === 'under' ? target - 1 : 100 - target;
         const mult = chance > 0 ? Number(((100 / chance) * 0.9).toFixed(2)) : 0;
@@ -49,7 +47,6 @@ export default function DiceGame() {
     const rollDice = useCallback(async () => {
         if (!canBet(betAmount) || gameState === 'rolling') return;
 
-        // Stop any lingering sounds from previous game
         stopSound('WIN');
         stopSound('LOSE');
 
@@ -63,7 +60,6 @@ export default function DiceGame() {
         }, 50);
 
         try {
-            // Get secure result from server
             const response = await fetch('/api/dice/roll', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -94,6 +90,7 @@ export default function DiceGame() {
                     outcome: 'win',
                     multiplier,
                     payout: betAmount * multiplier,
+                    gameParams: { target, result: finalResult, betUnder: betType === 'under' },
                 });
             } else {
                 playSound('LOSE');
@@ -105,6 +102,7 @@ export default function DiceGame() {
                     outcome: 'loss',
                     multiplier: 0,
                     payout: 0,
+                    gameParams: { target, result: finalResult, betUnder: betType === 'under' },
                 });
             }
         } catch (error) {
@@ -114,7 +112,6 @@ export default function DiceGame() {
         }
     }, [canBet, betAmount, gameState, target, betType, multiplier, playSound, stopSound, addBetRecord, primaryWallet?.address]);
 
-    // Quick bet handlers
     const handleQuickBet = (amount: number) => {
         if (gameState === 'rolling') return;
         setBetAmount(amount);
@@ -130,7 +127,6 @@ export default function DiceGame() {
         setBetAmount(betAmount * 2);
     };
 
-    // Handle demo mode selection
     const handleDemoSelect = () => {
         toggleDemoMode();
         setModeSelected(true);
