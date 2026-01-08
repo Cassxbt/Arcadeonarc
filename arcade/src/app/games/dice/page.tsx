@@ -45,8 +45,8 @@ export default function DiceGame() {
         return { winChance: chance, multiplier: mult };
     }, [target, betType]);
 
-    // Roll the dice
-    const rollDice = useCallback(() => {
+    // Roll the dice - calls server for secure outcome
+    const rollDice = useCallback(async () => {
         if (!canBet(betAmount) || gameState === 'rolling') return;
 
         // Stop any lingering sounds from previous game
@@ -57,23 +57,34 @@ export default function DiceGame() {
         setGameState('rolling');
         setRollResult(null);
 
-        // Simulate rolling animation
+        // Simulate rolling animation (visual only)
         const rollInterval = setInterval(() => {
             setRollResult(Math.floor(Math.random() * 100) + 1);
         }, 50);
 
-        // Final result after animation
-        setTimeout(() => {
-            clearInterval(rollInterval);
+        try {
+            // Get secure result from server
+            const response = await fetch('/api/dice/roll', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userAddress: primaryWallet?.address || 'demo',
+                    nonce: Date.now(),
+                    target,
+                    betUnder: betType === 'under',
+                }),
+            });
 
-            const finalResult = Math.floor(Math.random() * 100) + 1;
+            if (!response.ok) {
+                throw new Error('Failed to roll dice');
+            }
+
+            const { result: finalResult, won } = await response.json();
+
+            clearInterval(rollInterval);
             setRollResult(finalResult);
 
-            const isWin = betType === 'under'
-                ? finalResult < target
-                : finalResult > target;
-
-            if (isWin) {
+            if (won) {
                 playSound('WIN');
                 setGameState('won');
                 setStreak(prev => prev + 1);
@@ -96,8 +107,12 @@ export default function DiceGame() {
                     payout: 0,
                 });
             }
-        }, 1500);
-    }, [canBet, betAmount, gameState, target, betType, multiplier, playSound, addBetRecord]);
+        } catch (error) {
+            clearInterval(rollInterval);
+            setGameState('idle');
+            console.error('Dice roll error:', error);
+        }
+    }, [canBet, betAmount, gameState, target, betType, multiplier, playSound, stopSound, addBetRecord, primaryWallet?.address]);
 
     // Quick bet handlers
     const handleQuickBet = (amount: number) => {

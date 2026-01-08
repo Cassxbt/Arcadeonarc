@@ -1,12 +1,6 @@
-/* Design System - Core Styles */
-
-/* Google Fonts - Retro Pixel Font */
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Orbitron:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-  /* ===== RETRO NEON COLOR PALETTE ===== */
-
-  /* Primary Neon Colors */
   --neon-pink: #ff2a6d;
   --neon-cyan: #05d9e8;
   --neon-yellow: #f9f002;
@@ -15,14 +9,12 @@
   --neon-orange: #ff6b35;
   --neon-blue: #01cdfe;
 
-  /* Glow variations */
   --glow-pink: 0 0 10px #ff2a6d, 0 0 20px #ff2a6d, 0 0 40px #ff2a6d;
   --glow-cyan: 0 0 10px #05d9e8, 0 0 20px #05d9e8, 0 0 40px #05d9e8;
   --glow-yellow: 0 0 10px #f9f002, 0 0 20px #f9f002, 0 0 40px #f9f002;
   --glow-green: 0 0 10px #39ff14, 0 0 20px #39ff14, 0 0 40px #39ff14;
   --glow-purple: 0 0 10px #d300c5, 0 0 20px #d300c5, 0 0 40px #d300c5;
 
-  /* Game-specific colors */
   --color-primary: #ff2a6d;
   --color-primary-hover: #ff4d8a;
   --color-primary-light: #ff6b9d;
@@ -32,7 +24,6 @@
   --color-danger-light: #ff5c5c;
   --color-warning: #f9f002;
 
-  /* Dark Arcade Theme */
   --bg-primary: #0a0a12;
   --bg-secondary: #12121a;
   --bg-tertiary: #1a1a24;
@@ -47,7 +38,6 @@
   --border-color-light: #3a3a4a;
   --border-neon: var(--neon-pink);
 
-  /* ===== SPACING ===== */
   --space-xs: 0.25rem;
   --space-sm: 0.5rem;
   --space-md: 1rem;
@@ -56,14 +46,12 @@
   --space-2xl: 3rem;
   --space-3xl: 4rem;
 
-  /* ===== BORDER RADIUS ===== */
   --radius-sm: 0.25rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
   --radius-xl: 1rem;
   --radius-full: 9999px;
 
-  /* ===== SHADOWS ===== */
   --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.5);
   --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.5);
   --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.5);
@@ -71,83 +59,53 @@
   --shadow-glow-cyan: var(--glow-cyan);
   --shadow-glow-green: var(--glow-green);
 
-  /* ===== TRANSITIONS ===== */
   --transition-fast: 150ms ease;
   --transition-normal: 250ms ease;
   --transition-slow: 350ms ease;
 
-  /* ===== FONTS ===== */
   --font-pixel: 'Press Start 2P', monospace;
   --font-arcade: 'Orbitron', sans-serif;
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: 'Orbitron', monospace;
 }
 
-/* Light theme - MATRIX GREEN ARCADE: Pale mint with electric green neon */
-/* Light theme - PREMIUM CYBER-CLEAN: Apple-esque Pro Mode */
 [data-theme="light"] {
-  /* Clean, crisp backgrounds */
   --bg-primary: #FAFAFA;
-  /* Very subtle off-white */
   --bg-secondary: #F3F4F6;
-  /* Light gray for inputs/subtle areas */
   --bg-tertiary: #FFFFFF;
-  /* Pure white */
-  /* Solid cards with high opacity */
   --bg-card: #FFFFFF;
   --bg-card-hover: #F9FAFB;
 
-  /* High Contrast Typography - Inter/Grotesque style */
   --text-primary: #0F172A;
-  /* Slate 900 - Deep, rich black */
   --text-secondary: #334155;
-  /* Slate 700 - Professional gray */
   --text-muted: #64748B;
-  /* Slate 500 - Muted but readable */
 
-  /* Crisp Borders - No neon fuzz */
   --border-color: #E2E8F0;
-  /* Slate 200 */
   --border-color-light: #F1F5F9;
-  /* Slate 100 */
 
-  /* Shadows - "Lickable" Interface (Apple/Vercel style) */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 
-  /* Retained but refined accents - "Electric" but sharp */
-  /* Instead of diffuse glow, we use sharp distinct colors */
   --shadow-glow: 0 0 0 0 transparent;
-  /* Disable global text blurs in light mode */
   --shadow-glow-cyan: 0 4px 14px 0 rgba(14, 165, 233, 0.3);
-  /* Actionable glow */
   --shadow-glow-green: 0 4px 14px 0 rgba(16, 185, 129, 0.3);
-  /* Success glow */
 
-  /* Refined Neon Palette for Light Mode (Darker/Richer for visibility) */
   --neon-pink: #DB2777;
-  /* Pink 600 */
   --neon-cyan: #0284C7;
-  /* Sky 600 */
   --neon-yellow: #CA8A04;
-  /* Yellow 600 - Readable on white */
   --neon-green: #059669;
-  /* Emerald 600 - Readable on white */
   --neon-purple: #9333EA;
-  /* Purple 600 */
   --neon-orange: #EA580C;
-  /* Orange 600 */
   --neon-blue: #2563EB;
-  /* Blue 600 */
 }
 
-/* ===== BASE STYLES ===== */
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
+
 
 html {
   font-size: 16px;
@@ -165,7 +123,6 @@ body {
   overflow-x: hidden;
 }
 
-/* CRT Scanline Overlay */
 body::before {
   content: '';
   position: fixed;
@@ -183,7 +140,6 @@ body::before {
   opacity: 0.3;
 }
 
-/* Arcade Grid Background */
 body::after {
   content: '';
   position: fixed;
@@ -199,16 +155,10 @@ body::after {
   z-index: -1;
 }
 
-/* ===== LIGHT MODE SPECIFIC OVERRIDES ===== */
-
-/* Light mode: Subtle scanlines */
-/* Light mode: Clean professional backdrop */
 [data-theme="light"] body::before {
-  /* Remove scanlines for cleanliness */
   display: none;
 }
 
-/* Light mode: Subtle engineering grid */
 [data-theme="light"] body::after {
   background-image:
     linear-gradient(#E2E8F0 1px, transparent 1px),
@@ -217,7 +167,6 @@ body::after {
   opacity: 0.5;
 }
 
-/* Light mode: Frosted glass cards - white/translucent with blur */
 [data-theme="light"] .card,
 [data-theme="light"] .bg-card {
   background: rgba(255, 255, 255, 0.85);
@@ -228,8 +177,6 @@ body::after {
     inset 0 0 0 1px rgba(255, 255, 255, 0.9);
 }
 
-/* Light mode: h1 - INTENSE GREEN glow matching dark mode intensity */
-/* Light mode: Crisp Typography - No Blurs */
 [data-theme="light"] h1,
 [data-theme="light"] h2,
 [data-theme="light"] h3,
@@ -256,7 +203,6 @@ body::after {
   color: var(--neon-yellow);
 }
 
-/* Light mode: Button enhancements - GREEN primary */
 [data-theme="light"] .btn-primary {
   box-shadow:
     0 0 15px rgba(57, 255, 20, 0.5),
@@ -275,7 +221,6 @@ body::after {
     0 4px 12px rgba(0, 200, 16, 0.3);
 }
 
-/* Light mode: Card arcade styling */
 [data-theme="light"] .card-arcade {
   background: linear-gradient(180deg, rgba(255, 252, 248, 0.98) 0%, rgba(245, 237, 229, 0.99) 100%);
   border-color: #00b8d4;
@@ -284,7 +229,6 @@ body::after {
     0 8px 32px rgba(26, 26, 46, 0.08);
 }
 
-/* Light mode: Input styling */
 [data-theme="light"] .input {
   background: rgba(255, 255, 255, 0.9);
   border-color: rgba(180, 160, 140, 0.4);
@@ -295,7 +239,6 @@ body::after {
   box-shadow: 0 0 15px rgba(0, 184, 212, 0.3);
 }
 
-/* Light mode: Tile styling */
 [data-theme="light"] .tile {
   background: linear-gradient(180deg, rgba(255, 252, 248, 0.95) 0%, rgba(245, 237, 229, 0.98) 100%);
 }
@@ -304,7 +247,6 @@ body::after {
   background: rgba(250, 245, 240, 0.98);
 }
 
-/* Light mode: Scrollbar */
 [data-theme="light"]::-webkit-scrollbar-track {
   background: #f5ede5;
 }
@@ -317,7 +259,6 @@ body::after {
   background: linear-gradient(180deg, #00b8d4, #00a8e8);
 }
 
-/* Light mode: Arcade screen effect */
 [data-theme="light"] .arcade-screen {
   background: rgba(255, 252, 248, 0.98);
   border-color: #00b8d4;
@@ -326,14 +267,12 @@ body::after {
     inset 0 0 20px rgba(0, 0, 0, 0.05);
 }
 
-/* Light mode: Token display */
 [data-theme="light"] .token-display {
   background: rgba(255, 252, 248, 0.9);
   border-color: #00c810;
   box-shadow: 0 0 10px rgba(0, 200, 16, 0.2);
 }
 
-/* Light mode: Neon border effect */
 [data-theme="light"] .neon-border {
   border-color: #e8005a;
   box-shadow:
@@ -341,7 +280,7 @@ body::after {
     inset 0 0 8px rgba(232, 0, 90, 0.15);
 }
 
-/* ===== TYPOGRAPHY ===== */
+
 h1,
 h2,
 h3,
@@ -373,14 +312,12 @@ h4 {
   font-size: 1.25rem;
 }
 
-/* Pixel text style */
 .pixel-text {
   font-family: var(--font-pixel);
   font-size: 0.75rem;
   letter-spacing: 0.1em;
 }
 
-/* Neon text effects */
 .neon-text-pink {
   color: var(--neon-pink);
   text-shadow: var(--glow-pink);
@@ -401,7 +338,6 @@ h4 {
   text-shadow: var(--glow-green);
 }
 
-/* ===== UTILITY CLASSES ===== */
 .text-primary {
   color: var(--color-primary);
 }
@@ -428,8 +364,8 @@ h4 {
   border-radius: var(--radius-lg);
 }
 
-/* ===== BUTTON STYLES ===== */
 .btn {
+
   display: inline-flex;
   align-items: center;
   justify-content: center;

@@ -49,8 +49,6 @@ export const GAME_CONFIG = {
   QUICK_BETS: [1, 5, 10, 25, 50, 100],
 };
 
-// Dynamic SDK Environment ID (Live) - This is PUBLIC and safe to expose
-// Note: This is NOT the API Token (which starts with dyn_) - API Tokens are secret
 export const DYNAMIC_ENVIRONMENT_ID = 'a3744fd0-3794-4b60-a36a-57dbdbda6855';
 
 // API Endpoints

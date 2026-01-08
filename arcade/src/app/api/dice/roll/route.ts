@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { privateKeyToAccount } from 'viem/accounts';
 import { keccak256, encodePacked } from 'viem';
 import { logger } from '@/lib/logger';
+import { secureRandomInt } from '@/lib/random';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
 const SIGNER_PRIVATE_KEY = process.env.SIGNER_PRIVATE_KEY;
 if (!SIGNER_PRIVATE_KEY) {
@@ -11,6 +13,12 @@ if (!SIGNER_PRIVATE_KEY) {
 const signer = privateKeyToAccount(SIGNER_PRIVATE_KEY as `0x${string}`);
 
 export async function POST(request: NextRequest) {
+    const clientIp = getClientIp(request);
+    const { success: rateLimitOk } = await checkRateLimit(clientIp);
+    if (!rateLimitOk) {
+        return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    }
+
     try {
         const { userAddress, nonce, target, betUnder } = await request.json();
 
@@ -18,7 +26,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
         }
 
-        const result = Math.floor(Math.random() * 100) + 1;
+        const result = secureRandomInt(1, 101); // [1, 100] - crypto secure
 
         const messageHash = keccak256(
             encodePacked(

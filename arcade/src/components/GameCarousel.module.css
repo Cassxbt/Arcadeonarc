@@ -1,4 +1,3 @@
-/* ===== CAROUSEL CONTAINER ===== */
 .carouselContainer {
     position: relative;
     width: 100%;
@@ -9,7 +8,6 @@
     perspective-origin: 50% 50%;
 }
 
-/* ===== CAROUSEL TRACK ===== */
 .carouselTrack {
     position: relative;
     display: flex;
@@ -25,7 +23,6 @@
     cursor: grabbing;
 }
 
-/* ===== CARD WRAPPER ===== */
 .cardWrapper {
     position: absolute;
     width: 320px;
@@ -38,7 +35,6 @@
     cursor: pointer;
 }
 
-/* ===== GAME CARD ===== */
 .gameCard {
     display: flex;
     flex-direction: column;
@@ -71,7 +67,6 @@
     opacity: 0.8;
 }
 
-/* ===== CARD GLOW EFFECT ===== */
 .cardGlow {
     position: absolute;
     top: -50%;
@@ -99,7 +94,6 @@
     opacity: 0.15;
 }
 
-/* ===== GAME ICON ===== */
 .gameIcon {
     margin-bottom: var(--space-lg);
     animation: iconFloat 3s ease-in-out infinite;
@@ -135,7 +129,6 @@
     }
 }
 
-/* ===== GAME NAME ===== */
 .gameName {
     font-family: var(--font-pixel);
     font-size: 1rem;
@@ -146,7 +139,6 @@
     text-shadow: 0 0 15px var(--game-color, var(--neon-cyan));
 }
 
-/* ===== GAME DESCRIPTION ===== */
 .gameDescription {
     font-family: var(--font-arcade);
     color: var(--text-secondary);
@@ -156,7 +148,6 @@
     max-width: 280px;
 }
 
-/* ===== MULTIPLIER BADGE ===== */
 .gameMultiplier {
     font-family: var(--font-pixel);
     font-size: 0.75rem;
@@ -169,7 +160,6 @@
     border-radius: var(--radius-full);
 }
 
-/* ===== PLAY BUTTON ===== */
 .playButton {
     padding: var(--space-sm) var(--space-xl);
     background: linear-gradient(180deg, var(--neon-pink), #cc0044);
@@ -198,7 +188,6 @@
     }
 }
 
-/* ===== NAVIGATION BUTTONS ===== */
 .navButton {
     position: absolute;
     top: 50%;
@@ -232,7 +221,6 @@
     right: 0;
 }
 
-/* ===== DOTS INDICATOR ===== */
 .dotsContainer {
     display: flex;
     justify-content: center;
@@ -262,7 +250,6 @@
     transform: scale(1.2);
 }
 
-/* ===== RESPONSIVE ===== */
 @media (max-width: 768px) {
     .carouselContainer {
         padding: var(--space-lg) 0;
@@ -317,38 +304,94 @@
     }
 }
 
-/* ===== LIGHT MODE ===== */
+
 :global([data-theme="light"]) .gameCard {
-    background: rgba(255, 255, 255, 0.92);
-    backdrop-filter: blur(12px);
-    border-color: rgba(57, 255, 20, 0.3);
+    background: #FFFFFF !important;
+    border: 1px solid #E2E8F0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+:global([data-theme="light"]) .gameCard::before {
+    height: 3px;
+    opacity: 0.9;
 }
 
 :global([data-theme="light"]) .cardActive .gameCard {
-    border-color: var(--game-color, #39ff14);
+    border-color: #0F172A;
     box-shadow:
-        0 0 40px rgba(57, 255, 20, 0.4),
-        0 20px 60px rgba(0, 0, 0, 0.15);
+        0 20px 25px -5px rgba(0, 0, 0, 0.1),
+        0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+:global([data-theme="light"]) .cardGlow {
+    display: none;
 }
 
 :global([data-theme="light"]) .gameName {
-    color: #000;
+    color: #0F172A;
+    text-shadow: none;
+    font-weight: 800;
 }
 
 :global([data-theme="light"]) .gameDescription {
-    color: #333;
+    color: #64748B;
+    font-weight: 500;
+}
+
+:global([data-theme="light"]) .gameMultiplier {
+    background: #F0FDF4;
+    border: 1px solid #16A34A;
+    color: #15803D;
+    text-shadow: none;
+    font-weight: 700;
+}
+
+:global([data-theme="light"]) .playButton {
+    background: #0F172A;
+    border: 1px solid #0F172A;
+    color: #FFFFFF;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    animation: none;
+    font-weight: 700;
+}
+
+:global([data-theme="light"]) .playButton:hover {
+    background: #1E293B;
+    transform: translateY(-1px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 
 :global([data-theme="light"]) .navButton {
-    background: rgba(255, 255, 255, 0.9);
-    border-color: #39ff14;
-    color: #39ff14;
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    color: #64748B;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 :global([data-theme="light"]) .navButton:hover {
-    background: rgba(57, 255, 20, 0.15);
+    background: #F8FAFC;
+    color: #0F172A;
+    border-color: #CBD5E1;
+    transform: translateY(-50%) scale(1.05);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 :global([data-theme="light"]) .dot {
-    border-color: #ccc;
+    border-color: #CBD5E1;
+    background: transparent;
+}
+
+:global([data-theme="light"]) .dotActive {
+    background: #0F172A;
+    border-color: #0F172A;
+    box-shadow: none;
+    transform: scale(1.2);
+}
+
+:global([data-theme="light"]) .gameIcon {
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1)) !important;
+}
+
+:global([data-theme="light"]) .cardActive .gameIcon {
+    animation: iconFloat 3s ease-in-out infinite;
 }

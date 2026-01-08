@@ -101,21 +101,11 @@ export default function CrashGame() {
         return '';
     }, [gameState, multiplierLevel]);
 
-    // Generate crash point (house edge built in)
-    const generateCrashPoint = useCallback(() => {
-        const houseEdge = 0.10;
-        const random = Math.random();
+    // Game nonce for server communication
+    const [gameNonce, setGameNonce] = useState<number>(0);
 
-        if (random < houseEdge) {
-            return 1.00;
-        }
-
-        const e = 1 / (1 - random);
-        return Math.max(1.00, Math.floor(e * 100) / 100);
-    }, []);
-
-    // Start game
-    const startGame = useCallback(() => {
+    // Start game - calls server for secure crash point
+    const startGame = useCallback(async () => {
         if (!canBet(betAmount) || gameState === 'flying') return;
 
         // Stop any lingering sounds from previous game
@@ -123,16 +113,37 @@ export default function CrashGame() {
         stopSound('EXPLOSION');
         stopSound('CASH_OUT');
 
-        const crash = generateCrashPoint();
-        setCrashPoint(crash);
-        setMultiplier(1.00);
-        setCashedOutAt(null);
-        setShowFlash(false);
-        setGameState('flying');
-        startTimeRef.current = Date.now();
+        const nonce = Date.now();
+        setGameNonce(nonce);
 
-        playSound('CLICK');
-    }, [canBet, betAmount, gameState, generateCrashPoint, playSound, stopSound]);
+        try {
+            // Get crash point from server (stored in Redis, not revealed to client)
+            const response = await fetch('/api/crash', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'start',
+                    userAddress: primaryWallet?.address || 'demo',
+                    nonce,
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to start game');
+            }
+
+            // Server stores crash point in Redis - client doesn't know it yet
+            setMultiplier(1.00);
+            setCashedOutAt(null);
+            setShowFlash(false);
+            setGameState('flying');
+            startTimeRef.current = Date.now();
+
+            playSound('CLICK');
+        } catch (error) {
+            console.error('Crash start error:', error);
+        }
+    }, [canBet, betAmount, gameState, playSound, stopSound, primaryWallet?.address]);
 
     // Cash out
     const cashOut = useCallback(() => {
@@ -153,13 +164,18 @@ export default function CrashGame() {
         if (animationRef.current) {
             cancelAnimationFrame(animationRef.current);
         }
-    }, [gameState, multiplier, betAmount, playSound, addBetRecord]);
+    }, [gameState, multiplier, betAmount, playSound, addBetRecord, primaryWallet?.address, gameNonce]);
 
-    // Game loop
+    // Track if we've already checked crash this frame
+    const lastCheckRef = useRef<number>(0);
+
+    // Game loop - checks with server periodically
     useEffect(() => {
         if (gameState !== 'flying') return;
 
-        const animate = () => {
+        const checkInterval = 500; // Check server every 500ms
+
+        const animate = async () => {
             const elapsed = (Date.now() - startTimeRef.current) / 1000;
             const newMultiplier = Math.pow(1.06, elapsed * 10);
             const roundedMultiplier = Math.floor(newMultiplier * 100) / 100;
@@ -172,21 +188,45 @@ export default function CrashGame() {
                 return;
             }
 
-            // Check crash
-            if (roundedMultiplier >= crashPoint) {
-                setMultiplier(crashPoint);
-                setGameState('crashed');
-                setShowFlash(true);
-                playSound('EXPLOSION');
+            // Periodically check with server if we've crashed
+            const now = Date.now();
+            if (now - lastCheckRef.current > checkInterval) {
+                lastCheckRef.current = now;
 
-                addBetRecord({
-                    game: 'crash',
-                    betAmount,
-                    outcome: 'loss',
-                    multiplier: 0,
-                    payout: 0,
-                });
-                return;
+                try {
+                    const response = await fetch('/api/crash', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'check',
+                            userAddress: primaryWallet?.address || 'demo',
+                            nonce: gameNonce,
+                            currentMultiplier: roundedMultiplier * 10000, // Convert to basis points
+                        }),
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.crashed) {
+                            setCrashPoint(data.crashPoint / 10000);
+                            setMultiplier(data.crashPoint / 10000);
+                            setGameState('crashed');
+                            setShowFlash(true);
+                            playSound('EXPLOSION');
+
+                            addBetRecord({
+                                game: 'crash',
+                                betAmount,
+                                outcome: 'loss',
+                                multiplier: 0,
+                                payout: 0,
+                            });
+                            return;
+                        }
+                    }
+                } catch {
+                    // Network error, continue game
+                }
             }
 
             animationRef.current = requestAnimationFrame(animate);
@@ -199,7 +239,7 @@ export default function CrashGame() {
                 cancelAnimationFrame(animationRef.current);
             }
         };
-    }, [gameState, crashPoint, autoCashout, cashOut, betAmount, playSound, addBetRecord]);
+    }, [gameState, gameNonce, autoCashout, cashOut, betAmount, playSound, addBetRecord, primaryWallet?.address]);
 
     // Quick bet handlers
     const handleQuickBet = (amount: number) => {

@@ -1,5 +1,3 @@
-/* Deposit Modal Styles */
-
 .overlay {
     position: fixed;
     inset: 0;
@@ -297,14 +295,10 @@
     }
 }
 
-/* ===== LIGHT MODE MODAL OVERRIDES ===== */
-
-/* Light mode: Modal overlay */
 :global([data-theme="light"]) .overlay {
     background: rgba(26, 26, 46, 0.6);
 }
 
-/* Light mode: Modal window */
 :global([data-theme="light"]) .modal {
     background: linear-gradient(180deg, rgba(255, 252, 248, 0.98) 0%, rgba(245, 237, 229, 0.99) 100%);
     border-color: #00b8d4;
@@ -313,23 +307,19 @@
         0 20px 60px rgba(26, 26, 46, 0.2);
 }
 
-/* Light mode: Title */
 :global([data-theme="light"]) .title {
     color: #c8a800;
     text-shadow: 0 0 10px rgba(200, 168, 0, 0.6);
 }
 
-/* Light mode: Balance items */
 :global([data-theme="light"]) .balanceItem {
     background: rgba(255, 252, 248, 0.9);
 }
 
-/* Light mode: Input group */
 :global([data-theme="light"]) .inputGroup {
     background: rgba(255, 255, 255, 0.9);
 }
 
-/* Light mode: Quick buttons */
 :global([data-theme="light"]) .quickBtn {
     background: rgba(255, 252, 248, 0.9);
     color: #2a2a4a;

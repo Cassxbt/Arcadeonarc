@@ -1,26 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { privateKeyToAccount } from 'viem/accounts';
 import { keccak256, encodePacked } from 'viem';
+import { secureRandomInt } from '@/lib/random';
+import { redis, GAME_STATE_TTL } from '@/lib/redis';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
-// Server signer private key - MUST be set in environment variables
 const SIGNER_PRIVATE_KEY = process.env.SIGNER_PRIVATE_KEY;
 if (!SIGNER_PRIVATE_KEY) {
     throw new Error('SIGNER_PRIVATE_KEY environment variable is required');
 }
 const signer = privateKeyToAccount(SIGNER_PRIVATE_KEY as `0x${string}`);
 
-// Store active games (in production, use Redis or DB)
-const activeGames = new Map<string, {
+// Game state interface
+interface LaserGameState {
     currentTurn: number;
     destroyedColumns: number[];
     destroyedRows: number[];
-}>();
+}
 
-/**
- * Gridy Laser API
- * Handles: start, select, cashout
- */
 export async function POST(request: NextRequest) {
+    const clientIp = getClientIp(request);
+    const { success: rateLimitOk } = await checkRateLimit(clientIp);
+    if (!rateLimitOk) {
+        return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    }
+
     try {
         const body = await request.json();
         const { action, userAddress, nonce, turn, row, col } = body;
@@ -29,15 +33,14 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Missing userAddress' }, { status: 400 });
         }
 
-        const gameKey = `${userAddress}-${nonce}`;
+        const gameKey = `laser:${userAddress.toLowerCase()}:${nonce}`;
 
         if (action === 'start') {
-            // Initialize new game
-            activeGames.set(gameKey, {
+            await redis.set(gameKey, {
                 currentTurn: 0,
                 destroyedColumns: [],
                 destroyedRows: [],
-            });
+            } as LaserGameState, { ex: GAME_STATE_TTL });
 
             return NextResponse.json({
                 success: true,
@@ -46,14 +49,13 @@ export async function POST(request: NextRequest) {
         }
 
         if (action === 'select') {
-            const game = activeGames.get(gameKey);
+            const game = await redis.get<LaserGameState>(gameKey);
             if (!game) {
-                return NextResponse.json({ error: 'Game not found' }, { status: 404 });
+                return NextResponse.json({ error: 'Game not found or expired' }, { status: 404 });
             }
 
             const isColumnAttack = game.currentTurn % 2 === 0;
 
-            // Get remaining valid targets
             const remainingTargets: number[] = [];
             if (isColumnAttack) {
                 for (let i = 0; i < 10; i++) {
@@ -69,13 +71,11 @@ export async function POST(request: NextRequest) {
                 }
             }
 
-            // Generate random laser target
-            const laserTarget = remainingTargets[Math.floor(Math.random() * remainingTargets.length)];
+            const targetIndex = secureRandomInt(0, remainingTargets.length);
+            const laserTarget = remainingTargets[targetIndex];
 
-            // Check if player survives
             const survived = isColumnAttack ? (col !== laserTarget) : (row !== laserTarget);
 
-            // Update game state
             if (isColumnAttack) {
                 game.destroyedColumns.push(laserTarget);
             } else {
@@ -83,7 +83,6 @@ export async function POST(request: NextRequest) {
             }
             game.currentTurn++;
 
-            // Create signature for on-chain verification
             const messageHash = keccak256(
                 encodePacked(
                     ['address', 'uint256', 'uint8', 'uint8'],
@@ -95,9 +94,10 @@ export async function POST(request: NextRequest) {
                 message: { raw: messageHash },
             });
 
-            // Clean up if player got lasered
             if (!survived) {
-                activeGames.delete(gameKey);
+                await redis.del(gameKey);
+            } else {
+                await redis.set(gameKey, game, { ex: GAME_STATE_TTL });
             }
 
             return NextResponse.json({
@@ -110,12 +110,11 @@ export async function POST(request: NextRequest) {
         }
 
         if (action === 'cashout') {
-            const game = activeGames.get(gameKey);
+            const game = await redis.get<LaserGameState>(gameKey);
             if (!game) {
-                return NextResponse.json({ error: 'Game not found' }, { status: 404 });
+                return NextResponse.json({ error: 'Game not found or expired' }, { status: 404 });
             }
 
-            // Create cashout signature
             const messageHash = keccak256(
                 encodePacked(
                     ['address', 'uint256', 'uint8', 'string'],
@@ -127,8 +126,7 @@ export async function POST(request: NextRequest) {
                 message: { raw: messageHash },
             });
 
-            // Clean up
-            activeGames.delete(gameKey);
+            await redis.del(gameKey);
 
             return NextResponse.json({
                 success: true,
@@ -138,8 +136,9 @@ export async function POST(request: NextRequest) {
         }
 
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
-    } catch (error: any) {
-        console.error('Laser API error:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        console.error('Laser API error:', message);
+        return NextResponse.json({ error: message }, { status: 500 });
     }
 }

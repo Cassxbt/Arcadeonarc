@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { privateKeyToAccount } from 'viem/accounts';
 import { keccak256, encodePacked } from 'viem';
+import { secureRandomInt } from '@/lib/random';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
-// Server signer private key - MUST be set in environment variables
 const SIGNER_PRIVATE_KEY = process.env.SIGNER_PRIVATE_KEY;
 if (!SIGNER_PRIVATE_KEY) {
     throw new Error('SIGNER_PRIVATE_KEY environment variable is required');
@@ -17,10 +18,13 @@ const SEGMENT_MULTIPLIERS = [
     15000, 0, 20000, 30000, 18000   // 15-19
 ];
 
-/**
- * Wheel Game API - Spin the wheel
- */
 export async function POST(request: NextRequest) {
+    const clientIp = getClientIp(request);
+    const { success: rateLimitOk } = await checkRateLimit(clientIp);
+    if (!rateLimitOk) {
+        return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    }
+
     try {
         const body = await request.json();
         const { userAddress, nonce } = body;
@@ -29,11 +33,9 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
         }
 
-        // Generate random segment (0-19)
-        const segmentResult = Math.floor(Math.random() * 20);
+        const segmentResult = secureRandomInt(0, 20);
         const multiplier = SEGMENT_MULTIPLIERS[segmentResult];
 
-        // Create message hash (must match contract)
         const messageHash = keccak256(
             encodePacked(
                 ['address', 'uint256', 'uint8'],
@@ -41,7 +43,6 @@ export async function POST(request: NextRequest) {
             )
         );
 
-        // Sign with Ethereum prefix
         const signature = await signer.signMessage({
             message: { raw: messageHash },
         });
@@ -51,8 +52,9 @@ export async function POST(request: NextRequest) {
             multiplier,
             signature,
         });
-    } catch (error: any) {
-        console.error('Wheel API error:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        console.error('Wheel API error:', message);
+        return NextResponse.json({ error: message }, { status: 500 });
     }
 }

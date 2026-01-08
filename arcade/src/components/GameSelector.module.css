@@ -132,7 +132,6 @@
     }
 }
 
-/* May the odds favor you message */
 .messageOverlay {
     position: fixed;
     top: 0;
@@ -193,7 +192,6 @@
     }
 }
 
-/* Responsive */
 @media (max-width: 768px) {
     .gameCards {
         flex-direction: column;
@@ -214,4 +212,63 @@
         font-size: 1.25rem;
         padding: 0 var(--space-lg);
     }
+}
+
+:global([data-theme="light"]) .overlay {
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(12px);
+}
+
+:global([data-theme="light"]) .selectorBox {
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    box-shadow:
+        0 20px 25px -5px rgba(0, 0, 0, 0.1),
+        0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    animation: none;
+}
+
+:global([data-theme="light"]) .gameCard {
+    background: #F8FAFC;
+    border-color: #E2E8F0;
+    opacity: 0.6;
+}
+
+:global([data-theme="light"]) .gameCardActive {
+    background: #FFFFFF;
+    border-color: #CBD5E1;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    opacity: 1;
+}
+
+:global([data-theme="light"]) .gameCardSelected {
+    border-color: #0F172A;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
+    background: #FFFFFF;
+    animation: none;
+}
+
+:global([data-theme="light"]) .gameName {
+    color: #0F172A;
+    font-weight: 700;
+}
+
+:global([data-theme="light"]) .iconWrapper {
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+    color: #0F172A;
+}
+
+:global([data-theme="light"]) .selectingText {
+    color: #64748B;
+    text-shadow: none;
+    font-weight: 600;
+}
+
+:global([data-theme="light"]) .messageOverlay {
+    background: rgba(255, 255, 255, 0.9);
+}
+
+:global([data-theme="light"]) .message {
+    color: #0F172A;
+    text-shadow: none;
 }

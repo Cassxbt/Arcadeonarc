@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
+import {SignatureVerifier} from "./libraries/SignatureVerifier.sol";
 
 interface IARCadeVault {
     function placeBet(address user, uint256 amount) external returns (uint256 nonce);
@@ -47,15 +48,9 @@ contract WheelGame is ReentrancyGuard, Ownable, Pausable {
         18000   // Segment 19: 1.8x
     ];
     
-    /// @notice Basis points denominator
     uint256 public constant BPS_DENOMINATOR = 10000;
     
-    /* --- STORAGE --- */
-    
-    /// @notice Reference to the vault contract
     IARCadeVault public immutable vault;
-    
-    /// @notice Server address that signs game outcomes
     address public serverSigner;
     
     /* --- EVENTS --- */
@@ -110,7 +105,7 @@ contract WheelGame is ReentrancyGuard, Ownable, Pausable {
             messageHash
         ));
         
-        if (!_verifySignature(ethSignedHash, signature, serverSigner)) {
+        if (!SignatureVerifier.verify(ethSignedHash, signature, serverSigner)) {
             revert InvalidSignature();
         }
         
@@ -138,30 +133,7 @@ contract WheelGame is ReentrancyGuard, Ownable, Pausable {
         _unpause();
     }
     
-    /* --- INTERNAL FUNCTIONS --- */
-    
-    function _verifySignature(
-        bytes32 hash,
-        bytes calldata signature,
-        address signer
-    ) internal pure returns (bool) {
-        if (signature.length != 65) return false;
-        
-        bytes32 r;
-        bytes32 s;
-        uint8 v;
-        
-        assembly {
-            r := calldataload(signature.offset)
-            s := calldataload(add(signature.offset, 32))
-            v := byte(0, calldataload(add(signature.offset, 64)))
-        }
-        
-        if (v < 27) v += 27;
-        if (v != 27 && v != 28) return false;
-        
-        return ecrecover(hash, v, r, s) == signer;
-    }
+
     
     /* --- VIEW FUNCTIONS --- */
     

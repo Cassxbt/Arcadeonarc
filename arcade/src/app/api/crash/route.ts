@@ -1,21 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { privateKeyToAccount } from 'viem/accounts';
 import { keccak256, encodePacked } from 'viem';
+import { secureRandomFloat } from '@/lib/random';
+import { redis, GAME_STATE_TTL } from '@/lib/redis';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
-// Server signer private key - MUST be set in environment variables
 const SIGNER_PRIVATE_KEY = process.env.SIGNER_PRIVATE_KEY;
 if (!SIGNER_PRIVATE_KEY) {
     throw new Error('SIGNER_PRIVATE_KEY environment variable is required');
 }
 const signer = privateKeyToAccount(SIGNER_PRIVATE_KEY as `0x${string}`);
 
-// Store active games' crash points (in production, use Redis or DB)
-const activeGames = new Map<string, { crashPoint: number; startTime: number }>();
+// Game state interface
+interface CrashGameState {
+    crashPoint: number;
+    startTime: number;
+}
 
-/**
- * Cannon Crash API - Start a new game
- */
 export async function POST(request: NextRequest) {
+    const clientIp = getClientIp(request);
+    const { success: rateLimitOk } = await checkRateLimit(clientIp);
+    if (!rateLimitOk) {
+        return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    }
+
     try {
         const body = await request.json();
         const { action, userAddress, nonce, cashoutMultiplier } = body;
@@ -24,13 +32,13 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
         }
 
-        const gameKey = `${userAddress}-${nonce}`;
+        const gameKey = `crash:${userAddress.toLowerCase()}:${nonce}`;
 
         if (action === 'start') {
-            // Generate crash point using fair distribution
+            // Generate crash point using fair distribution - CRYPTO SECURE
             // 10% chance of instant crash (1.00x)
             // Otherwise exponential distribution
-            const random = Math.random();
+            const random = secureRandomFloat();
             let crashPoint: number;
 
             if (random < 0.10) {
@@ -41,10 +49,12 @@ export async function POST(request: NextRequest) {
                 crashPoint = Math.max(10000, Math.floor(e * 10000));
             }
 
-            // Cap at 100x
             crashPoint = Math.min(crashPoint, 1000000);
 
-            activeGames.set(gameKey, { crashPoint, startTime: Date.now() });
+            await redis.set(gameKey, {
+                crashPoint,
+                startTime: Date.now(),
+            } as CrashGameState, { ex: GAME_STATE_TTL });
 
             return NextResponse.json({
                 success: true,
@@ -53,13 +63,12 @@ export async function POST(request: NextRequest) {
         }
 
         if (action === 'cashout' || action === 'crash') {
-            const game = activeGames.get(gameKey);
+            const game = await redis.get<CrashGameState>(gameKey);
 
             if (!game) {
-                return NextResponse.json({ error: 'Game not found' }, { status: 404 });
+                return NextResponse.json({ error: 'Game not found or expired' }, { status: 404 });
             }
 
-            // Create message hash (must match contract)
             const messageHash = keccak256(
                 encodePacked(
                     ['address', 'uint256', 'uint256'],
@@ -67,15 +76,12 @@ export async function POST(request: NextRequest) {
                 )
             );
 
-            // Sign with Ethereum prefix
             const signature = await signer.signMessage({
                 message: { raw: messageHash },
             });
 
-            // Clean up
-            activeGames.delete(gameKey);
+            await redis.del(gameKey);
 
-            // Determine if cashout was successful
             const success = action === 'cashout' &&
                 cashoutMultiplier &&
                 cashoutMultiplier <= game.crashPoint;
@@ -87,9 +93,26 @@ export async function POST(request: NextRequest) {
             });
         }
 
+        if (action === 'check') {
+            const game = await redis.get<CrashGameState>(gameKey);
+
+            if (!game) {
+                return NextResponse.json({ error: 'Game not found or expired' }, { status: 404 });
+            }
+
+            const currentMultiplier = body.currentMultiplier || 10000;
+            const crashed = currentMultiplier >= game.crashPoint;
+
+            return NextResponse.json({
+                crashed,
+                crashPoint: crashed ? game.crashPoint : undefined, // Only reveal if crashed
+            });
+        }
+
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
-    } catch (error: any) {
-        console.error('Crash API error:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        console.error('Crash API error:', message);
+        return NextResponse.json({ error: message }, { status: 500 });
     }
 }

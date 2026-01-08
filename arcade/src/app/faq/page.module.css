@@ -19,7 +19,6 @@
     animation: neonFlickerCyan 4s infinite;
 }
 
-/* Subtle cyan neon flicker */
 @keyframes neonFlickerCyan {
 
     0%,
@@ -75,7 +74,6 @@
     font-size: 1rem;
 }
 
-/* FAQ Accordion */
 .faqList {
     display: flex;
     flex-direction: column;
@@ -158,7 +156,6 @@
     max-height: 1000px;
 }
 
-/* FAQ Content */
 .faqContent {
     padding: var(--space-lg);
     font-family: var(--font-sans);
@@ -224,7 +221,6 @@
     color: var(--text-primary);
 }
 
-/* Responsive */
 @media (max-width: 768px) {
     .title {
         font-size: 1.5rem;
@@ -248,9 +244,6 @@
     }
 }
 
-/* ===== LIGHT MODE FAQ OVERRIDES ===== */
-
-/* Light mode: Title */
 :global([data-theme="light"]) .title {
     color: #00b8d4;
     text-shadow:
@@ -259,7 +252,6 @@
         0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* Light mode: FAQ items */
 :global([data-theme="light"]) .faqItem {
     background: rgba(255, 252, 248, 0.95);
     backdrop-filter: blur(8px);
@@ -269,7 +261,6 @@
     border-color: #00b8d4;
 }
 
-/* Light mode: FAQ header */
 :global([data-theme="light"]) .faqHeader:hover {
     background: rgba(245, 237, 229, 0.9);
 }
@@ -278,12 +269,10 @@
     background: rgba(245, 237, 229, 0.9);
 }
 
-/* Light mode: FAQ icon */
 :global([data-theme="light"]) .faqIcon {
     background: rgba(255, 252, 248, 0.9);
 }
 
-/* Light mode: Coming soon notice */
 :global([data-theme="light"]) .comingSoon {
     background: rgba(200, 168, 0, 0.1);
     border-color: #c8a800;

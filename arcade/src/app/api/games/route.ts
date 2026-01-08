@@ -1,99 +1,67 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
-// POST /api/games - Record a game session
 export async function POST(request: NextRequest) {
+    const clientIp = getClientIp(request);
+    const { success: rateLimitOk } = await checkRateLimit(clientIp);
+    if (!rateLimitOk) {
+        return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    }
+
     try {
         const body = await request.json();
-        const { wallet, game, bet_amount, payout, multiplier, won, tx_hash } = body;
+        const { wallet, game, bet_amount, payout, multiplier } = body;
 
-        if (!wallet || !game || bet_amount === undefined || payout === undefined || won === undefined) {
+        if (!wallet || !game || bet_amount === undefined || payout === undefined) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
         const walletLower = wallet.toLowerCase();
 
-        // Validate game type
         if (!['dice', 'tower', 'crash', 'wheel', 'laser'].includes(game)) {
             return NextResponse.json({ error: 'Invalid game type' }, { status: 400 });
         }
 
+        if (bet_amount < 0.5 || bet_amount > 100) {
+            return NextResponse.json({ error: 'Invalid bet amount' }, { status: 400 });
+        }
+
+        if (payout < 0 || payout > bet_amount * 100) {
+            return NextResponse.json({ error: 'Invalid payout value' }, { status: 400 });
+        }
+
         const supabase = createServerClient();
 
-        // Check if user exists
-        const { data: user, error: userError } = await supabase
-            .from('users')
-            .select('*')
-            .eq('wallet_address', walletLower)
-            .single();
+        const { data, error } = await supabase.rpc('place_bet_atomic', {
+            p_wallet: walletLower,
+            p_bet_amount: bet_amount,
+            p_payout: payout,
+            p_game: game,
+            p_multiplier: multiplier || 0
+        });
 
-        if (userError || !user) {
-            return NextResponse.json({ error: 'User not registered' }, { status: 400 });
+        if (error) {
+            console.error('Atomic bet failed:', error);
+            return NextResponse.json({ error: 'Database operation failed' }, { status: 500 });
         }
 
-        // Get current week and year
-        const now = new Date();
-        const startOfYear = new Date(now.getFullYear(), 0, 1);
-        const days = Math.floor((now.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
-        const weekNumber = Math.ceil((days + startOfYear.getDay() + 1) / 7);
-        const year = now.getFullYear();
+        const result = data as { success: boolean; error?: string; new_balance?: number; streak?: number; won?: boolean; available?: number; required?: number };
 
-        // Update streak
-        const today = now.toISOString().split('T')[0]; // YYYY-MM-DD
-        let newStreak = user.current_streak;
-
-        if (user.last_played_date !== today) {
-            // Check if played yesterday
-            const yesterday = new Date(now);
-            yesterday.setDate(yesterday.getDate() - 1);
-            const yesterdayStr = yesterday.toISOString().split('T')[0];
-
-            if (user.last_played_date === yesterdayStr) {
-                // Consecutive day - increment streak
-                newStreak = user.current_streak + 1;
-            } else if (!user.last_played_date) {
-                // First time playing
-                newStreak = 1;
-            } else {
-                // Streak broken - reset to 1
-                newStreak = 1;
-            }
-
-            // Update user's streak and last played date
-            await supabase
-                .from('users')
-                .update({
-                    current_streak: newStreak,
-                    last_played_date: today,
-                })
-                .eq('wallet_address', walletLower);
-        }
-
-        // Record the game session
-        const { data: session, error: sessionError } = await supabase
-            .from('game_sessions')
-            .insert({
-                wallet_address: walletLower,
-                game,
-                bet_amount,
-                payout,
-                multiplier: multiplier || 0,
-                won,
-                tx_hash: tx_hash || null,
-                week_number: weekNumber,
-                year,
-            })
-            .select()
-            .single();
-
-        if (sessionError) {
-            throw sessionError;
+        if (!result.success) {
+            const status = result.error === 'Insufficient balance' ? 400 : 500;
+            return NextResponse.json({
+                error: result.error,
+                available: result.available,
+                required: result.required
+            }, { status });
         }
 
         return NextResponse.json({
             success: true,
-            session,
-            streak: newStreak,
+            newBalance: result.new_balance,
+            streak: result.streak,
+            won: result.won
         });
     } catch (error) {
         console.error('Error recording game:', error);
@@ -101,7 +69,6 @@ export async function POST(request: NextRequest) {
     }
 }
 
-// GET /api/games?wallet=0x...&limit=10 - Get recent games for a user
 export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const wallet = searchParams.get('wallet')?.toLowerCase();
@@ -121,9 +88,7 @@ export async function GET(request: NextRequest) {
             .order('played_at', { ascending: false })
             .limit(Math.min(limit, 50));
 
-        if (error) {
-            throw error;
-        }
+        if (error) throw error;
 
         return NextResponse.json({ games });
     } catch (error) {

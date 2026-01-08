@@ -796,126 +796,337 @@
         padding: 8px 10px;
         border-radius: 8px;
     }
-
-    .rowActive .tilesWrapper {
-        border-width: 2px;
-    }
-
-    /* Tiles */
-    .tile {
-        width: 42px;
-        height: 42px;
-        border-radius: 6px;
-    }
-
-    .tileQuestion {
-        font-size: 1.1rem;
-    }
-
-    .skullIcon,
-    .checkIcon {
-        width: 22px;
-        height: 22px;
-    }
-
-    /* Compact bet controls */
-    .card {
-        padding: var(--space-xs) var(--space-sm);
-    }
-
-    .card h3 {
-        font-size: 0.6rem;
-        margin-bottom: var(--space-xs);
-    }
-
-    .betControls {
-        margin-bottom: var(--space-xs);
-    }
-
-    .betAdjustBtn {
-        width: 36px;
-        font-size: 1.1rem;
-    }
-
-    .betInputWrapper {
-        min-height: 38px;
-    }
-
-    .betInput {
-        font-size: 1.1rem;
-    }
-
-    .quickBets {
-        gap: 6px;
-    }
-
-    .quickBtn {
-        padding: 6px 4px;
-        font-size: 0.75rem;
-    }
-
-    /* Compact stats - inline */
-    .statsGrid {
-        grid-template-columns: repeat(4, 1fr);
-        gap: var(--space-xs);
-    }
-
-    .statLabel {
-        font-size: 0.5rem;
-    }
-
-    .statValue,
-    .statValueHighlight {
-        font-size: 0.85rem;
-    }
-
-    /* Multiplier display during game */
-    .multiplierDisplay {
-        padding: var(--space-xs) 0;
-    }
-
-    .currentMultiplier {
-        font-size: 1.5rem;
-    }
-
-    .potentialWin {
-        font-size: 0.85rem;
-    }
-
-    /* Buttons */
-    .primaryBtn,
-    .cashoutBtn {
-        height: 48px;
-        font-size: 0.85rem;
-    }
-
-    /* Result display */
-    .resultDisplay {
-        padding: var(--space-xs) 0;
-    }
-
-    .resultWon,
-    .resultLost {
-        font-size: 1.1rem;
-    }
-
-    /* Compact overlays */
-    .winMultiplier {
-        font-size: 2rem;
-    }
-
-    .winAmount {
-        font-size: 1.1rem;
-    }
-
-    .overlayLose h2 {
-        font-size: 1.5rem;
-    }
-
-    .loseAmount {
-        font-size: 1rem;
-    }
 }
+
+/* ===== LIGHT MODE TOWER OVERRIDES ===== */
+/* Clean, high-contrast engineering aesthetic */
+
+/* Container: Clean White */
+/* Container: Clean White */
+:global([data-theme="light"]) .container {
+    background: #FAFAFA;
+}
+
+/* Force Game Area Background to White/Light */
+:global([data-theme="light"]) .gameArea {
+    background: #FFFFFF !important;
+    /* Force override */
+    border: 1px solid #E2E8F0;
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.02);
+}
+
+:global([data-theme="light"]) .gameArea::before {
+    background-image:
+        linear-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
+    opacity: 0.6;
+    background-color: #FAFAFA;
+    /* Ensure base is light */
+}
+
+/* Control Panel: White with Slate Borders */
+:global([data-theme="light"]) .controlPanel {
+    background: #FFFFFF;
+    border-right-color: #E2E8F0;
+    border-top-color: #E2E8F0;
+}
+
+:global([data-theme="light"]) .card {
+    background: #F8FAFC;
+    border-color: #E2E8F0;
+}
+
+:global([data-theme="light"]) .card h3 {
+    color: #64748B;
+    text-shadow: none;
+}
+
+/* Inputs & Controls */
+:global([data-theme="light"]) .betInputWrapper {
+    background: #FFFFFF;
+    border-color: #CBD5E1;
+}
+
+:global([data-theme="light"]) .betInput {
+    color: #0F172A;
+}
+
+:global([data-theme="light"]) .betAdjustBtn {
+    background: #F1F5F9;
+    color: #475569;
+    border-color: #CBD5E1;
+}
+
+:global([data-theme="light"]) .betAdjustBtn:hover:not(:disabled) {
+    background: #E2E8F0;
+    color: #0F172A;
+}
+
+:global([data-theme="light"]) .quickBtn {
+    background: #FFFFFF;
+    border-color: #E2E8F0;
+    color: #64748B;
+}
+
+:global([data-theme="light"]) .quickBtn:hover:not(:disabled) {
+    border-color: #0284C7;
+    color: #0284C7;
+    background: #F0F9FF;
+}
+
+/* Stats */
+:global([data-theme="light"]) .statLabel {
+    color: #64748B;
+}
+
+:global([data-theme="light"]) .statValue {
+    color: #0F172A;
+}
+
+:global([data-theme="light"]) .statValueHighlight {
+    color: #0284C7;
+}
+
+/* Game Grid & Tiles */
+:global([data-theme="light"]) .tilesWrapper {
+    background: #FFFFFF;
+    border-color: #E2E8F0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+:global([data-theme="light"]) .row {
+    opacity: 0.4;
+}
+
+:global([data-theme="light"]) .rowActive {
+    opacity: 1;
+}
+
+:global([data-theme="light"]) .rowActive .tilesWrapper {
+    border-color: #059669;
+    /* Emerald */
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.15);
+    animation: none;
+    /* No pulse in light mode */
+}
+
+/* Multipliers */
+:global([data-theme="light"]) .multiplier {
+    color: #94A3B8;
+    /* Slate 400 */
+}
+
+:global([data-theme="light"]) .rowActive .multiplier {
+    color: #059669;
+    text-shadow: none;
+}
+
+/* The actual Tiles */
+:global([data-theme="light"]) .tile {
+    background: #F1F5F9;
+    /* Slate 100 */
+    border: 2px solid #CBD5E1;
+    /* Slate 300 - Stronger border */
+    box-shadow: 0 2px 0 #CBD5E1;
+    /* Tactile feel */
+}
+
+:global([data-theme="light"]) .tile:hover.tileClickable {
+    background: #E2E8F0;
+    border-color: #0F172A;
+    transform: translateY(-1px);
+}
+
+:global([data-theme="light"]) .tileQuestion {
+    color: #94A3B8;
+}
+
+:global([data-theme="light"]) .tileClickable .tileQuestion {
+    color: #64748B;
+    text-shadow: none;
+}
+
+/* Tile States */
+:global([data-theme="light"]) .tileSafe {
+    background: #059669;
+    /* Solid Green */
+    border-color: #047857;
+}
+
+:global([data-theme="light"]) .checkIcon {
+    color: #FFFFFF;
+}
+
+:global([data-theme="light"]) .tileDeathRevealed {
+    background: #FEE2E2;
+    border-color: #EF4444;
+}
+
+:global([data-theme="light"]) .skullIcon {
+    filter: none;
+    color: #EF4444;
+}
+
+/* Play Button */
+:global([data-theme="light"]) .primaryBtn {
+    background: #0F172A;
+    border-color: #0F172A;
+    color: white;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+:global([data-theme="light"]) .primaryBtn:hover:not(:disabled) {
+    background: #1E293B;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+/* Sidebar */
+:global([data-theme="light"]) .sidebar {
+    background: #FFFFFF;
+    border-left-color: #E2E8F0;
+}
+
+:global([data-theme="light"]) .sidebarHeader,
+:global([data-theme="light"]) .historyHeader {
+    background: #F8FAFC;
+    border-bottom-color: #E2E8F0;
+    color: #64748B;
+}
+
+:global([data-theme="light"]) .historyItem {
+    background: #F8FAFC;
+    border: 1px solid #F1F5F9;
+}
+
+:global([data-theme="light"]) .historyWin {
+    border-left-color: #059669;
+}
+
+:global([data-theme="light"]) .historyLoss {
+    border-left-color: #EF4444;
+}
+
+:global([data-theme="light"]) .historyAmount {
+    color: #64748B;
+}
+
+
+
+/* Tiles */
+.tile {
+    width: 42px;
+    height: 42px;
+    border-radius: 6px;
+}
+
+.tileQuestion {
+    font-size: 1.1rem;
+}
+
+.skullIcon,
+.checkIcon {
+    width: 22px;
+    height: 22px;
+}
+
+/* Compact bet controls */
+.card {
+    padding: var(--space-xs) var(--space-sm);
+}
+
+.card h3 {
+    font-size: 0.6rem;
+    margin-bottom: var(--space-xs);
+}
+
+.betControls {
+    margin-bottom: var(--space-xs);
+}
+
+.betAdjustBtn {
+    width: 36px;
+    font-size: 1.1rem;
+}
+
+.betInputWrapper {
+    min-height: 38px;
+}
+
+.betInput {
+    font-size: 1.1rem;
+}
+
+.quickBets {
+    gap: 6px;
+}
+
+.quickBtn {
+    padding: 6px 4px;
+    font-size: 0.75rem;
+}
+
+/* Compact stats - inline */
+.statsGrid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-xs);
+}
+
+.statLabel {
+    font-size: 0.5rem;
+}
+
+.statValue,
+.statValueHighlight {
+    font-size: 0.85rem;
+}
+
+/* Multiplier display during game */
+.multiplierDisplay {
+    padding: var(--space-xs) 0;
+}
+
+.currentMultiplier {
+    font-size: 1.5rem;
+}
+
+.potentialWin {
+    font-size: 0.85rem;
+}
+
+/* Buttons */
+.primaryBtn,
+.cashoutBtn {
+    height: 48px;
+    font-size: 0.85rem;
+}
+
+/* Result display */
+.resultDisplay {
+    padding: var(--space-xs) 0;
+}
+
+.resultWon,
+.resultLost {
+    font-size: 1.1rem;
+}
+
+/* Compact overlays */
+.winMultiplier {
+    font-size: 2rem;
+}
+
+.winAmount {
+    font-size: 1.1rem;
+}
+
+.overlayLose h2 {
+    font-size: 1.5rem;
+}
+
+.loseAmount {
+    font-size: 1rem;
+}
+
 
 /* Extra small phones */
 @media (max-width: 380px) {

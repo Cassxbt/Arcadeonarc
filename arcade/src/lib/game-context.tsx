@@ -1,26 +1,17 @@
 'use client';
 
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { createPublicClient, http, formatUnits } from 'viem';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { useDemoLimits, GameType } from './useDemoLimits';
 import { useUser } from './useUser';
 import { useStreak } from './useStreak';
-import { arcTestnet, CONTRACTS } from './constants';
-import { VAULT_ABI } from './abi';
-import { signRequest } from './sign-request';
-
-// Create public client for reading vault balance (created once, outside component)
-const publicClient = createPublicClient({
-    chain: arcTestnet,
-    transport: http(),
-});
 
 interface GameContextType {
     // Balance
     balance: number;
     isLoading: boolean;
     refreshBalance: () => Promise<void>;
+    syncBalanceAfterDeposit: () => Promise<void>;
 
     // Demo mode
     demoMode: boolean;
@@ -77,12 +68,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     const { user, isRegistered, refetch: refetchUser } = useUser();
     const { streak, streakMultiplier } = useStreak();
 
-    // Real balance
+    // Server-tracked balance (for instant gameplay)
     const [balance, setBalance] = useState(0);
     const [isLoading, setIsLoading] = useState(false);
 
     // Demo mode
-    const [demoMode, setDemoMode] = useState(false); // Start with demo OFF - user must select
+    const [demoMode, setDemoMode] = useState(false);
     const [demoBalance, setDemoBalance] = useState(DEMO_STARTING_BALANCE);
 
     // Username modal state
@@ -97,7 +88,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     // Show username modal when wallet connects and user isn't registered
     useEffect(() => {
         if (primaryWallet && !isRegistered && !demoMode) {
-            // Small delay to let the wallet connection complete
             const timer = setTimeout(() => {
                 setShowUsernameModal(true);
             }, 500);
@@ -105,7 +95,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         }
     }, [primaryWallet, isRegistered, demoMode]);
 
-    // Fetch real balance from vault contract
+    // Fetch server balance from Supabase (via user data)
     const refreshBalance = useCallback(async () => {
         if (!primaryWallet?.address) {
             setBalance(0);
@@ -114,13 +104,15 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
         setIsLoading(true);
         try {
-            const rawBalance = await publicClient.readContract({
-                address: CONTRACTS.ARCADE_VAULT,
-                abi: VAULT_ABI,
-                functionName: 'balances',
-                args: [primaryWallet.address as `0x${string}`],
-            });
-            setBalance(Number(formatUnits(rawBalance as bigint, 6)));
+            // Fetch user data which includes server_balance
+            const response = await fetch(`/api/users?wallet=${primaryWallet.address.toLowerCase()}`);
+            const data = await response.json();
+
+            if (data.user && data.user.server_balance !== undefined) {
+                setBalance(data.user.server_balance);
+            } else {
+                setBalance(0);
+            }
         } catch (error) {
             console.error('Failed to fetch balance:', error);
             setBalance(0);
@@ -129,17 +121,44 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         }
     }, [primaryWallet?.address]);
 
+    // Sync vault balance to server after deposit
+    const syncBalanceAfterDeposit = useCallback(async () => {
+        if (!primaryWallet?.address) return;
+
+        try {
+            const response = await fetch('/api/balance/sync', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ wallet: primaryWallet.address }),
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setBalance(data.balance);
+            }
+        } catch (error) {
+            console.error('Failed to sync balance:', error);
+            // Fallback to regular refresh
+            await refreshBalance();
+        }
+    }, [primaryWallet?.address, refreshBalance]);
+
     useEffect(() => {
-        if (primaryWallet) {
+        if (primaryWallet && isRegistered) {
             refreshBalance();
         }
-    }, [primaryWallet, refreshBalance]);
+    }, [primaryWallet, isRegistered, refreshBalance]);
+
+    useEffect(() => {
+        if (!primaryWallet?.address || demoMode) return;
+        const interval = setInterval(refreshBalance, 30000);
+        return () => clearInterval(interval);
+    }, [primaryWallet?.address, demoMode, refreshBalance]);
 
     // Toggle demo mode
     const toggleDemoMode = useCallback(() => {
         setDemoMode(prev => {
             if (!prev) {
-                // Entering demo mode, reset demo balance
                 setDemoBalance(DEMO_STARTING_BALANCE);
             }
             return !prev;
@@ -151,14 +170,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         setBetAmountState(Math.max(0.5, Math.min(100, amount)));
     }, []);
 
-    // Record game to Supabase AND settle on-chain (for real money games when registered)
+    // Record game to server - NO blockchain calls, just API
     const recordGameToServer = useCallback(async (record: Omit<BetRecord, 'id' | 'timestamp'>) => {
         if (!primaryWallet?.address || demoMode) return;
 
-        // 1. Record stats to Supabase (only if registered)
         if (isRegistered) {
             try {
-                await fetch('/api/games', {
+                const response = await fetch('/api/games', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -170,41 +188,23 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
                         won: record.outcome === 'win',
                     }),
                 });
-            } catch {
-                // Stats recording is non-critical, continue silently
+
+                if (response.ok) {
+                    const data = await response.json();
+                    // Update balance from server response
+                    if (data.newBalance !== undefined) {
+                        setBalance(data.newBalance);
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to record game:', error);
+                // On error, refresh balance from server
+                await refreshBalance();
             }
         }
-
-        // 2. Settle on-chain with signed request
-        try {
-            const settlementData = {
-                userAddress: primaryWallet.address,
-                betAmount: record.betAmount,
-                payout: record.payout,
-                game: record.game,
-                won: record.outcome === 'win',
-            };
-
-            const signedRequest = await signRequest(settlementData);
-
-            const response = await fetch('/api/game/settle', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(signedRequest),
-            });
-
-            if (!response.ok) {
-                // Settlement failed - balance will refresh on next action
-            }
-        } catch {
-            // Network error - balance will be stale until next refresh
-        }
-
-        // 3. Refresh the displayed balance from vault
-        await refreshBalance();
     }, [primaryWallet?.address, isRegistered, demoMode, refreshBalance]);
 
-    // Add bet record (also records demo play if in demo mode)
+    // Add bet record - instant UI update, async server update
     const addBetRecord = useCallback((record: Omit<BetRecord, 'id' | 'timestamp'>) => {
         const newRecord: BetRecord = {
             ...record,
@@ -212,11 +212,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
             timestamp: new Date(),
         };
 
-        setBetHistory(prev => [newRecord, ...prev].slice(0, 50)); // Keep last 50
+        setBetHistory(prev => [newRecord, ...prev].slice(0, 50));
 
-        // Update demo balance if in demo mode
         if (demoMode) {
-            // Record the demo play for limit tracking
             demoLimits.recordPlay(record.game);
 
             if (record.outcome === 'win') {
@@ -225,18 +223,23 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
                 setDemoBalance(prev => prev - record.betAmount);
             }
         } else {
-            // Record to server for points (real money mode)
+            // Update balance optimistically for instant feedback
+            const delta = record.outcome === 'win'
+                ? record.payout - record.betAmount
+                : -record.betAmount;
+            setBalance(prev => prev + delta);
+
+            // Record to server (async, non-blocking)
             recordGameToServer(record);
         }
     }, [demoMode, demoLimits, recordGameToServer]);
 
-    // Effective balance (demo or real)
+    // Effective balance
     const effectiveBalance = demoMode ? demoBalance : balance;
 
-    // Can bet check - also check demo limits in demo mode
+    // Can bet check
     const canBet = useCallback((amount: number) => {
-        const basicCheck = amount >= 0.5 && amount <= 100 && amount <= effectiveBalance;
-        return basicCheck;
+        return amount >= 0.5 && amount <= 100 && amount <= effectiveBalance;
     }, [effectiveBalance]);
 
     return (
@@ -245,6 +248,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
                 balance,
                 isLoading,
                 refreshBalance,
+                syncBalanceAfterDeposit,
                 demoMode,
                 demoBalance,
                 toggleDemoMode,
@@ -258,13 +262,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
                 addBetRecord,
                 effectiveBalance,
                 canBet,
-                // User registration
                 isRegistered,
                 username: user?.username_display || null,
                 showUsernameModal,
                 setShowUsernameModal,
                 refetchUser,
-                // Streak
                 streak,
                 streakMultiplier,
             }}

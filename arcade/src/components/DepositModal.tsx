@@ -17,7 +17,7 @@ interface DepositModalProps {
 export function DepositModal({ isOpen, onClose, mode }: DepositModalProps) {
     const { primaryWallet } = useDynamicContext();
     const { getVaultBalance, getWalletBalance, deposit, withdraw, isLoading, error } = useVault();
-    const { refreshBalance } = useGame();
+    const { refreshBalance, syncBalanceAfterDeposit, balance: serverBalance } = useGame();
     const { playSound } = useSound();
 
     const [amount, setAmount] = useState('');
@@ -49,14 +49,47 @@ export function DepositModal({ isOpen, onClose, mode }: DepositModalProps) {
 
         let result: boolean;
         if (mode === 'deposit') {
+            // Deposit to vault, then sync server balance
             result = await deposit(amountNum);
+            if (result) {
+                // Sync vault balance to server after successful deposit
+                await syncBalanceAfterDeposit();
+            }
         } else {
-            result = await withdraw(amountNum);
+            try {
+                const reserveResponse = await fetch('/api/balance/withdraw', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        wallet: primaryWallet?.address,
+                        amount: amountNum,
+                    }),
+                });
+
+                if (!reserveResponse.ok) {
+                    const data = await reserveResponse.json();
+                    throw new Error(data.error || 'Withdrawal reservation failed');
+                }
+
+                result = await withdraw(amountNum);
+
+                await fetch('/api/balance/withdraw', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        wallet: primaryWallet?.address,
+                        amount: amountNum,
+                        action: result ? 'confirm' : 'cancel',
+                    }),
+                });
+            } catch (err) {
+                console.error('Withdrawal error:', err);
+                result = false;
+            }
         }
 
         if (result) {
             setSuccess(true);
-            // Play appropriate sound based on mode
             playSound(mode === 'deposit' ? 'COIN_DEPOSIT' : 'COIN_WITHDRAW');
             await refreshBalance();
             setTimeout(() => {

@@ -1,6 +1,3 @@
-/* Global overrides and resets */
-
-/* Prevent horizontal scroll on mobile */
 html,
 body {
   overflow-x: hidden;
@@ -19,24 +16,20 @@ main {
   min-height: calc(100vh - 70px);
 }
 
-/* Remove default Next.js styles */
 a {
   color: inherit;
   text-decoration: none;
 }
 
-/* Custom scrollbar for the whole page */
 html {
   scroll-behavior: smooth;
 }
 
-/* Focus styles for accessibility */
 *:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
 
-/* Selection styles */
 ::selection {
   background: var(--color-primary);
   color: white;

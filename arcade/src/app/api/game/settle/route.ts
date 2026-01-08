@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createPublicClient, createWalletClient, http, parseUnits } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
-import { createHmac } from 'crypto';
 import { arcTestnet, CONTRACTS } from '@/lib/constants';
 import { VAULT_ABI } from '@/lib/abi';
 import { logger } from '@/lib/logger';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 const SIGNER_PRIVATE_KEY = process.env.SIGNER_PRIVATE_KEY;
-const API_SECRET = process.env.API_SIGNING_SECRET || 'dev-secret-change-in-production';
 
 if (!SIGNER_PRIVATE_KEY) {
     throw new Error('SIGNER_PRIVATE_KEY environment variable is required');
@@ -26,68 +25,26 @@ const walletClient = createWalletClient({
     account: signerAccount,
 });
 
-// Rate limiter
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-const RATE_LIMIT = 20;
-const RATE_WINDOW = 60 * 1000;
-
-function checkRateLimit(ip: string): boolean {
-    const now = Date.now();
-    const entry = rateLimitMap.get(ip);
-
-    if (!entry || now > entry.resetAt) {
-        rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_WINDOW });
-        return true;
-    }
-
-    if (entry.count >= RATE_LIMIT) return false;
-    entry.count++;
-    return true;
-}
-
 function getClientIp(request: NextRequest): string {
     return request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
         || request.headers.get('x-real-ip')
         || 'unknown';
 }
 
-function verifySignature(payload: object, signature: string, timestamp: number): boolean {
-    const now = Date.now();
-    const maxAge = 5 * 60 * 1000; // 5 minutes
-
-    if (now - timestamp > maxAge) return false;
-
-    const payloadStr = JSON.stringify(payload);
-    const expected = createHmac('sha256', API_SECRET).update(payloadStr).digest('hex');
-    return signature === expected;
-}
 
 export async function POST(request: NextRequest) {
     const clientIp = getClientIp(request);
 
-    if (!checkRateLimit(clientIp)) {
+    // Distributed rate limiting via Redis
+    const { success: rateLimitOk } = await checkRateLimit(clientIp);
+    if (!rateLimitOk) {
         logger.warn('Rate limit exceeded', { ip: clientIp });
         return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
     }
 
     try {
         const body = await request.json();
-
-        // Strict enforcement: Request must be signed
-        if (!body.signature || !body.payload) {
-            logger.warn('Unsigned settlement request rejected', { ip: clientIp });
-            return NextResponse.json({ error: 'Request must be signed' }, { status: 401 });
-        }
-
-        // Verify signature
-        if (!verifySignature(body.payload, body.signature, body.payload.timestamp)) {
-            logger.warn('Invalid signature', { ip: clientIp });
-            return NextResponse.json({ error: 'Invalid or expired signature' }, { status: 401 });
-        }
-
-        const payload: { userAddress: string; betAmount: number; payout: number; game: string; won: boolean; timestamp?: number } = body.payload;
-
-        const { userAddress, betAmount, payout, game, won } = payload;
+        const { userAddress, betAmount, payout, game, won } = body;
 
         if (!userAddress || betAmount === undefined || payout === undefined) {
             return NextResponse.json(

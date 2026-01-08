@@ -6,11 +6,32 @@ import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { arcTestnet, CONTRACTS } from './constants';
 import { VAULT_ABI, ERC20_ABI } from './abi';
 
-// Create public client for read operations
 const publicClient = createPublicClient({
     chain: arcTestnet,
     transport: http(),
 });
+
+async function withRetry<T>(
+    operation: () => Promise<T>,
+    maxAttempts = 3,
+    baseDelay = 1000
+): Promise<T> {
+    let lastError: Error | undefined;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+            return await operation();
+        } catch (err) {
+            lastError = err as Error;
+            if (lastError.message?.includes('rejected') || lastError.message?.includes('denied')) {
+                throw lastError;
+            }
+            if (attempt < maxAttempts) {
+                await new Promise(r => setTimeout(r, baseDelay * Math.pow(2, attempt - 1)));
+            }
+        }
+    }
+    throw lastError;
+}
 
 /**
  * Hook for interacting with the ARCadeVault contract
@@ -172,16 +193,17 @@ export function useVault() {
 
             const amountWei = parseUnits(amount.toString(), 6);
 
-            const hash = await walletClient.writeContract({
-                address: CONTRACTS.ARCADE_VAULT,
-                abi: VAULT_ABI,
-                functionName: 'deposit',
-                args: [amountWei],
-                chain: arcTestnet,
-                account: primaryWallet.address as `0x${string}`,
+            await withRetry(async () => {
+                const hash = await walletClient.writeContract({
+                    address: CONTRACTS.ARCADE_VAULT,
+                    abi: VAULT_ABI,
+                    functionName: 'deposit',
+                    args: [amountWei],
+                    chain: arcTestnet,
+                    account: primaryWallet.address as `0x${string}`,
+                });
+                await publicClient.waitForTransactionReceipt({ hash });
             });
-
-            await publicClient.waitForTransactionReceipt({ hash });
             return true;
         } catch (err) {
             console.error('Deposit failed:', err);
@@ -213,16 +235,17 @@ export function useVault() {
 
             const amountWei = parseUnits(amount.toString(), 6);
 
-            const hash = await walletClient.writeContract({
-                address: CONTRACTS.ARCADE_VAULT,
-                abi: VAULT_ABI,
-                functionName: 'withdraw',
-                args: [amountWei],
-                chain: arcTestnet,
-                account: primaryWallet.address as `0x${string}`,
+            await withRetry(async () => {
+                const hash = await walletClient.writeContract({
+                    address: CONTRACTS.ARCADE_VAULT,
+                    abi: VAULT_ABI,
+                    functionName: 'withdraw',
+                    args: [amountWei],
+                    chain: arcTestnet,
+                    account: primaryWallet.address as `0x${string}`,
+                });
+                await publicClient.waitForTransactionReceipt({ hash });
             });
-
-            await publicClient.waitForTransactionReceipt({ hash });
             return true;
         } catch (err) {
             console.error('Withdraw failed:', err);

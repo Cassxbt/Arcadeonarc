@@ -1,19 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { privateKeyToAccount } from 'viem/accounts';
-import { keccak256, encodePacked, toHex } from 'viem';
+import { keccak256, encodePacked } from 'viem';
+import { secureRandomInt } from '@/lib/random';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
-// Server signer private key - MUST be set in environment variables
-// This key is used to sign game outcomes for provable fairness
 const SIGNER_PRIVATE_KEY = process.env.SIGNER_PRIVATE_KEY;
 if (!SIGNER_PRIVATE_KEY) {
     throw new Error('SIGNER_PRIVATE_KEY environment variable is required');
 }
 const signer = privateKeyToAccount(SIGNER_PRIVATE_KEY as `0x${string}`);
-
-/**
- * Tower Game API - Get death tile position and signature for a row
- */
 export async function POST(request: NextRequest) {
+    const clientIp = getClientIp(request);
+    const { success: rateLimitOk } = await checkRateLimit(clientIp);
+    if (!rateLimitOk) {
+        return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    }
+
     try {
         const { userAddress, nonce, row, tilesInRow } = await request.json();
 
@@ -21,10 +23,8 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
         }
 
-        // Generate random death tile position
-        const deathTile = Math.floor(Math.random() * tilesInRow);
+        const deathTile = secureRandomInt(0, tilesInRow);
 
-        // Create message hash (must match contract)
         const messageHash = keccak256(
             encodePacked(
                 ['address', 'uint256', 'uint8', 'uint8'],
@@ -32,7 +32,6 @@ export async function POST(request: NextRequest) {
             )
         );
 
-        // Sign with Ethereum prefix
         const signature = await signer.signMessage({
             message: { raw: messageHash },
         });
@@ -42,8 +41,9 @@ export async function POST(request: NextRequest) {
             signature,
             row,
         });
-    } catch (error: any) {
-        console.error('Tower API error:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        console.error('Tower API error:', message);
+        return NextResponse.json({ error: message }, { status: 500 });
     }
 }
