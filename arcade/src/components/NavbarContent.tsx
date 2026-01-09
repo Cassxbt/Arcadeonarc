@@ -8,6 +8,8 @@ import { useTheme } from '@/lib/theme';
 import { useSound } from '@/lib/sounds';
 import { useGame } from '@/lib/game-context';
 import { DepositModal } from './DepositModal';
+import { CashierWidget } from './CashierWidget';
+import { UserWidget } from './UserWidget';
 import {
     Gamepad2,
     HelpCircle,
@@ -29,7 +31,7 @@ export function NavbarContent() {
     const { primaryWallet } = useDynamicContext();
     const { theme, toggleTheme } = useTheme();
     const { soundEnabled, toggleSound } = useSound();
-    const { balance } = useGame();
+    const { balance, username } = useGame();
 
     const [depositModalOpen, setDepositModalOpen] = useState(false);
     const [modalMode, setModalMode] = useState<'deposit' | 'withdraw'>('deposit');
@@ -78,6 +80,7 @@ export function NavbarContent() {
     };
 
     const displayBalance = primaryWallet ? balance : 0;
+    const displayUsername = username || (primaryWallet ? `${primaryWallet.address.slice(0, 6)}...` : 'Guest');
 
     return (
         <>
@@ -125,29 +128,20 @@ export function NavbarContent() {
 
                     {/* Right side */}
                     <div className={styles.right}>
-                        {/* Real-time USDC Balance Display */}
-                        <div className={styles.balance}>
-                            <span className={styles.balanceLabel}>USDC</span>
-                            <span className={styles.balanceAmount}>
-                                ${displayBalance.toFixed(2)}
-                            </span>
-                        </div>
-
-                        {/* Deposit/Withdraw buttons for connected wallet */}
+                        {/* Desktop: New Widgets */}
                         {primaryWallet && (
-                            <div className={styles.walletActions}>
-                                <button onClick={openDeposit} className={styles.depositBtn}>
-                                    Deposit
-                                </button>
-                                <button onClick={openWithdraw} className={styles.withdrawBtn}>
-                                    Withdraw
-                                </button>
-                            </div>
+                            <>
+                                <UserWidget username={displayUsername} />
+                                <CashierWidget
+                                    balance={displayBalance}
+                                    onDeposit={openDeposit}
+                                    onWithdraw={openWithdraw}
+                                />
+                            </>
                         )}
 
                         {/* Desktop Controls - Sound and Theme only */}
                         <div className={styles.controls}>
-                            {/* Sound Toggle */}
                             <button
                                 onClick={toggleSound}
                                 className={styles.iconBtn}
@@ -160,7 +154,6 @@ export function NavbarContent() {
                                 )}
                             </button>
 
-                            {/* Theme Toggle */}
                             <button
                                 onClick={toggleTheme}
                                 className={styles.iconBtn}
@@ -174,7 +167,8 @@ export function NavbarContent() {
                             </button>
                         </div>
 
-                        {/* Arcade-styled Wallet/Login Widget */}
+                        {/* Login Widget - Hidden when connected to reduce clutter, or kept for switching? */}
+                        {/* Dynamic Widget handles its own state, so we keep it but it collapses mostly */}
                         <div className={styles.walletWidget}>
                             <DynamicWidget />
                         </div>
@@ -186,6 +180,7 @@ export function NavbarContent() {
                             aria-label="Toggle menu"
                         >
                             <span className={`${styles.hamburger} ${mobileMenuOpen ? styles.hamburgerOpen : ''}`}>
+                                ·
                                 <span></span>
                                 <span></span>
                                 <span></span>
@@ -221,6 +216,7 @@ export function NavbarContent() {
 
                     {/* Primary Navigation */}
                     <nav className={styles.mobileNavSection}>
+                        {/* Regular Links... Copied from previous logic, linking to main pages */}
                         <Link
                             href="/faq"
                             className={`${styles.mobileMenuItem} ${styles.menuItem} ${styles.menuItem2} ${isActiveLink('/faq') ? styles.mobileMenuItemActive : ''}`}
@@ -257,10 +253,20 @@ export function NavbarContent() {
                             </span>
                             <span className={styles.menuItemText}>Leaderboard</span>
                         </Link>
+                        {/* Profile Link for Mobile */}
+                        <Link
+                            href="/profile"
+                            className={`${styles.mobileMenuItem} ${styles.menuItem} ${styles.menuItem6} ${isActiveLink('/profile') ? styles.mobileMenuItemActive : ''}`}
+                        >
+                            <span className={styles.menuItemIcon}>
+                                <Gamepad2 size={24} />
+                            </span>
+                            <span className={styles.menuItemText}>Profile</span>
+                        </Link>
                     </nav>
 
                     {/* Controls Row */}
-                    <div className={`${styles.mobileControlsRow} ${styles.menuItem} ${styles.menuItem6}`}>
+                    <div className={`${styles.mobileControlsRow} ${styles.menuItem} ${styles.menuItem7}`}>
                         <button
                             onClick={toggleSound}
                             className={styles.mobileControlItem}
@@ -288,7 +294,7 @@ export function NavbarContent() {
 
                     {/* Wallet Actions */}
                     {primaryWallet && (
-                        <div className={`${styles.mobileWalletRow} ${styles.menuItem} ${styles.menuItem7}`}>
+                        <div className={`${styles.mobileWalletRow} ${styles.menuItem} ${styles.menuItem8}`}>
                             <button onClick={openDeposit} className={styles.mobileDepositBtn}>
                                 Deposit
                             </button>
@@ -299,7 +305,7 @@ export function NavbarContent() {
                     )}
 
                     {/* Social Links */}
-                    <div className={`${styles.mobileSocialRow} ${styles.menuItem} ${styles.menuItem8}`}>
+                    <div className={`${styles.mobileSocialRow} ${styles.menuItem} ${styles.menuItem9}`}>
                         <a href="https://twitter.com/ArcadeOnArc" target="_blank" rel="noopener noreferrer" className={styles.mobileSocialLink}>
                             <Twitter size={20} />
                         </a>

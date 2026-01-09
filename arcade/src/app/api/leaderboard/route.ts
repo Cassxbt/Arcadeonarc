@@ -21,136 +21,202 @@ export async function GET(request: NextRequest) {
     try {
         const supabase = createServerClient();
 
+        // Time calculations
         const now = new Date();
         const startOfYear = new Date(now.getFullYear(), 0, 1);
         const days = Math.floor((now.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
         const currentWeek = Math.ceil((days + startOfYear.getDay() + 1) / 7);
         const currentYear = now.getFullYear();
-        const currentMonth = now.getMonth() + 1;
 
         let leaderboard: LeaderboardEntry[] = [];
 
         if (period === 'week') {
-            // This week's activity - aggregate from game_sessions
-            const { data: weeklyData, error } = await supabase
+            const { data: weeklyGames, error: gamesError } = await supabase
                 .from('game_sessions')
-                .select(`
-                    wallet_address,
-                    bet_amount,
-                    payout,
-                    won
-                `)
+                .select('wallet_address, bet_amount, payout, won')
                 .eq('week_number', currentWeek)
                 .eq('year', currentYear);
 
-            if (error) throw error;
+            if (gamesError) throw gamesError;
 
-            // Aggregate by wallet
-            const aggregated = new Map<string, {
+
+            const weekStart = new Date(now);
+            const dayOfWeek = weekStart.getDay() || 7; // 1-7 (Mon-Sun)
+            weekStart.setDate(now.getDate() - dayOfWeek + 1); // Monday
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekStart.getDate() + 6); // Sunday
+
+            const startDateStr = weekStart.toISOString().split('T')[0];
+            const endDateStr = weekEnd.toISOString().split('T')[0];
+
+            const { data: questRewards, error: questsError } = await supabase
+                .from('daily_quests')
+                .select('wallet_address, quest_id')
+                .gte('quest_date', startDateStr)
+                .lte('quest_date', endDateStr)
+                .eq('reward_claimed', true);
+
+            if (questsError) throw questsError;
+
+
+            const { data: milestoneRewards, error: milestonesError } = await supabase
+                .from('milestones')
+                .select('wallet_address, milestone_id')
+                .eq('week_number', currentWeek)
+                .eq('year', currentYear)
+                .eq('reward_claimed', true);
+
+            if (milestonesError) throw milestonesError;
+
+
+            const playerStats = new Map<string, {
                 games_played: number;
                 wins: number;
                 total_won: number;
+                quest_points: number;
+                milestone_points: number;
             }>();
 
-            for (const session of weeklyData || []) {
-                const current = aggregated.get(session.wallet_address) || {
-                    games_played: 0,
-                    wins: 0,
-                    total_won: 0,
-                };
-                current.games_played++;
-                if (session.won) current.wins++;
-                current.total_won += Number(session.payout);
-                aggregated.set(session.wallet_address, current);
+
+            const getStats = (wallet: string) => {
+                const lowerWallet = wallet.toLowerCase();
+                if (!playerStats.has(lowerWallet)) {
+                    playerStats.set(lowerWallet, { games_played: 0, wins: 0, total_won: 0, quest_points: 0, milestone_points: 0 });
+                }
+                return playerStats.get(lowerWallet)!;
+            };
+
+
+            // Points formula from cron: games + (wins * 2) + sqrt(total_won)
+            for (const game of weeklyGames || []) {
+                const stats = getStats(game.wallet_address);
+                stats.games_played++;
+                if (game.won) stats.wins++;
+                stats.total_won += Number(game.payout);
             }
 
-            const wallets = Array.from(aggregated.keys());
+
+            const QUEST_VALUES: Record<string, number> = {
+                'play_3': 50,
+                'win_1': 100,
+                'try_2_games': 75,
+                'completion_bonus': 200
+            };
+
+            for (const q of questRewards || []) {
+                const stats = getStats(q.wallet_address);
+                stats.quest_points += QUEST_VALUES[q.quest_id] || 0;
+            }
+
+
+            const MILESTONE_VALUES: Record<string, number> = {
+                'bronze': 500,
+                'silver': 1500,
+                'gold': 3000,
+                'diamond': 5000
+            };
+
+            for (const m of milestoneRewards || []) {
+                const stats = getStats(m.wallet_address);
+                stats.milestone_points += MILESTONE_VALUES[m.milestone_id] || 0;
+            }
+
+
+            const wallets = Array.from(playerStats.keys());
             if (wallets.length > 0) {
                 const { data: users } = await supabase
                     .from('users')
                     .select('wallet_address, username_display, current_streak')
                     .in('wallet_address', wallets);
 
-                const userMap = new Map(users?.map(u => [u.wallet_address, u]) || []);
+                const userMap = new Map(users?.map(u => [u.wallet_address.toLowerCase(), u]) || []);
 
                 const entries = wallets
-                    .filter(wallet => aggregated.get(wallet)!.games_played >= 3) // Minimum 3 games
                     .map(wallet => {
-                        const stats = aggregated.get(wallet)!;
+                        const stats = playerStats.get(wallet)!;
                         const user = userMap.get(wallet);
-                        const streak = user?.current_streak || 0;
-                        const streakMultiplier = Math.min(1.0 + (streak - 1) * 0.15, 2.0);
 
-                        // Points formula: (wins + usdc/10 + games) * streak_multiplier
-                        const rawPoints = stats.wins + (stats.total_won / 10) + stats.games_played;
-                        const points = Math.round(rawPoints * (streak > 0 ? streakMultiplier : 1));
+
+                        // Calculate Activity Points
+                        const activityPoints = stats.games_played + (stats.wins * 2) + Math.floor(Math.sqrt(stats.total_won));
+
+                        // Total Weekly Points
+                        // Note: Daily bonus (25pts) is not retrospectively trackable for "this week" easily without a log table,
+                        // so we omit it for the weekly specific leaderboard to ensure accuracy of what we can prove.
+                        const totalPoints = stats.quest_points + stats.milestone_points + activityPoints;
 
                         return {
                             wallet_address: wallet,
                             username: user?.username_display || wallet.slice(0, 6) + '...' + wallet.slice(-4),
-                            points,
+                            points: totalPoints,
                             games_played: stats.games_played,
                             wins: stats.wins,
                             total_won: stats.total_won,
-                            streak,
+                            streak: user?.current_streak || 0
                         };
                     })
-                    .sort((a, b) => b.points - a.points)
+                    // Filter: Minimum 3 games required to appear
+                    .filter(e => e.games_played >= 3)
+                    // Sort: Points DESC, then Games DESC, then Wins DESC (Strict Tie-breaking)
+                    .sort((a, b) => {
+                        if (b.points !== a.points) return b.points - a.points;
+                        if (b.games_played !== a.games_played) return b.games_played - a.games_played;
+                        return b.wins - a.wins;
+                    })
                     .slice(0, limit);
 
+                // Assign Rank (1, 2, 3...)
                 leaderboard = entries.map((entry, index) => ({
                     rank: index + 1,
-                    ...entry,
+                    ...entry
                 }));
             }
+
+
         } else if (period === 'season') {
-            // Current month - get from weekly_points table
-            // For now, aggregate current month's game sessions
-            const startOfMonth = new Date(currentYear, currentMonth - 1, 1);
-            const endOfMonth = new Date(currentYear, currentMonth, 0);
+            const currentMonth = now.getMonth() + 1; // 1-12
+            const startOfMonth = new Date(currentYear, now.getMonth(), 1).toISOString();
+            const endOfMonth = new Date(currentYear, now.getMonth() + 1, 0).toISOString();
 
-            const { data: monthlyData, error } = await supabase
-                .from('game_sessions')
-                .select('wallet_address, payout, won')
-                .gte('played_at', startOfMonth.toISOString())
-                .lte('played_at', endOfMonth.toISOString());
+            const { data: distributions, error: distError } = await supabase
+                .from('weekly_distributions')
+                .select('wallet_address, points_received')
+                .gte('distributed_at', startOfMonth)
+                .lte('distributed_at', endOfMonth);
 
-            if (error) throw error;
+            if (distError) throw distError;
 
-            const aggregated = new Map<string, { games_played: number; wins: number; total_won: number }>();
 
-            for (const session of monthlyData || []) {
-                const current = aggregated.get(session.wallet_address) || { games_played: 0, wins: 0, total_won: 0 };
-                current.games_played++;
-                if (session.won) current.wins++;
-                current.total_won += Number(session.payout);
-                aggregated.set(session.wallet_address, current);
+            const seasonalStats = new Map<string, number>(); // wallet -> total points
+
+            for (const dist of distributions || []) {
+                const current = seasonalStats.get(dist.wallet_address.toLowerCase()) || 0;
+                seasonalStats.set(dist.wallet_address.toLowerCase(), current + dist.points_received);
             }
 
-            const wallets = Array.from(aggregated.keys());
+            const wallets = Array.from(seasonalStats.keys());
             if (wallets.length > 0) {
                 const { data: users } = await supabase
                     .from('users')
-                    .select('wallet_address, username_display, current_streak, lifetime_xp')
+                    .select('wallet_address, username_display, current_streak')
                     .in('wallet_address', wallets);
 
-                const userMap = new Map(users?.map(u => [u.wallet_address, u]) || []);
+                const userMap = new Map(users?.map(u => [u.wallet_address.toLowerCase(), u]) || []);
 
                 const entries = wallets
-                    .filter(wallet => aggregated.get(wallet)!.games_played >= 3)
                     .map(wallet => {
-                        const stats = aggregated.get(wallet)!;
+                        const points = seasonalStats.get(wallet)!;
                         const user = userMap.get(wallet);
-                        const rawPoints = stats.wins + (stats.total_won / 10) + stats.games_played;
-
                         return {
                             wallet_address: wallet,
                             username: user?.username_display || wallet.slice(0, 6) + '...' + wallet.slice(-4),
-                            points: Math.round(rawPoints),
-                            games_played: stats.games_played,
-                            wins: stats.wins,
-                            total_won: stats.total_won,
+                            points: points,
                             streak: user?.current_streak || 0,
+                            // These stats aren't as relevant for 'Season' (which is just pool earnings), 
+                            // but we fill them for type compatibility.
+                            games_played: 0,
+                            wins: 0,
+                            total_won: 0
                         };
                     })
                     .sort((a, b) => b.points - a.points)
@@ -158,60 +224,83 @@ export async function GET(request: NextRequest) {
 
                 leaderboard = entries.map((entry, index) => ({
                     rank: index + 1,
-                    ...entry,
+                    ...entry
                 }));
             }
+
+
         } else {
-            // All-time - use lifetime_xp from users table
             const { data: users, error } = await supabase
                 .from('users')
-                .select('wallet_address, username_display, lifetime_xp, current_streak')
+                .select('wallet_address, username_display, lifetime_xp, current_streak, created_at')
                 .order('lifetime_xp', { ascending: false })
-                .limit(limit);
+                // Secondary sorts handled by application code because we need complex joins for stats
+                .limit(limit * 2); // Fetch more to handle ties locally
 
             if (error) throw error;
 
-            const wallets = users?.map(u => u.wallet_address) || [];
+            if (users && users.length > 0) {
+                const wallets = users.map(u => u.wallet_address);
 
-            let gameStats = new Map<string, { games_played: number; wins: number; total_won: number }>();
 
-            if (wallets.length > 0) {
-                const { data: sessions } = await supabase
+                // Fetch stats for tie-breaking (Games, Wins)
+                const { data: allSessions } = await supabase
                     .from('game_sessions')
-                    .select('wallet_address, payout, won')
+                    .select('wallet_address, won, payout')
                     .in('wallet_address', wallets);
 
-                for (const session of sessions || []) {
-                    const current = gameStats.get(session.wallet_address) || { games_played: 0, wins: 0, total_won: 0 };
-                    current.games_played++;
-                    if (session.won) current.wins++;
-                    current.total_won += Number(session.payout);
-                    gameStats.set(session.wallet_address, current);
-                }
-            }
+                const statsMap = new Map<string, { games: number, wins: number, total_won: number }>();
 
-            leaderboard = (users || []).map((user, index) => {
-                const stats = gameStats.get(user.wallet_address) || { games_played: 0, wins: 0, total_won: 0 };
-                return {
+                for (const s of allSessions || []) {
+                    const stats = statsMap.get(s.wallet_address) || { games: 0, wins: 0, total_won: 0 };
+                    stats.games++;
+                    if (s.won) stats.wins++;
+                    stats.total_won += Number(s.payout);
+                    statsMap.set(s.wallet_address, stats);
+                }
+
+                const entries = users.map(user => {
+                    const stats = statsMap.get(user.wallet_address) || { games: 0, wins: 0, total_won: 0 };
+                    return {
+                        wallet_address: user.wallet_address,
+                        username: user.username_display,
+                        points: user.lifetime_xp || 0,
+                        streak: user.current_streak || 0,
+                        games_played: stats.games,
+                        wins: stats.wins,
+                        total_won: stats.total_won,
+                        created_at: new Date(user.created_at).getTime()
+                    };
+                });
+
+                // Application-side sort with strict tie-breakers
+                entries.sort((a, b) => {
+                    if (b.points !== a.points) return b.points - a.points; // 1. Points
+                    if (b.games_played !== a.games_played) return b.games_played - a.games_played; // 2. Games Played
+                    if (b.wins !== a.wins) return b.wins - a.wins; // 3. Wins
+                    return a.created_at - b.created_at; // 4. Seniority (Oldest first)
+                });
+
+                leaderboard = entries.slice(0, limit).map((entry, index) => ({
                     rank: index + 1,
-                    wallet_address: user.wallet_address,
-                    username: user.username_display,
-                    points: Number(user.lifetime_xp),
-                    games_played: stats.games_played,
-                    wins: stats.wins,
-                    total_won: stats.total_won,
-                    streak: user.current_streak,
-                };
-            });
+                    username: entry.username,
+                    wallet_address: entry.wallet_address,
+                    points: entry.points,
+                    games_played: entry.games_played,
+                    wins: entry.wins,
+                    total_won: entry.total_won,
+                    streak: entry.streak
+                }));
+            }
         }
 
         return NextResponse.json({
             leaderboard,
             period,
             week: currentWeek,
-            year: currentYear,
-            month: currentMonth,
+            year: currentYear
         });
+
     } catch (error) {
         console.error('Error fetching leaderboard:', error);
         return NextResponse.json({ error: 'Failed to fetch leaderboard' }, { status: 500 });

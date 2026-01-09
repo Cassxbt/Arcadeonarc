@@ -4,6 +4,8 @@ import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import { calculateServerPayout } from '@/lib/game-logic';
 import { getVerifiedWallet } from '@/lib/verify-dynamic-jwt';
 import { updateQuestProgress } from '@/lib/quest-progress';
+import { checkAndAwardBadges } from '@/lib/badges';
+
 
 export async function POST(request: NextRequest) {
     const clientIp = getClientIp(request);
@@ -75,6 +77,12 @@ export async function POST(request: NextRequest) {
         updateQuestProgress(wallet, { game, won, bet_amount }).catch(err => {
             console.error('Quest progress update failed:', err);
         });
+
+        // Check for badges (non-blocking)
+        checkAndAwardBadges(supabase, wallet).catch(err => {
+            console.error('Badge check failed:', err);
+        });
+
 
         return NextResponse.json({
             success: true,

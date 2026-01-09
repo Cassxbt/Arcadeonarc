@@ -1,0 +1,331 @@
+.profilePage {
+    min-height: 100vh;
+    padding: 120px 20px 60px;
+    background: radial-gradient(circle at 50% 0%, #1a1a2e 0%, #000000 100%);
+    color: var(--text-primary);
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+}
+
+/* Header Section */
+.header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 40px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(5, 217, 232, 0.2);
+    border-radius: 24px;
+    position: relative;
+    overflow: hidden;
+}
+
+.header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
+}
+
+.avatarContainer {
+    position: relative;
+    width: 120px;
+    height: 120px;
+}
+
+.avatar {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: linear-gradient(45deg, #1a1a2e, #0f3460);
+    border: 4px solid var(--neon-cyan);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 30px rgba(5, 217, 232, 0.3);
+}
+
+.avatarIcon {
+    width: 60px;
+    height: 60px;
+    color: var(--neon-cyan);
+}
+
+.userInfo {
+    text-align: center;
+}
+
+.username {
+    font-family: var(--font-arcade);
+    font-size: 2.5rem;
+    color: var(--text-primary);
+    text-shadow: 0 0 15px rgba(5, 217, 232, 0.5);
+    margin-bottom: 8px;
+}
+
+.walletAddress {
+    font-family: var(--font-pixel);
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    background: rgba(255, 255, 255, 0.05);
+    padding: 6px 12px;
+    border-radius: 20px;
+    letter-spacing: 0.05em;
+}
+
+/* Stats Grid */
+.statsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+}
+
+.statCard {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: all 0.3s ease;
+}
+
+.statCard:hover {
+    transform: translateY(-5px);
+    border-color: var(--neon-cyan);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.statHeader {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.statValue {
+    font-family: var(--font-arcade);
+    font-size: 2rem;
+    color: var(--text-primary);
+}
+
+.statSubtext {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+/* Colors for specific cards */
+.purple .statValue {
+    color: var(--neon-purple);
+    text-shadow: 0 0 10px rgba(188, 19, 254, 0.4);
+}
+
+.green .statValue {
+    color: var(--neon-green);
+    text-shadow: 0 0 10px rgba(57, 255, 20, 0.4);
+}
+
+.pink .statValue {
+    color: var(--neon-pink);
+    text-shadow: 0 0 10px rgba(255, 42, 109, 0.4);
+}
+
+.yellow .statValue {
+    color: var(--neon-yellow);
+    text-shadow: 0 0 10px rgba(254, 218, 117, 0.4);
+}
+
+/* Favorite Game Section */
+.favoriteGame {
+    background: linear-gradient(135deg, rgba(26, 26, 46, 0.8), rgba(15, 52, 96, 0.8));
+    border: 1px solid var(--neon-cyan);
+    border-radius: 24px;
+    padding: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 40px;
+    position: relative;
+    overflow: hidden;
+}
+
+.gameInfo {
+    flex: 1;
+    z-index: 1;
+}
+
+.sectionTitle {
+    font-family: var(--font-arcade);
+    font-size: 1.5rem;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.gameName {
+    font-family: var(--font-pixel);
+    font-size: 3rem;
+    color: var(--neon-cyan);
+    text-shadow: 0 0 20px rgba(5, 217, 232, 0.6);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+}
+
+.gameStats {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+}
+
+.gameIcon {
+    font-size: 8rem;
+    opacity: 0.2;
+    transform: rotate(15deg);
+}
+
+/* Badges Section */
+.badgesSection {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.badgesGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.badgeCard {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 16px;
+    transition: all 0.3s ease;
+    cursor: default;
+}
+
+.badgeCard:hover {
+    transform: translateY(-5px) scale(1.02);
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--neon-yellow);
+    box-shadow: 0 0 20px rgba(254, 218, 117, 0.2);
+}
+
+.badgeIcon {
+    font-size: 3rem;
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
+    animation: float 3s ease-in-out infinite;
+}
+
+.badgeName {
+    font-family: var(--font-pixel);
+    font-size: 1rem;
+    color: var(--neon-yellow);
+    letter-spacing: 0.05em;
+}
+
+.badgeDescription {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+.emptyState {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 40px;
+    color: var(--text-secondary);
+    font-family: var(--font-pixel);
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 16px;
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
+/* Loading State */
+.loading {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding-top: 80px;
+    gap: 20px;
+    color: var(--neon-cyan);
+    font-family: var(--font-arcade);
+    font-size: 1.5rem;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(5, 217, 232, 0.3);
+    border-top-color: var(--neon-cyan);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+/* Animations */
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes float {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-5px);
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .profilePage {
+        padding: 100px 16px 40px;
+    }
+
+    .username {
+        font-size: 1.8rem;
+    }
+
+    .favoriteGame {
+        flex-direction: column;
+        text-align: center;
+        padding: 24px;
+        gap: 20px;
+    }
+
+    .sectionTitle {
+        justify-content: center;
+    }
+
+    .statsGrid {
+        grid-template-columns: 1fr;
+    }
+}

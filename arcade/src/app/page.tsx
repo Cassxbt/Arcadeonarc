@@ -23,6 +23,7 @@ import {
 } from '@/components/icons';
 import { GameSelector } from '@/components/GameSelector';
 import { GameCarousel } from '@/components/GameCarousel';
+import { TypewriterText } from '@/components/TypewriterText';
 import { useStats } from '@/lib/useStats';
 import styles from './page.module.css';
 
@@ -96,7 +97,17 @@ export default function Home() {
           Play. Win. <span className={styles.highlight}>Earn USDC.</span>
         </h2>
         <p className={styles.subtitle}>
-          Fast, fair, and fun crypto gaming on Arc L1
+          <TypewriterText
+            phrases={[
+              'Real fast and fun gaming on Arc L1',
+              'Provably fair games with instant payouts',
+              'Win USDC in seconds, not days',
+              'Built on Arc L1 by Circle',
+            ]}
+            typingSpeed={60}
+            deletingSpeed={30}
+            pauseTime={2500}
+          />
         </p>
         <div className={styles.heroButtons}>
           <button onClick={handleStartPlaying} className={styles.primaryBtn}>

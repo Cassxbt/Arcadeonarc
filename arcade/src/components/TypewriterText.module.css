@@ -1,0 +1,31 @@
+.typewriter {
+    display: inline;
+}
+
+.cursor {
+    display: inline-block;
+    color: var(--neon-cyan);
+    animation: blink 0.8s infinite;
+    font-weight: 300;
+    margin-left: 2px;
+    text-shadow: 0 0 10px var(--neon-cyan);
+}
+
+@keyframes blink {
+
+    0%,
+    50% {
+        opacity: 1;
+    }
+
+    51%,
+    100% {
+        opacity: 0;
+    }
+}
+
+/* Light mode adjustments */
+:global([data-theme="light"]) .cursor {
+    color: #0284C7;
+    text-shadow: none;
+}
