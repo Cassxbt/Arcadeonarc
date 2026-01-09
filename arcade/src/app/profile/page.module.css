@@ -1,331 +1,311 @@
+/* Profile Page Redesign - Premium Dashboard Style */
+
 .profilePage {
     min-height: 100vh;
-    padding: 120px 20px 60px;
-    background: radial-gradient(circle at 50% 0%, #1a1a2e 0%, #000000 100%);
+    padding: 100px 24px 60px;
+    background: var(--bg-primary);
+    /* Fallback */
+    background: radial-gradient(circle at 50% -20%, #111122 0%, #000000 100%);
     color: var(--text-primary);
 }
 
 .container {
-    max-width: 1200px;
+    max-width: 1100px;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
-    gap: 40px;
+    gap: 32px;
 }
 
-/* Header Section */
+/* Header - Identity Strip */
 .header {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.identityLeft {
+    display: flex;
     align-items: center;
     gap: 20px;
-    padding: 40px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(5, 217, 232, 0.2);
-    border-radius: 24px;
-    position: relative;
-    overflow: hidden;
 }
 
-.header::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
-}
-
-.avatarContainer {
-    position: relative;
-    width: 120px;
-    height: 120px;
-}
-
-.avatar {
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    background: linear-gradient(45deg, #1a1a2e, #0f3460);
-    border: 4px solid var(--neon-cyan);
+.rankIcon {
+    width: 64px;
+    height: 64px;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 0 30px rgba(5, 217, 232, 0.3);
-}
-
-.avatarIcon {
-    width: 60px;
-    height: 60px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01));
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
     color: var(--neon-cyan);
+    font-size: 1.5rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px);
 }
 
-.userInfo {
-    text-align: center;
+.userIdentity {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
 .username {
     font-family: var(--font-arcade);
-    font-size: 2.5rem;
+    font-size: 2rem;
     color: var(--text-primary);
-    text-shadow: 0 0 15px rgba(5, 217, 232, 0.5);
-    margin-bottom: 8px;
+    letter-spacing: 0.02em;
+    line-height: 1;
 }
 
-.walletAddress {
-    font-family: var(--font-pixel);
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    background: rgba(255, 255, 255, 0.05);
-    padding: 6px 12px;
-    border-radius: 20px;
-    letter-spacing: 0.05em;
-}
-
-/* Stats Grid */
-.statsGrid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 24px;
-}
-
-.statCard {
+.walletBadge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
     background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 100px;
+    font-size: 0.75rem;
+    font-family: monospace;
+    color: var(--text-secondary);
+    width: fit-content;
+}
+
+.joinDate {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    opacity: 0.6;
+}
+
+/* Bento Grid System */
+.bentoGrid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: auto auto;
+    /* Two main rows */
+    gap: 20px;
+}
+
+/* Base Card Style */
+.card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
     border-radius: 20px;
     padding: 24px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(20px);
+    overflow: hidden;
+    position: relative;
 }
 
-.statCard:hover {
-    transform: translateY(-5px);
-    border-color: var(--neon-cyan);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+.card:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.12);
+    transform: translateY(-2px);
 }
 
-.statHeader {
+/* Card Sizes */
+.large {
+    grid-column: span 2;
+    grid-row: span 2;
+}
+
+.medium {
+    grid-column: span 1;
+    grid-row: span 1;
+}
+
+.wide {
+    grid-column: span 4;
+}
+
+/* Card Content Styling */
+.cardLabel {
     display: flex;
     align-items: center;
-    gap: 12px;
-    color: var(--text-secondary);
-    font-size: 0.9rem;
+    gap: 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.08em;
+    color: var(--text-secondary);
+    margin-bottom: auto;
 }
 
-.statValue {
+.cardValue {
     font-family: var(--font-arcade);
     font-size: 2rem;
     color: var(--text-primary);
+    margin-top: 16px;
 }
 
-.statSubtext {
-    font-size: 0.8rem;
+.cardSubtext {
+    font-size: 0.75rem;
     color: var(--text-secondary);
+    opacity: 0.7;
+    margin-top: 4px;
 }
 
-/* Colors for specific cards */
-.purple .statValue {
-    color: var(--neon-purple);
-    text-shadow: 0 0 10px rgba(188, 19, 254, 0.4);
+/* Hero Stats Styling (XP) */
+.heroValue {
+    font-size: 4rem;
+    color: var(--neon-cyan);
+    text-shadow: 0 0 30px rgba(5, 217, 232, 0.15);
+    line-height: 1;
+    margin-top: 24px;
 }
 
-.green .statValue {
-    color: var(--neon-green);
-    text-shadow: 0 0 10px rgba(57, 255, 20, 0.4);
-}
-
-.pink .statValue {
-    color: var(--neon-pink);
-    text-shadow: 0 0 10px rgba(255, 42, 109, 0.4);
-}
-
-.yellow .statValue {
-    color: var(--neon-yellow);
-    text-shadow: 0 0 10px rgba(254, 218, 117, 0.4);
-}
-
-/* Favorite Game Section */
-.favoriteGame {
-    background: linear-gradient(135deg, rgba(26, 26, 46, 0.8), rgba(15, 52, 96, 0.8));
-    border: 1px solid var(--neon-cyan);
-    border-radius: 24px;
-    padding: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 40px;
-    position: relative;
+.xpBarContainer {
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    margin-top: 20px;
     overflow: hidden;
 }
 
-.gameInfo {
-    flex: 1;
-    z-index: 1;
+.xpBarFill {
+    height: 100%;
+    background: var(--neon-cyan);
+    border-radius: 6px;
+    box-shadow: 0 0 10px var(--neon-cyan);
 }
 
-.sectionTitle {
+/* Favorite Game Card */
+.favoriteGameCard {
+    background: linear-gradient(90deg, rgba(20, 20, 30, 0.8), rgba(10, 10, 15, 0.9));
+    border: 1px solid var(--neon-cyan);
+    box-shadow: inset 0 0 40px rgba(5, 217, 232, 0.05);
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.favGameInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.favGameTitle {
     font-family: var(--font-arcade);
-    font-size: 1.5rem;
+    font-size: 2rem;
+    color: var(--neon-cyan);
+    text-shadow: 0 0 10px rgba(5, 217, 232, 0.4);
+}
+
+.favGameStats {
+    display: flex;
+    gap: 16px;
     color: var(--text-secondary);
-    margin-bottom: 16px;
+    font-size: 0.9rem;
+}
+
+.favGameIcon {
+    font-size: 4rem;
+    opacity: 0.8;
+    color: var(--neon-cyan);
+    filter: drop-shadow(0 0 20px rgba(5, 217, 232, 0.3));
+}
+
+/* Badges Grid */
+.badgesSection {
+    margin-top: 20px;
+}
+
+.sectionHeader {
     display: flex;
     align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.badgesContainer {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
     gap: 12px;
 }
 
-.gameName {
-    font-family: var(--font-pixel);
-    font-size: 3rem;
-    color: var(--neon-cyan);
-    text-shadow: 0 0 20px rgba(5, 217, 232, 0.6);
-    margin-bottom: 8px;
-    text-transform: uppercase;
-}
-
-.gameStats {
-    color: var(--text-secondary);
-    font-size: 1.1rem;
-}
-
-.gameIcon {
-    font-size: 8rem;
-    opacity: 0.2;
-    transform: rotate(15deg);
-}
-
-/* Badges Section */
-.badgesSection {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-.badgesGrid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 20px;
-}
-
-.badgeCard {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 16px;
-    padding: 24px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: 16px;
-    transition: all 0.3s ease;
-    cursor: default;
-}
-
-.badgeCard:hover {
-    transform: translateY(-5px) scale(1.02);
-    background: rgba(255, 255, 255, 0.05);
-    border-color: var(--neon-yellow);
-    box-shadow: 0 0 20px rgba(254, 218, 117, 0.2);
-}
-
-.badgeIcon {
-    font-size: 3rem;
-    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
-    animation: float 3s ease-in-out infinite;
-}
-
-.badgeName {
-    font-family: var(--font-pixel);
-    font-size: 1rem;
-    color: var(--neon-yellow);
-    letter-spacing: 0.05em;
-}
-
-.badgeDescription {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    line-height: 1.4;
-}
-
-.emptyState {
-    grid-column: 1 / -1;
-    text-align: center;
-    padding: 40px;
-    color: var(--text-secondary);
-    font-family: var(--font-pixel);
+.badgeSlot {
+    aspect-ratio: 1;
+    border-radius: 12px;
     background: rgba(255, 255, 255, 0.02);
-    border-radius: 16px;
     border: 1px dashed rgba(255, 255, 255, 0.1);
-}
-
-/* Loading State */
-.loading {
-    min-height: 100vh;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding-top: 80px;
-    gap: 20px;
-    color: var(--neon-cyan);
-    font-family: var(--font-arcade);
-    font-size: 1.5rem;
+    font-size: 2rem;
+    transition: all 0.2s ease;
+    position: relative;
+    cursor: help;
 }
 
-.spinner {
-    width: 40px;
-    height: 40px;
-    border: 4px solid rgba(5, 217, 232, 0.3);
-    border-top-color: var(--neon-cyan);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
+.badgeSlot.earned {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-style: solid;
 }
 
-/* Animations */
-@keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
+.badgeSlot.earned:hover {
+    border-color: var(--neon-yellow);
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+    transform: scale(1.05);
 }
 
-@keyframes float {
-
-    0%,
-    100% {
-        transform: translateY(0);
-    }
-
-    50% {
-        transform: translateY(-5px);
-    }
-}
-
-/* Responsive */
+/* Mobile Responsive */
 @media (max-width: 768px) {
     .profilePage {
-        padding: 100px 16px 40px;
+        padding: 80px 16px 40px;
     }
 
-    .username {
-        font-size: 1.8rem;
-    }
-
-    .favoriteGame {
+    .header {
         flex-direction: column;
-        text-align: center;
-        padding: 24px;
+        align-items: flex-start;
         gap: 20px;
     }
 
-    .sectionTitle {
-        justify-content: center;
+    .username {
+        font-size: 1.5rem;
     }
 
-    .statsGrid {
-        grid-template-columns: 1fr;
+    .bentoGrid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    /* On mobile, breakdown the large cards */
+    .large {
+        grid-column: span 2;
+        grid-row: span 1;
+    }
+
+    .medium {
+        grid-column: span 1;
+    }
+
+    .wide {
+        grid-column: span 2;
+    }
+
+    .heroValue {
+        font-size: 2.5rem;
+    }
+
+    .favoriteGameCard {
+        flex-direction: column;
+        text-align: center;
+        gap: 20px;
+    }
+
+    .favGameStats {
+        justify-content: center;
     }
 }

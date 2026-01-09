@@ -112,15 +112,10 @@
     gap: var(--space-md);
 }
 
-.balance {
+.desktopWidgets {
     display: flex;
     align-items: center;
-    gap: var(--space-sm);
-    padding: var(--space-sm) var(--space-md);
-    background: var(--bg-tertiary);
-    border: 2px solid var(--neon-green);
-    border-radius: var(--radius-md);
-    box-shadow: 0 0 10px rgba(57, 255, 20, 0.2);
+    gap: var(--space-md);
 }
 
 .balanceLabel {
@@ -547,51 +542,90 @@
     background: rgba(255, 255, 255, 0.1);
 }
 
-/* Wallet Row */
-.mobileWalletRow {
+/* Mobile Wallet Section */
+.mobileWalletSection {
     display: flex;
-    gap: 12px;
+    flex-direction: column;
+    gap: 16px;
     width: 100%;
     max-width: 320px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+}
+
+.mobileProfileBtn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.mobileUserIcon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(5, 217, 232, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--neon-cyan);
+    border: 1px solid rgba(5, 217, 232, 0.3);
+}
+
+.mobileUserInfo {
+    display: flex;
+    flex-direction: column;
+}
+
+.mobileUsername {
+    font-family: var(--font-arcade);
+    font-size: 1rem;
+    color: var(--text-primary);
+}
+
+.mobileViewProfile {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.mobileActionButtons {
+    display: flex;
+    gap: 12px;
 }
 
 .mobileDepositBtn,
 .mobileWithdrawBtn {
     flex: 1;
-    min-height: 52px;
-    padding: 14px 20px;
+    min-height: 48px;
+    padding: 0 16px;
     font-family: var(--font-pixel);
-    font-size: 0.6rem;
+    font-size: 0.7rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.05em;
     border-radius: 12px;
     cursor: pointer;
-    transition: all 0.25s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
 }
 
 .mobileDepositBtn {
-    background: linear-gradient(180deg, var(--neon-green) 0%, #00aa00 100%);
+    background: var(--neon-green);
     color: #000;
-    border: 2px solid var(--neon-green);
-    box-shadow: 0 0 20px rgba(57, 255, 20, 0.4);
-}
-
-.mobileDepositBtn:hover {
-    box-shadow: 0 0 30px rgba(57, 255, 20, 0.6);
-    transform: translateY(-2px);
+    border: none;
+    box-shadow: 0 4px 12px rgba(57, 255, 20, 0.3);
 }
 
 .mobileWithdrawBtn {
     background: transparent;
-    color: var(--neon-pink);
-    border: 2px solid var(--neon-pink);
-}
-
-.mobileWithdrawBtn:hover {
-    background: rgba(255, 42, 109, 0.1);
-    box-shadow: 0 0 20px rgba(255, 42, 109, 0.3);
-    transform: translateY(-2px);
+    color: var(--text-primary);
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 /* Social Row */
@@ -660,11 +694,11 @@
         display: none;
     }
 
-    .controls {
+    .desktopWidgets {
         display: none;
     }
 
-    .walletActions {
+    .controls {
         display: none;
     }
 
