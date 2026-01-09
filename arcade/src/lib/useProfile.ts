@@ -9,6 +9,9 @@ interface ProfileData {
         lifetime_xp: number;
         current_streak: number;
         created_at: string;
+        rank: number;
+        topPercent: number;
+        totalPlayers: number;
     };
     badges: (BadgeDefinition & { earned_at: string })[];
     gameStats: {

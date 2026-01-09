@@ -69,7 +69,9 @@ export default function ProfilePage() {
                         <div className={styles.xpBarContainer}>
                             <div className={styles.xpBarFill} style={{ width: `${Math.min(userData.lifetime_xp % 1000 / 10, 100)}%` }}></div>
                         </div>
-                        <div className={styles.cardSubtext}>Rank 12 • Top 5% OF PLAYERS</div>
+                        <div className={styles.cardSubtext}>
+                            Rank {userData.rank} • Top {userData.topPercent}% OF PLAYERS
+                        </div>
                     </div>
 
 

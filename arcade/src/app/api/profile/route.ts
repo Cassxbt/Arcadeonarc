@@ -22,6 +22,24 @@ export async function GET(request: NextRequest) {
 
         if (userError) throw userError;
 
+        // Calculate Rank and Percentile
+        const { count: higherXpCount, error: rankError } = await supabase
+            .from('users')
+            .select('*', { count: 'exact', head: true })
+            .gt('lifetime_xp', user.lifetime_xp);
+
+        if (rankError) throw rankError;
+
+        const { count: totalPlayers, error: countError } = await supabase
+            .from('users')
+            .select('*', { count: 'exact', head: true });
+
+        if (countError) throw countError;
+
+        const rank = (higherXpCount || 0) + 1;
+        const total = totalPlayers || 1;
+        const topPercent = Math.ceil((rank / total) * 100);
+
         const { data: badgesData, error: badgesError } = await supabase
             .from('badges')
             .select('badge_type, earned_at')
@@ -105,7 +123,11 @@ export async function GET(request: NextRequest) {
                 username: user.username_display,
                 lifetime_xp: user.lifetime_xp,
                 current_streak: user.current_streak,
-                created_at: user.created_at
+
+                created_at: user.created_at,
+                rank,
+                topPercent,
+                totalPlayers: total
             },
             badges,
             gameStats: {

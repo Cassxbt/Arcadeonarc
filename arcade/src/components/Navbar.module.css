@@ -542,6 +542,45 @@
     background: rgba(255, 255, 255, 0.1);
 }
 
+/* Mobile Balance Card */
+.mobileBalanceCard {
+    background: linear-gradient(135deg, rgba(20, 20, 30, 0.6), rgba(10, 10, 15, 0.8));
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    backdrop-filter: blur(10px);
+}
+
+.balanceLabel {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    letter-spacing: 0.15em;
+    font-weight: 600;
+}
+
+.mobileBalanceValue {
+    font-family: var(--font-arcade);
+    font-size: 2rem;
+    /* reduced from huge size if it was larger */
+    background: linear-gradient(180deg, #fff 0%, #aaa 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.currencySymbol {
+    font-size: 1.2rem;
+    color: var(--neon-green);
+    -webkit-text-fill-color: var(--neon-green);
+    margin-top: 4px;
+}
+
 /* Mobile Wallet Section */
 .mobileWalletSection {
     display: flex;
@@ -628,36 +667,33 @@
     border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-/* Social Row */
+/* Social Row - Fixed Alignment */
 .mobileSocialRow {
     display: flex;
     justify-content: center;
-    gap: 20px;
+    /* Center them perfectly */
+    gap: 24px;
     width: 100%;
-    max-width: 320px;
-    padding: 16px 0;
+    padding: 10px 0;
 }
 
 .mobileSocialLink {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 52px;
-    height: 52px;
-    background: rgba(255, 255, 255, 0.06);
-    border: 2px solid rgba(255, 255, 255, 0.15);
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     color: var(--text-secondary);
-    text-decoration: none;
-    transition: all 0.25s ease;
+    transition: all 0.2s ease;
 }
 
 .mobileSocialLink:hover {
-    background: rgba(255, 42, 109, 0.15);
-    border-color: var(--neon-pink);
-    color: var(--neon-pink);
-    transform: translateY(-3px);
-    box-shadow: 0 8px 20px rgba(255, 42, 109, 0.3);
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+    transform: translateY(-2px);
 }
 
 /* Wallet CTA at Bottom */

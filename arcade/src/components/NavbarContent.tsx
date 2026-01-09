@@ -197,10 +197,11 @@ export function NavbarContent() {
                     </button>
 
                     <div className={`${styles.mobileBalanceCard} ${styles.menuItem} ${styles.menuItem1}`}>
-                        <span className={styles.balanceLabel}>USDC</span>
-                        <span className={styles.mobileBalanceValue}>
-                            ${displayBalance.toFixed(2)}
-                        </span>
+                        <div className={styles.balanceLabel}>TOTAL BALANCE</div>
+                        <div className={styles.mobileBalanceValue}>
+                            <span className={styles.currencySymbol}>$</span>
+                            {displayBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </div>
                     </div>
 
                     <nav className={styles.mobileNavSection}>
@@ -291,10 +292,10 @@ export function NavbarContent() {
 
                             <div className={styles.mobileActionButtons}>
                                 <button onClick={openDeposit} className={styles.mobileDepositBtn}>
-                                    Deposit
+                                    <span className={styles.btnIcon}>＋</span> Deposit
                                 </button>
                                 <button onClick={openWithdraw} className={styles.mobileWithdrawBtn}>
-                                    Withdraw
+                                    <span className={styles.btnIcon}>－</span> Withdraw
                                 </button>
                             </div>
                         </div>
