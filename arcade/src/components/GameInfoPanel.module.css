@@ -194,6 +194,18 @@
     .panel {
         width: 100vw;
         max-width: none;
+        height: auto;
+        max-height: calc(100vh - env(safe-area-inset-bottom, 0px));
+        top: auto;
+        bottom: 0;
+        border-left: none;
+        border-top: 2px solid var(--neon-cyan);
+        border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+        transform: translateY(100%);
+    }
+
+    .panelVisible {
+        transform: translateY(0);
     }
 
     .panelHeader {
@@ -207,6 +219,9 @@
     .panelContent {
         padding: var(--space-md);
         gap: var(--space-md);
+        max-height: 70vh;
+        overflow-y: auto;
+        padding-bottom: calc(var(--space-lg) + env(safe-area-inset-bottom, 20px));
     }
 
     .ruleCard {

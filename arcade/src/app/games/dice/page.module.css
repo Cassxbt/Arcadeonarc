@@ -403,7 +403,7 @@
 /* Responsive */
 @media (max-width: 768px) {
 
-    /* Fixed viewport - NO page scroll */
+    /* Fixed viewport - scrollable game area */
     .container {
         height: calc(100vh - 80px);
         overflow: hidden;
@@ -436,8 +436,8 @@
         flex: 1;
         min-height: 0;
         overflow-y: auto;
-        padding: var(--space-md);
-        gap: var(--space-md);
+        padding: var(--space-sm);
+        gap: var(--space-sm);
     }
 
     .card {
@@ -496,34 +496,39 @@
     }
 
     .sliderContainer {
-        padding: var(--space-md) var(--space-xs);
+        padding: var(--space-sm) var(--space-xs);
     }
 
     .sliderLabels {
         font-size: 0.65rem;
-    }
-
-    .diceBox {
-        width: 90px;
-        height: 90px;
-    }
-
-    .diceValue {
-        font-size: 2.25rem;
+        margin-top: var(--space-xs);
     }
 
     .diceResult {
-        gap: var(--space-md);
+        gap: var(--space-sm);
+        padding-bottom: var(--space-md);
+    }
+
+    .diceBox {
+        width: 80px;
+        height: 80px;
+        border-width: 3px;
+    }
+
+    .diceValue {
+        font-size: 2rem;
     }
 
     .resultWin,
     .resultLoss {
-        padding: var(--space-sm) var(--space-md);
-        font-size: 0.85rem;
+        padding: var(--space-xs) var(--space-sm);
+        font-size: 0.75rem;
+        text-align: center;
+        gap: var(--space-xs);
     }
 
     .resultEmoji {
-        font-size: 1.25rem;
+        font-size: 0.9rem;
     }
 }
 

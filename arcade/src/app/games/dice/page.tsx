@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { useGame } from '@/lib/game-context';
 import { useSound } from '@/lib/sounds';
@@ -36,6 +36,14 @@ export default function DiceGame() {
     const [betType, setBetType] = useState<'under' | 'over'>('under');
     const [streak, setStreak] = useState(0);
     const [showInfo, setShowInfo] = useState(false);
+    const resultRef = useRef<HTMLDivElement>(null);
+
+    // Auto-scroll to result on mobile when game ends
+    useEffect(() => {
+        if ((gameState === 'won' || gameState === 'lost') && resultRef.current) {
+            resultRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }, [gameState]);
 
     const { winChance, multiplier } = useMemo(() => {
         const chance = betType === 'under' ? target - 1 : 100 - target;
@@ -321,7 +329,7 @@ export default function DiceGame() {
                     </div>
 
                     {/* Dice Result */}
-                    <div className={styles.diceResult}>
+                    <div className={styles.diceResult} ref={resultRef}>
                         <div className={`${styles.diceBox} ${gameState === 'rolling' ? styles.diceRolling : ''}`}>
                             <span className={styles.diceValue}>
                                 {rollResult !== null ? rollResult : '?'}

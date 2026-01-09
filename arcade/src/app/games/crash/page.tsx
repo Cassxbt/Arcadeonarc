@@ -79,11 +79,13 @@ export default function CrashGame() {
     const [cashedOutAt, setCashedOutAt] = useState<number | null>(null);
     const [showFlash, setShowFlash] = useState(false);
     const [showInfo, setShowInfo] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
     const animationRef = useRef<number | null>(null);
     const startTimeRef = useRef<number>(0);
     const gameAreaRef = useRef<HTMLDivElement>(null);
     const gameStateRef = useRef<GameState>(gameState);
+    const isStartingRef = useRef<boolean>(false);
 
     // Keep gameStateRef in sync - critical for animation loop to see latest state
     useEffect(() => {
@@ -107,17 +109,28 @@ export default function CrashGame() {
     const [gameNonce, setGameNonce] = useState<number>(0);
 
     const startGame = useCallback(async () => {
-        if (!canBet(betAmount) || gameState === 'flying') return;
+        // Prevent double-taps and check eligibility
+        if (!canBet(betAmount) || gameState === 'flying' || isStartingRef.current || isLoading) return;
 
+        // Mark as starting immediately to prevent double-taps
+        isStartingRef.current = true;
+        setIsLoading(true);
+
+        // Stop any lingering sounds
         stopSound('WIN');
         stopSound('EXPLOSION');
         stopSound('CASH_OUT');
+
+        // Cancel any lingering animation frame from previous game
+        if (animationRef.current) {
+            cancelAnimationFrame(animationRef.current);
+            animationRef.current = null;
+        }
 
         const nonce = Date.now();
         setGameNonce(nonce);
 
         try {
-            // Get crash point from server (stored in Redis, not revealed to client)
             const response = await fetch('/api/crash', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -132,22 +145,32 @@ export default function CrashGame() {
                 throw new Error('Failed to start game');
             }
 
-            // Server stores crash point in Redis - client doesn't know it yet
+            // Reset game state for new round
             setMultiplier(1.00);
             setCashedOutAt(null);
             setShowFlash(false);
             setGameState('flying');
             startTimeRef.current = Date.now();
+            lastCheckRef.current = 0;
 
             playSound('CLICK');
         } catch (error) {
             console.error('Crash start error:', error);
+        } finally {
+            setIsLoading(false);
+            isStartingRef.current = false;
         }
-    }, [canBet, betAmount, gameState, playSound, stopSound, primaryWallet?.address]);
+    }, [canBet, betAmount, gameState, isLoading, playSound, stopSound, primaryWallet?.address]);
 
     // Cash out
     const cashOut = useCallback(() => {
         if (gameState !== 'flying') return;
+
+        // Cancel animation frame immediately to stop any pending API checks
+        if (animationRef.current) {
+            cancelAnimationFrame(animationRef.current);
+            animationRef.current = null;
+        }
 
         setCashedOutAt(multiplier);
         setGameState('cashedOut');
@@ -161,11 +184,7 @@ export default function CrashGame() {
             payout: betAmount * multiplier,
             gameParams: { cashoutMultiplier: Math.floor(multiplier * 10000), crashPoint: 0 },
         });
-
-        if (animationRef.current) {
-            cancelAnimationFrame(animationRef.current);
-        }
-    }, [gameState, multiplier, betAmount, playSound, addBetRecord, primaryWallet?.address, gameNonce]);
+    }, [gameState, multiplier, betAmount, playSound, addBetRecord]);
 
     const lastCheckRef = useRef<number>(0);
 
@@ -354,11 +373,12 @@ export default function CrashGame() {
                         {(gameState === 'idle' || gameState === 'crashed' || gameState === 'cashedOut') && (
                             <button
                                 onClick={startGame}
-                                disabled={!canBet(betAmount)}
-                                className={styles.primaryBtn}
+                                disabled={!canBet(betAmount) || isLoading}
+                                className={`${styles.primaryBtn} ${isLoading ? styles.loading : ''}`}
+                                style={{ touchAction: 'manipulation' }}
                             >
                                 <Rocket size={20} style={{ marginRight: '8px' }} />
-                                Launch Cannon (${betAmount})
+                                {isLoading ? 'Launching...' : `Launch Cannon ($${betAmount})`}
                             </button>
                         )}
 

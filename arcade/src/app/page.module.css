@@ -38,12 +38,6 @@
   margin-bottom: var(--space-sm);
   animation: neonFlicker 3s infinite alternate;
   letter-spacing: 0.1em;
-  /* GPU acceleration for smoother animation */
-  will-change: opacity, text-shadow;
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
 }
 
 .title {
@@ -589,41 +583,47 @@
   }
 }
 
-/* Mobile-optimized neon flicker - uses opacity-only animation for GPU performance */
+/* Mobile-optimized neon - SHARP shadows with STEPPED flicker for authentic neon tube effect */
 @keyframes neonFlickerMobile {
 
+  /* ON state - bright, sharp */
   0%,
-  9%,
+  18%,
   22%,
-  57%,
+  50%,
+  54%,
   100% {
     opacity: 1;
+    text-shadow:
+      0 0 2px #fff,
+      0 0 4px var(--neon-pink),
+      0 0 8px var(--neon-pink);
   }
 
-  2%,
-  8% {
-    opacity: 0.8;
-  }
-
-  21% {
+  /* Quick flicker OFF */
+  19%,
+  21%,
+  51%,
+  53% {
     opacity: 0.4;
-  }
-
-  56% {
-    opacity: 0.7;
+    text-shadow:
+      0 0 1px var(--neon-pink);
   }
 }
 
-/* Override animation for mobile devices */
+/* Override animation for mobile devices - sharp, punchy neon */
 @media (max-width: 768px),
 (hover: none) {
   .arcadeTitle {
-    /* Simpler static shadow for mobile - animation handles flicker via opacity */
+    /* Sharp shadow - small blur radii for crisp text */
+    color: #ff3a7d;
+    /* Slightly brighter pink */
     text-shadow:
-      0 0 8px var(--neon-pink),
-      0 0 16px var(--neon-pink),
-      0 0 32px var(--neon-pink);
-    animation: neonFlickerMobile 3s infinite linear;
+      0 0 2px #fff,
+      0 0 4px #ff2a6d,
+      0 0 8px #ff2a6d;
+    /* Stepped animation = discrete jumps, no interpolation = works on mobile */
+    animation: neonFlickerMobile 2.5s infinite steps(1);
   }
 }
 
