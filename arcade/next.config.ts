@@ -4,7 +4,7 @@ const nextConfig: NextConfig = {
   async headers() {
     // Define allowed origins based on environment
     const allowedOrigin = process.env.NODE_ENV === 'production'
-      ? (process.env.NEXT_PUBLIC_SITE_URL || 'https://arcade-on-arc.vercel.app')
+      ? (process.env.NEXT_PUBLIC_SITE_URL || 'https://arcadeonarc.fun')
       : 'http://localhost:3000';
 
     return [
