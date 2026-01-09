@@ -46,11 +46,38 @@ export function GameCarousel({ games }: GameCarouselProps) {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [goToPrev, goToNext]);
 
-    // Touch/drag handlers
+    // Touch/drag handlers with direction locking
+    const touchDirectionRef = useRef<'horizontal' | 'vertical' | null>(null);
+    const startYRef = useRef(0);
+
     const handleDragStart = (e: React.MouseEvent | React.TouchEvent) => {
         setIsDragging(true);
-        const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-        setStartX(clientX);
+        touchDirectionRef.current = null;
+        if ('touches' in e) {
+            setStartX(e.touches[0].clientX);
+            startYRef.current = e.touches[0].clientY;
+        } else {
+            setStartX(e.clientX);
+        }
+    };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+        if (!isDragging) return;
+
+        const currentX = e.touches[0].clientX;
+        const currentY = e.touches[0].clientY;
+        const diffX = Math.abs(currentX - startX);
+        const diffY = Math.abs(currentY - startYRef.current);
+
+        // Determine swipe direction on first significant movement
+        if (!touchDirectionRef.current && (diffX > 10 || diffY > 10)) {
+            touchDirectionRef.current = diffX > diffY ? 'horizontal' : 'vertical';
+        }
+
+        // If horizontal swipe, prevent page scroll
+        if (touchDirectionRef.current === 'horizontal') {
+            e.preventDefault();
+        }
     };
 
     const handleDragEnd = (e: React.MouseEvent | React.TouchEvent) => {
@@ -60,10 +87,13 @@ export function GameCarousel({ games }: GameCarouselProps) {
         const clientX = 'changedTouches' in e ? e.changedTouches[0].clientX : e.clientX;
         const diff = startX - clientX;
 
-        if (Math.abs(diff) > 50) {
+        // Only change slide if horizontal swipe
+        if (touchDirectionRef.current !== 'vertical' && Math.abs(diff) > 50) {
             if (diff > 0) goToNext();
             else goToPrev();
         }
+
+        touchDirectionRef.current = null;
     };
 
     // Parallax tilt effect on mouse move
@@ -154,6 +184,7 @@ export function GameCarousel({ games }: GameCarouselProps) {
                 onMouseUp={handleDragEnd}
                 onMouseLeave={handleDragEnd}
                 onTouchStart={handleDragStart}
+                onTouchMove={handleTouchMove}
                 onTouchEnd={handleDragEnd}
             >
                 {games.map((game, index) => {

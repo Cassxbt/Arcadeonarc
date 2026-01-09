@@ -109,19 +109,15 @@ export default function CrashGame() {
     const [gameNonce, setGameNonce] = useState<number>(0);
 
     const startGame = useCallback(async () => {
-        // Prevent double-taps and check eligibility
         if (!canBet(betAmount) || gameState === 'flying' || isStartingRef.current || isLoading) return;
 
-        // Mark as starting immediately to prevent double-taps
         isStartingRef.current = true;
         setIsLoading(true);
 
-        // Stop any lingering sounds
         stopSound('WIN');
         stopSound('EXPLOSION');
         stopSound('CASH_OUT');
 
-        // Cancel any lingering animation frame from previous game
         if (animationRef.current) {
             cancelAnimationFrame(animationRef.current);
             animationRef.current = null;
@@ -145,7 +141,6 @@ export default function CrashGame() {
                 throw new Error('Failed to start game');
             }
 
-            // Reset game state for new round
             setMultiplier(1.00);
             setCashedOutAt(null);
             setShowFlash(false);
@@ -166,7 +161,6 @@ export default function CrashGame() {
     const cashOut = useCallback(() => {
         if (gameState !== 'flying') return;
 
-        // Cancel animation frame immediately to stop any pending API checks
         if (animationRef.current) {
             cancelAnimationFrame(animationRef.current);
             animationRef.current = null;

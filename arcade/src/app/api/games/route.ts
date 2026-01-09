@@ -3,6 +3,7 @@ import { createServerClient } from '@/lib/supabase-server';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import { calculateServerPayout } from '@/lib/game-logic';
 import { getSessionWallet } from '@/lib/session';
+import { updateQuestProgress } from '@/lib/quest-progress';
 
 export async function POST(request: NextRequest) {
     const clientIp = getClientIp(request);
@@ -69,6 +70,11 @@ export async function POST(request: NextRequest) {
                 required: result.required
             }, { status });
         }
+
+        // Update quest progress (non-blocking)
+        updateQuestProgress(wallet, { game, won, bet_amount }).catch(err => {
+            console.error('Quest progress update failed:', err);
+        });
 
         return NextResponse.json({
             success: true,

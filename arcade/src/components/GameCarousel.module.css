@@ -17,6 +17,7 @@
     transform-style: preserve-3d;
     cursor: grab;
     user-select: none;
+    touch-action: pan-y;
 }
 
 .carouselTrack:active {

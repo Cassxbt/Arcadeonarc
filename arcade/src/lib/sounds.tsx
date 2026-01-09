@@ -84,7 +84,7 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
     }, []);
 
     // Mobile audio unlock - iOS/Safari blocks audio until user interaction
-    // This unlocks the audio context on first touch/click
+    // This unlocks the audio context on first touch/click WITHOUT playing game sounds
     const audioUnlocked = useRef(false);
 
     useEffect(() => {
@@ -92,42 +92,31 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
 
         const unlockAudio = () => {
             if (audioUnlocked.current) return;
-
-            // Mute first, then play briefly to unlock iOS audio context
-            // This prevents any audible sound during unlock
-            audioRefs.current.forEach(audio => {
-                const originalVolume = audio.volume;
-                audio.volume = 0; // Mute before playing
-                const playPromise = audio.play();
-                if (playPromise) {
-                    playPromise
-                        .then(() => {
-                            audio.pause();
-                            audio.currentTime = 0;
-                            audio.volume = originalVolume; // Restore volume
-                        })
-                        .catch(() => {
-                            audio.volume = originalVolume; // Restore on failure too
-                        });
-                } else {
-                    audio.volume = originalVolume;
-                }
-            });
-
             audioUnlocked.current = true;
 
-            // Also create and resume AudioContext if available (for Web Audio API)
             try {
                 const AudioContext = window.AudioContext || (window as Window & { webkitAudioContext?: typeof window.AudioContext }).webkitAudioContext;
                 if (AudioContext) {
                     const ctx = new AudioContext();
+
+                    const buffer = ctx.createBuffer(1, 1, 22050);
+                    const source = ctx.createBufferSource();
+                    source.buffer = buffer;
+                    source.connect(ctx.destination);
+                    source.start(0);
+
+                    // Resume context if suspended
                     if (ctx.state === 'suspended') {
                         ctx.resume();
                     }
                 }
             } catch {
-                // AudioContext not supported
+                // AudioContext not supported, fallback to simpler unlock
             }
+
+            audioRefs.current.forEach(audio => {
+                audio.load();
+            });
 
             // Remove listeners after unlock
             document.removeEventListener('touchstart', unlockAudio);
@@ -135,10 +124,9 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
             document.removeEventListener('click', unlockAudio);
         };
 
-        // Listen for first user interaction
-        document.addEventListener('touchstart', unlockAudio, { passive: true });
-        document.addEventListener('touchend', unlockAudio, { passive: true });
-        document.addEventListener('click', unlockAudio, { passive: true });
+        document.addEventListener('touchstart', unlockAudio, { passive: true, once: true });
+        document.addEventListener('touchend', unlockAudio, { passive: true, once: true });
+        document.addEventListener('click', unlockAudio, { passive: true, once: true });
 
         return () => {
             document.removeEventListener('touchstart', unlockAudio);

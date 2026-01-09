@@ -13,6 +13,7 @@ import {
     HelpCircle,
     BarChart3,
     Trophy,
+    Target,
     Volume2,
     VolumeX,
     Sun,
@@ -105,6 +106,13 @@ export function NavbarContent() {
                         >
                             <BarChart3 size={18} style={iconStyle('var(--neon-green)', isActiveLink('/stats'))} />
                             Stats
+                        </Link>
+                        <Link
+                            href="/quests"
+                            className={`${styles.navLink} ${isActiveLink('/quests') ? styles.navLinkActive : ''}`}
+                        >
+                            <Target size={18} style={iconStyle('var(--neon-pink)', isActiveLink('/quests'))} />
+                            Quests
                         </Link>
                         <Link
                             href="/leaderboard"
@@ -232,8 +240,17 @@ export function NavbarContent() {
                             <span className={styles.menuItemText}>Stats</span>
                         </Link>
                         <Link
+                            href="/quests"
+                            className={`${styles.mobileMenuItem} ${styles.menuItem} ${styles.menuItem4} ${isActiveLink('/quests') ? styles.mobileMenuItemActive : ''}`}
+                        >
+                            <span className={styles.menuItemIcon}>
+                                <Target size={24} />
+                            </span>
+                            <span className={styles.menuItemText}>Quests</span>
+                        </Link>
+                        <Link
                             href="/leaderboard"
-                            className={`${styles.mobileMenuItem} ${styles.menuItem} ${styles.menuItem4} ${isActiveLink('/leaderboard') ? styles.mobileMenuItemActive : ''}`}
+                            className={`${styles.mobileMenuItem} ${styles.menuItem} ${styles.menuItem5} ${isActiveLink('/leaderboard') ? styles.mobileMenuItemActive : ''}`}
                         >
                             <span className={styles.menuItemIcon}>
                                 <Trophy size={24} />
@@ -243,7 +260,7 @@ export function NavbarContent() {
                     </nav>
 
                     {/* Controls Row */}
-                    <div className={`${styles.mobileControlsRow} ${styles.menuItem} ${styles.menuItem5}`}>
+                    <div className={`${styles.mobileControlsRow} ${styles.menuItem} ${styles.menuItem6}`}>
                         <button
                             onClick={toggleSound}
                             className={styles.mobileControlItem}
@@ -271,7 +288,7 @@ export function NavbarContent() {
 
                     {/* Wallet Actions */}
                     {primaryWallet && (
-                        <div className={`${styles.mobileWalletRow} ${styles.menuItem} ${styles.menuItem6}`}>
+                        <div className={`${styles.mobileWalletRow} ${styles.menuItem} ${styles.menuItem7}`}>
                             <button onClick={openDeposit} className={styles.mobileDepositBtn}>
                                 Deposit
                             </button>
@@ -282,7 +299,7 @@ export function NavbarContent() {
                     )}
 
                     {/* Social Links */}
-                    <div className={`${styles.mobileSocialRow} ${styles.menuItem} ${styles.menuItem7}`}>
+                    <div className={`${styles.mobileSocialRow} ${styles.menuItem} ${styles.menuItem8}`}>
                         <a href="https://twitter.com/ArcadeOnArc" target="_blank" rel="noopener noreferrer" className={styles.mobileSocialLink}>
                             <Twitter size={20} />
                         </a>
@@ -292,7 +309,7 @@ export function NavbarContent() {
                     </div>
 
                     {/* Login/Wallet Widget - Bottom CTA */}
-                    <div className={`${styles.mobileWalletCTA} ${styles.menuItem} ${styles.menuItem8}`}>
+                    <div className={`${styles.mobileWalletCTA} ${styles.menuItem} ${styles.menuItem9}`}>
                         <DynamicWidget />
                     </div>
                 </div>
