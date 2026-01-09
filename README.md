@@ -8,7 +8,7 @@
 [![Built on Arc](https://img.shields.io/badge/Built%20on-Arc-00D4FF?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIyIi8+PC9zdmc+)](https://arc.network)
 [![USDC Payments](https://img.shields.io/badge/Payments-USDC-2775CA?style=for-the-badge&logo=circle&logoColor=white)](https://circle.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
-[![Next.js](https://img.shields.io/badge/Frontend-Next.js%2015-000000?style=for-the-badge&logo=next.js)](https://nextjs.org)
+[![Next.js](https://img.shields.io/badge/Frontend-Next.js%2016-000000?style=for-the-badge&logo=next.js)](https://nextjs.org)
 [![Solidity](https://img.shields.io/badge/Contracts-Solidity-363636?style=for-the-badge&logo=solidity)](https://soliditylang.org)
 
 <br />
@@ -57,7 +57,7 @@ graph TD
 
 ### Component Stack
 *   **Smart Contracts**: Solidity 0.8.20 (Foundry)
-*   **Frontend**: Next.js 15, React 18, TailwindCSS
+*   **Frontend**: Next.js 16, React 19, TailwindCSS
 *   **Indexing**: Supabase (Leaderboards)
 *   **Auth**: Dynamic (Wallet Connect)
 *   **Infrastructure**: Arc Testnet (Reth-based)
