@@ -69,7 +69,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     const { primaryWallet } = useDynamicContext();
     const isLoggedIn = useIsLoggedIn();
     const demoLimits = useDemoLimits();
-    const { user, isRegistered, refetch: refetchUser } = useUser();
+    const { user, isRegistered, isLoading: isUserLoading, refetch: refetchUser } = useUser();
     const { streak, streakMultiplier } = useStreak();
 
     // Server-tracked balance (for instant gameplay)
@@ -90,13 +90,17 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     const [betHistory, setBetHistory] = useState<BetRecord[]>([]);
 
     useEffect(() => {
-        if (isLoggedIn && !isRegistered && !demoMode) {
+        if (isLoggedIn && !isRegistered && !demoMode && !isUserLoading) {
             const timer = setTimeout(() => {
                 setShowUsernameModal(true);
             }, 500);
             return () => clearTimeout(timer);
         }
-    }, [isLoggedIn, isRegistered, demoMode]);
+
+        if (isRegistered && showUsernameModal) {
+            setShowUsernameModal(false);
+        }
+    }, [isLoggedIn, isRegistered, demoMode, isUserLoading, showUsernameModal]);
 
     const refreshBalance = useCallback(async () => {
         if (!primaryWallet?.address) {
