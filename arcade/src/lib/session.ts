@@ -1,9 +1,16 @@
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
+import { randomBytes } from 'crypto';
 
-const SESSION_SECRET = process.env.SESSION_SECRET || process.env.SIGNER_PRIVATE_KEY;
+const SESSION_SECRET = process.env.SESSION_SECRET;
+const SIGNER_PRIVATE_KEY = process.env.SIGNER_PRIVATE_KEY;
+
 if (!SESSION_SECRET) {
     throw new Error('SESSION_SECRET environment variable is required');
+}
+
+if (SESSION_SECRET === SIGNER_PRIVATE_KEY) {
+    throw new Error('SESSION_SECRET and SIGNER_PRIVATE_KEY must be different');
 }
 
 const secret = new TextEncoder().encode(SESSION_SECRET);
@@ -82,11 +89,11 @@ export function clearSessionCookie(): string {
 }
 
 /**
- * Generate a random challenge for wallet signing
+ * Generate a cryptographically secure random challenge for wallet signing
  */
 export function generateChallenge(): string {
     const timestamp = Date.now();
-    const random = Math.random().toString(36).substring(2, 15);
+    const random = randomBytes(32).toString('hex');
     return `arcade-auth-${timestamp}-${random}`;
 }
 

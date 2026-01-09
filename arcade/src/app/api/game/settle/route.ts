@@ -5,6 +5,7 @@ import { arcTestnet, CONTRACTS } from '@/lib/constants';
 import { VAULT_ABI } from '@/lib/abi';
 import { logger } from '@/lib/logger';
 import { checkRateLimit } from '@/lib/rate-limit';
+import { getSessionWallet } from '@/lib/session';
 
 const SIGNER_PRIVATE_KEY = process.env.SIGNER_PRIVATE_KEY;
 
@@ -35,11 +36,16 @@ function getClientIp(request: NextRequest): string {
 export async function POST(request: NextRequest) {
     const clientIp = getClientIp(request);
 
-    // Distributed rate limiting via Redis
     const { success: rateLimitOk } = await checkRateLimit(clientIp);
     if (!rateLimitOk) {
         logger.warn('Rate limit exceeded', { ip: clientIp });
         return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    }
+
+    const authenticatedWallet = await getSessionWallet(request);
+    if (!authenticatedWallet) {
+        logger.warn('Unauthorized settlement attempt', { ip: clientIp });
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     try {
@@ -57,6 +63,18 @@ export async function POST(request: NextRequest) {
             return NextResponse.json(
                 { error: 'Invalid address format' },
                 { status: 400 }
+            );
+        }
+
+        if (userAddress.toLowerCase() !== authenticatedWallet.toLowerCase()) {
+            logger.warn('Settlement authorization mismatch', {
+                authenticated: authenticatedWallet,
+                target: userAddress,
+                ip: clientIp
+            });
+            return NextResponse.json(
+                { error: 'Forbidden' },
+                { status: 403 }
             );
         }
 
