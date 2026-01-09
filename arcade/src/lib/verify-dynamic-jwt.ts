@@ -21,6 +21,7 @@ interface DynamicJWTPayload {
         address?: string;
         chain?: string;
         wallet_name?: string;
+        wallet_provider?: string;
         format?: string;
     }>;
     iat: number;
@@ -40,14 +41,16 @@ export async function verifyDynamicJWT(token: string): Promise<{ wallet: string;
         });
 
         const dynamicPayload = payload as unknown as DynamicJWTPayload;
+        const credentials = dynamicPayload.verified_credentials || [];
 
-        // Extract wallet address from verified credentials
-        const walletCredential = dynamicPayload.verified_credentials?.find(
-            (cred) => cred.address && cred.format === 'blockchain'
-        );
+        // Find wallet address - check embedded wallet first, then any with address
+        const walletCredential =
+            credentials.find((cred) => cred.address && cred.wallet_provider === 'embeddedWallet') ||
+            credentials.find((cred) => cred.address && cred.format === 'blockchain') ||
+            credentials.find((cred) => cred.address);
 
         if (!walletCredential?.address) {
-            console.error('No wallet address found in JWT credentials');
+            console.error('No wallet address found in JWT. Credentials:', JSON.stringify(credentials));
             return null;
         }
 
