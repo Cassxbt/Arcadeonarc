@@ -58,6 +58,37 @@
     text-shadow: 0 0 5px var(--neon-pink), 0 0 10px var(--neon-pink);
     margin-bottom: var(--space-md);
     letter-spacing: 0.05em;
+    /* GPU acceleration for smoother animation */
+    will-change: opacity, text-shadow;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    animation: titleFlicker 3s infinite alternate;
+}
+
+@keyframes titleFlicker {
+
+    0%,
+    9%,
+    22%,
+    57%,
+    100% {
+        opacity: 1;
+    }
+
+    2%,
+    8% {
+        opacity: 0.85;
+    }
+
+    21% {
+        opacity: 0.5;
+    }
+
+    56% {
+        opacity: 0.75;
+    }
 }
 
 .message {

@@ -47,7 +47,6 @@ export default function Leaderboard() {
                 if (response.ok) {
                     setLeaderboard(data.leaderboard || []);
 
-                    // Calculate aggregate stats
                     const entries = data.leaderboard || [];
                     setStats({
                         totalPaidOut: entries.reduce((sum: number, e: LeaderboardEntry) => sum + e.total_won, 0),

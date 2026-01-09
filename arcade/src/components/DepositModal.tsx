@@ -49,7 +49,6 @@ export function DepositModal({ isOpen, onClose, mode }: DepositModalProps) {
 
         let result: boolean;
         if (mode === 'deposit') {
-            // Deposit to vault, then sync server balance
             result = await deposit(amountNum);
             if (result) {
                 // Sync vault balance to server after successful deposit

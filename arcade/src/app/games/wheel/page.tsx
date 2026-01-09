@@ -89,7 +89,6 @@ export default function WheelGame() {
         };
     }, [resultSegment, betAmount]);
 
-    // Spin the wheel
     const spinWheel = useCallback(() => {
         if (!canBet(betAmount) || gameState !== 'idle') return;
 
@@ -101,7 +100,6 @@ export default function WheelGame() {
         setGameState('spinning');
         setResultSegment(null);
 
-        // Start the wheel spin sound (looped for duration of spin)
         playSound('WHEEL_SPIN', { loop: true });
 
         // Generate random segment (0-19)
@@ -117,7 +115,6 @@ export default function WheelGame() {
 
         // After spin animation completes (5 seconds)
         setTimeout(() => {
-            // Stop the wheel spin sound
             stopSound('WHEEL_SPIN');
 
             const segment = SEGMENTS[targetSegment];

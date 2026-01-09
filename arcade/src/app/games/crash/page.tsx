@@ -109,7 +109,6 @@ export default function CrashGame() {
     const startGame = useCallback(async () => {
         if (!canBet(betAmount) || gameState === 'flying') return;
 
-        // Stop any lingering sounds from previous game
         stopSound('WIN');
         stopSound('EXPLOSION');
         stopSound('CASH_OUT');
@@ -186,7 +185,6 @@ export default function CrashGame() {
 
             setMultiplier(roundedMultiplier);
 
-            // Check auto-cashout
             if (autoCashout && roundedMultiplier >= autoCashout) {
                 cashOut();
                 return;

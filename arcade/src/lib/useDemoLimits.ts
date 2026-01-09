@@ -72,7 +72,6 @@ function saveLimits(limits: DemoLimits): void {
 export function useDemoLimits(): DemoLimitState {
     const [limits, setLimits] = useState<DemoLimits>(getDefaultLimits);
 
-    // Load from localStorage on mount
     useEffect(() => {
         setLimits(loadLimits());
     }, []);

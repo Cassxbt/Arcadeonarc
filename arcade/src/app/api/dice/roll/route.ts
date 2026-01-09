@@ -28,10 +28,14 @@ export async function POST(request: NextRequest) {
 
         const result = secureRandomInt(1, 101); // [1, 100] - crypto secure
 
+        const addressForSigning = userAddress === 'demo'
+            ? '0x0000000000000000000000000000000000000000'
+            : userAddress;
+
         const messageHash = keccak256(
             encodePacked(
                 ['address', 'uint256', 'uint8', 'bool', 'uint8'],
-                [userAddress as `0x${string}`, BigInt(nonce), target, betUnder, result]
+                [addressForSigning as `0x${string}`, BigInt(nonce), target, betUnder, result]
             )
         );
 

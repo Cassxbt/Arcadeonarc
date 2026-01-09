@@ -93,19 +93,24 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
         const unlockAudio = () => {
             if (audioUnlocked.current) return;
 
-            // Try to play and immediately pause each audio element
-            // This "unlocks" them for future playback on iOS
+            // Mute first, then play briefly to unlock iOS audio context
+            // This prevents any audible sound during unlock
             audioRefs.current.forEach(audio => {
+                const originalVolume = audio.volume;
+                audio.volume = 0; // Mute before playing
                 const playPromise = audio.play();
                 if (playPromise) {
                     playPromise
                         .then(() => {
                             audio.pause();
                             audio.currentTime = 0;
+                            audio.volume = originalVolume; // Restore volume
                         })
                         .catch(() => {
-                            // Still locked, will try again on next interaction
+                            audio.volume = originalVolume; // Restore on failure too
                         });
+                } else {
+                    audio.volume = originalVolume;
                 }
             });
 

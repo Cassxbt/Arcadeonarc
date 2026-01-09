@@ -128,7 +128,6 @@ export function useUsernameCheck() {
     const [error, setError] = useState<string | null>(null);
 
     const checkUsername = useCallback(async (username: string) => {
-        // Validate format first
         if (!username || username.length < 3) {
             setIsAvailable(null);
             setError('Username must be at least 3 characters');

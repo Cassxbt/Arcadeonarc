@@ -28,12 +28,10 @@ export function GameCarousel({ games }: GameCarouselProps) {
 
     const totalGames = games.length;
 
-    // Navigate to previous card
     const goToPrev = useCallback(() => {
         setActiveIndex((prev) => (prev - 1 + totalGames) % totalGames);
     }, [totalGames]);
 
-    // Navigate to next card
     const goToNext = useCallback(() => {
         setActiveIndex((prev) => (prev + 1) % totalGames);
     }, [totalGames]);
@@ -93,7 +91,6 @@ export function GameCarousel({ games }: GameCarouselProps) {
     const getCardStyle = (index: number): React.CSSProperties => {
         const diff = index - activeIndex;
 
-        // Normalize for circular carousel
         let normalizedDiff = diff;
         if (diff > totalGames / 2) normalizedDiff = diff - totalGames;
         if (diff < -totalGames / 2) normalizedDiff = diff + totalGames;

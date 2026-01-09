@@ -30,7 +30,6 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        // Read actual vault balance from blockchain
         const vaultBalance = await publicClient.readContract({
             address: CONTRACTS.ARCADE_VAULT,
             abi: VAULT_ABI,

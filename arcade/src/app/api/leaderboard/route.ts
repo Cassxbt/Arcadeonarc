@@ -117,7 +117,6 @@ export async function GET(request: NextRequest) {
 
             if (error) throw error;
 
-            // Similar aggregation as weekly
             const aggregated = new Map<string, { games_played: number; wins: number; total_won: number }>();
 
             for (const session of monthlyData || []) {

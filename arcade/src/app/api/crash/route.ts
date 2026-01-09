@@ -76,10 +76,14 @@ export async function POST(request: NextRequest) {
                 return NextResponse.json({ error: 'Game not found or expired' }, { status: 404 });
             }
 
+            const addressForSigning = userAddress === 'demo'
+                ? '0x0000000000000000000000000000000000000000'
+                : userAddress;
+
             const messageHash = keccak256(
                 encodePacked(
                     ['address', 'uint256', 'uint256'],
-                    [userAddress as `0x${string}`, BigInt(nonce), BigInt(game.crashPoint)]
+                    [addressForSigning as `0x${string}`, BigInt(nonce), BigInt(game.crashPoint)]
                 )
             );
 

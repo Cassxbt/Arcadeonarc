@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
-import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
+import { useDynamicContext, useIsLoggedIn } from '@dynamic-labs/sdk-react-core';
 import { useDemoLimits, GameType } from './useDemoLimits';
 import { useUser } from './useUser';
 import { useStreak } from './useStreak';
@@ -67,6 +67,7 @@ const DEMO_STARTING_BALANCE = 1000; // $1000 demo balance
 
 export function GameProvider({ children }: { children: React.ReactNode }) {
     const { primaryWallet } = useDynamicContext();
+    const isLoggedIn = useIsLoggedIn();
     const demoLimits = useDemoLimits();
     const { user, isRegistered, refetch: refetchUser } = useUser();
     const { streak, streakMultiplier } = useStreak();
@@ -89,13 +90,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     const [betHistory, setBetHistory] = useState<BetRecord[]>([]);
 
     useEffect(() => {
-        if (primaryWallet && !isRegistered && !demoMode) {
+        if (isLoggedIn && !isRegistered && !demoMode) {
             const timer = setTimeout(() => {
                 setShowUsernameModal(true);
             }, 500);
             return () => clearTimeout(timer);
         }
-    }, [primaryWallet, isRegistered, demoMode]);
+    }, [isLoggedIn, isRegistered, demoMode]);
 
     const refreshBalance = useCallback(async () => {
         if (!primaryWallet?.address) {

@@ -82,7 +82,6 @@ export function GameSelector({ onClose }: GameSelectorProps) {
         const targetIndex = targetIndexRef.current;
         const totalSpins = 20 + Math.floor(Math.random() * 10); // 20-30 total spins
 
-        // Start the slot machine sound (looped)
         playSound('SLOT_MACHINE', { loop: true });
 
         // Phase 1: Fast spinning (first 15 spins at 80ms each)
@@ -103,16 +102,13 @@ export function GameSelector({ onClose }: GameSelectorProps) {
                 setSelectedGame(games[targetIndex]);
                 setPhase('done');
 
-                // Stop the slot machine sound and play chime
                 stopSound('SLOT_MACHINE');
                 playSound('CHIME');
 
-                // Show message after a brief pause
                 setTimeout(() => {
                     setShowMessage(true);
                 }, 400);
 
-                // Navigate after message displays
                 setTimeout(() => {
                     router.push(games[targetIndex].path);
                     onClose();
@@ -139,7 +135,6 @@ export function GameSelector({ onClose }: GameSelectorProps) {
             setTimeout(runAnimation, delay);
         };
 
-        // Start animation after a brief delay
         setTimeout(runAnimation, 100);
 
     }, []); // Empty dependency array - runs once on mount

@@ -25,10 +25,14 @@ export async function POST(request: NextRequest) {
 
         const deathTile = secureRandomInt(0, tilesInRow);
 
+        const addressForSigning = userAddress === 'demo'
+            ? '0x0000000000000000000000000000000000000000'
+            : userAddress;
+
         const messageHash = keccak256(
             encodePacked(
                 ['address', 'uint256', 'uint8', 'uint8'],
-                [userAddress as `0x${string}`, BigInt(nonce), row, deathTile]
+                [addressForSigning as `0x${string}`, BigInt(nonce), row, deathTile]
             )
         );
 

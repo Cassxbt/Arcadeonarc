@@ -82,10 +82,14 @@ export async function POST(request: NextRequest) {
             }
             game.currentTurn++;
 
+            const addressForSigning = userAddress === 'demo'
+                ? '0x0000000000000000000000000000000000000000'
+                : userAddress;
+
             const messageHash = keccak256(
                 encodePacked(
                     ['address', 'uint256', 'uint8', 'uint8'],
-                    [userAddress as `0x${string}`, BigInt(nonce), game.currentTurn - 1, laserTarget]
+                    [addressForSigning as `0x${string}`, BigInt(nonce), game.currentTurn - 1, laserTarget]
                 )
             );
 
@@ -114,10 +118,14 @@ export async function POST(request: NextRequest) {
                 return NextResponse.json({ error: 'Game not found or expired' }, { status: 404 });
             }
 
+            const addressForSigningCashout = userAddress === 'demo'
+                ? '0x0000000000000000000000000000000000000000'
+                : userAddress;
+
             const messageHash = keccak256(
                 encodePacked(
                     ['address', 'uint256', 'uint8', 'string'],
-                    [userAddress as `0x${string}`, BigInt(nonce), game.currentTurn, 'cashout']
+                    [addressForSigningCashout as `0x${string}`, BigInt(nonce), game.currentTurn, 'cashout']
                 )
             );
 

@@ -43,7 +43,6 @@ export default function DiceGame() {
         return { winChance: chance, multiplier: mult };
     }, [target, betType]);
 
-    // Roll the dice - calls server for secure outcome
     const rollDice = useCallback(async () => {
         if (!canBet(betAmount) || gameState === 'rolling') return;
 

@@ -36,10 +36,14 @@ export async function POST(request: NextRequest) {
         const segmentResult = secureRandomInt(0, 20);
         const multiplier = SEGMENT_MULTIPLIERS[segmentResult];
 
+        const addressForSigning = userAddress === 'demo'
+            ? '0x0000000000000000000000000000000000000000'
+            : userAddress;
+
         const messageHash = keccak256(
             encodePacked(
                 ['address', 'uint256', 'uint8'],
-                [userAddress as `0x${string}`, BigInt(nonce), segmentResult]
+                [addressForSigning as `0x${string}`, BigInt(nonce), segmentResult]
             )
         );
 
