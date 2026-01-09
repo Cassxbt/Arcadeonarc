@@ -3,23 +3,16 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   async headers() {
     // Define allowed origins based on environment
-    const allowedOrigins = process.env.NODE_ENV === 'production'
-      ? [
-          process.env.NEXT_PUBLIC_SITE_URL || 'https://arcade-on-arc.vercel.app',
-          'https://arcade-on-arc.vercel.app'
-        ]
-      : [
-          'http://localhost:3000',
-          'http://localhost:3001',
-          'http://127.0.0.1:3000'
-        ];
+    const allowedOrigin = process.env.NODE_ENV === 'production'
+      ? (process.env.NEXT_PUBLIC_SITE_URL || 'https://arcade-on-arc.vercel.app')
+      : 'http://localhost:3000';
 
     return [
       {
         source: "/api/:path*",
         headers: [
           { key: "Access-Control-Allow-Credentials", value: "true" },
-          { key: "Access-Control-Allow-Origin", value: allowedOrigins[0] },
+          { key: "Access-Control-Allow-Origin", value: allowedOrigin },
           { key: "Access-Control-Allow-Methods", value: "GET,DELETE,PATCH,POST,PUT" },
           { key: "Access-Control-Allow-Headers", value: "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization" },
           // Security headers
