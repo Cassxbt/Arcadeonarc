@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
+import { authFetch } from './auth-fetch';
 
 export interface Quest {
     id: string;
@@ -56,7 +57,7 @@ export function useQuests(): UseQuestsReturn {
             setIsLoading(true);
             setError(null);
 
-            const response = await fetch('/api/quests');
+            const response = await authFetch('/api/quests');
             const data = await response.json();
 
             if (response.ok) {
@@ -83,9 +84,8 @@ export function useQuests(): UseQuestsReturn {
         }
 
         try {
-            const response = await fetch('/api/quests', {
+            const response = await authFetch('/api/quests', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'claim', quest_id: questId }),
             });
 
@@ -112,9 +112,8 @@ export function useQuests(): UseQuestsReturn {
         }
 
         try {
-            const response = await fetch('/api/quests', {
+            const response = await authFetch('/api/quests', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'claim', quest_id: 'completion_bonus' }),
             });
 

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
+import { authFetch } from './auth-fetch';
 
 export interface Milestone {
     id: string;
@@ -54,7 +55,7 @@ export function useMilestones(): UseMilestonesReturn {
             setIsLoading(true);
             setError(null);
 
-            const response = await fetch('/api/milestones');
+            const response = await authFetch('/api/milestones');
             const data = await response.json();
 
             if (response.ok) {
@@ -79,9 +80,8 @@ export function useMilestones(): UseMilestonesReturn {
         }
 
         try {
-            const response = await fetch('/api/milestones', {
+            const response = await authFetch('/api/milestones', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ milestone_id: milestoneId }),
             });
 

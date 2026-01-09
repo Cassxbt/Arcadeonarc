@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
+import { authFetch } from './auth-fetch';
 
 interface DailyBonusState {
     claimed: boolean;
@@ -57,9 +58,8 @@ export function useDailyBonus(): UseDailyBonusReturn {
         }
 
         try {
-            const response = await fetch('/api/daily-bonus', {
+            const response = await authFetch('/api/daily-bonus', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ wallet: walletAddress }),
             });
 

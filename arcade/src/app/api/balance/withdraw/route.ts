@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
-import { getSessionWallet } from '@/lib/session';
+import { getVerifiedWallet } from '@/lib/verify-dynamic-jwt';
 
 export async function POST(request: NextRequest) {
     const clientIp = getClientIp(request);
@@ -11,8 +11,8 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-        // SECURITY: Get wallet from verified session
-        const wallet = await getSessionWallet(request);
+        // SECURITY: Get wallet from verified Dynamic JWT
+        const wallet = await getVerifiedWallet(request);
         if (!wallet) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
@@ -62,8 +62,8 @@ export async function PUT(request: NextRequest) {
     }
 
     try {
-        // SECURITY: Get wallet from verified session
-        const wallet = await getSessionWallet(request);
+        // SECURITY: Get wallet from verified Dynamic JWT
+        const wallet = await getVerifiedWallet(request);
         if (!wallet) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }

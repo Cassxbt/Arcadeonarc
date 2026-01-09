@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
-import { getSessionWallet } from '@/lib/session';
+import { getVerifiedWallet } from '@/lib/verify-dynamic-jwt';
 
 const QUEST_DEFINITIONS = {
     play_3: {
@@ -54,7 +54,7 @@ function getTodayQuestIds(date: string): string[] {
 
 export async function GET(request: NextRequest) {
     try {
-        const wallet = await getSessionWallet(request);
+        const wallet = await getVerifiedWallet(request);
         if (!wallet) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
@@ -115,7 +115,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
     try {
-        const wallet = await getSessionWallet(request);
+        const wallet = await getVerifiedWallet(request);
         if (!wallet) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
