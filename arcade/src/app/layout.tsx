@@ -14,6 +14,21 @@ export const metadata: Metadata = {
   title: "ARCade - Crypto Gaming on Arc L1",
   description: "Play Tower, Dice, and Cannon Crash games. Win USDC instantly on Arc L1 blockchain.",
   keywords: ["crypto", "gaming", "arcade", "usdc", "arc", "blockchain", "tower", "dice", "crash"],
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/icon.png', type: 'image/png', sizes: '32x32' },
+      { url: '/icon.svg', type: 'image/svg+xml' },
+    ],
+    apple: [
+      { url: '/apple-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
+  },
+  manifest: '/manifest.json',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#0a0a12' },
+  ],
 };
 
 export default function RootLayout({

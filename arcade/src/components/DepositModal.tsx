@@ -90,7 +90,21 @@ export function DepositModal({ isOpen, onClose, mode }: DepositModalProps) {
         if (result) {
             setSuccess(true);
             playSound(mode === 'deposit' ? 'COIN_DEPOSIT' : 'COIN_WITHDRAW');
+
+            // Refresh game context balance
             await refreshBalance();
+
+            // Refresh modal's vault and wallet balances to show updated values
+            if (primaryWallet?.address) {
+                const address = primaryWallet.address as `0x${string}`;
+                const [wallet, vault] = await Promise.all([
+                    getWalletBalance(address),
+                    getVaultBalance(address),
+                ]);
+                setWalletBalance(wallet);
+                setVaultBalance(vault);
+            }
+
             setTimeout(() => {
                 setSuccess(false);
                 setAmount('');

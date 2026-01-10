@@ -139,6 +139,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
             if (response.ok) {
                 const data = await response.json();
                 setBalance(data.balance);
+                // Broadcast balance update to ensure UI refreshes across all components and tabs
+                broadcastBalanceUpdate(data.balance);
             }
         } catch (error) {
             console.error('Failed to sync balance:', error);
