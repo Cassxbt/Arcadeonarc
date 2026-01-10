@@ -139,8 +139,6 @@ export async function checkAndAwardBadges(supabase: SupabaseClient, wallet: stri
 
             if (insertError) {
                 console.error('Error awarding badges:', insertError);
-            } else {
-                console.log(`Awarded ${newBadges.length} new badges to ${wallet}`);
             }
         }
 
