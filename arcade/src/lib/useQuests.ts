@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { authFetch } from './auth-fetch';
+import { getSupabaseClient } from './supabase';
 
 export interface Quest {
     id: string;
@@ -131,9 +132,44 @@ export function useQuests(): UseQuestsReturn {
         }
     }, [walletAddress]);
 
+    // Fetch quests on mount
     useEffect(() => {
         fetchQuests();
     }, [fetchQuests]);
+
+    // 🎯 NEW: Real-time subscription to quest updates
+    useEffect(() => {
+        if (!walletAddress) return;
+
+        const supabase = getSupabaseClient();
+
+        // Get today's date (same format as backend uses)
+        const today = new Date().toISOString().split('T')[0];
+
+        // Subscribe to changes in the daily_quests table for this user
+        const channel = supabase
+            .channel('quest-updates')
+            .on(
+                'postgres_changes',
+                {
+                    event: '*', // Listen to INSERT, UPDATE, DELETE
+                    schema: 'public',
+                    table: 'daily_quests',
+                    filter: `wallet_address=eq.${walletAddress}`,
+                },
+                (payload) => {
+                    // When database changes, refresh the quests
+                    console.log('Quest updated in database!', payload);
+                    fetchQuests();
+                }
+            )
+            .subscribe();
+
+        // Cleanup: unsubscribe when component unmounts or wallet changes
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [walletAddress, fetchQuests]);
 
     return {
         quests,
