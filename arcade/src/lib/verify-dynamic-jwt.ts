@@ -41,20 +41,14 @@ export async function verifyDynamicJWT(token: string): Promise<{ wallet: string;
         const dynamicPayload = payload as unknown as DynamicJWTPayload;
         const credentials = dynamicPayload.verified_credentials || [];
 
-        console.log('JWT payload iss:', dynamicPayload.iss);
-        console.log('JWT credentials count:', credentials.length);
-
         const walletCredential =
             credentials.find((cred) => cred.address && cred.wallet_provider === 'embeddedWallet') ||
             credentials.find((cred) => cred.address && cred.format === 'blockchain') ||
             credentials.find((cred) => cred.address);
 
         if (!walletCredential?.address) {
-            console.error('No wallet address found in JWT. Credentials:', JSON.stringify(credentials));
             return null;
         }
-
-        console.log('Found wallet:', walletCredential.address);
 
         return {
             wallet: walletCredential.address.toLowerCase(),
