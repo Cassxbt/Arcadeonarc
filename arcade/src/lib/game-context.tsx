@@ -7,6 +7,7 @@ import { useUser } from './useUser';
 import { useStreak } from './useStreak';
 import { getSupabaseClient } from './supabase';
 import { broadcastBalanceUpdate, subscribeToBalanceUpdates } from './cross-tab-sync';
+import { authFetch } from './auth-fetch';
 
 interface GameContextType {
     // Balance
@@ -118,9 +119,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
             } else if (data.user) {
                 // User exists but server_balance is null/undefined - sync from vault
                 setIsLoading(false);
-                const syncResponse = await fetch('/api/balance/sync', {
+                const syncResponse = await authFetch('/api/balance/sync', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ wallet: primaryWallet.address }),
                 });
                 if (syncResponse.ok) {
@@ -146,9 +146,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         if (!primaryWallet?.address) return;
 
         try {
-            const response = await fetch('/api/balance/sync', {
+            const response = await authFetch('/api/balance/sync', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ wallet: primaryWallet.address }),
             });
 
