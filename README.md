@@ -8,7 +8,7 @@
 
 ---
 
-## Problem Statement
+## Popular Issue
 
 Traditional online gaming platforms suffer from three critical bottlenecks:
 
@@ -56,7 +56,7 @@ User Wallet (USDC + winnings)
 | **Styling** | TailwindCSS + CSS Modules | Component isolation, theme switching |
 | **Blockchain** | Solidity 0.8.20 (Foundry) | Smart contracts, deployment scripts |
 | **Network** | Arc Testnet (Reth-based) | USDC-native L1 with <350ms finality |
-| **Authentication** | Dynamic SDK | Multi-wallet support (MetaMask, WC, Coinbase) |
+| **Authentication** | Dynamic SDK | Multi-wallet support (MetaMask, WalletConnect, browser wallets) |
 | **Database** | Supabase (PostgreSQL) | User stats, leaderboards, real-time subscriptions |
 | **State Management** | React Context + BroadcastChannel | Cross-tab balance synchronization |
 
@@ -87,8 +87,8 @@ The global online casino market is projected at **$127.3B by 2027** (CAGR 11.7%)
 Crypto gaming and betting generated **$4.6B in 2023**, with 15.3% projected CAGR through 2030. Key drivers:
 
 - Stablecoin adoption reducing volatility friction
-- Layer 2 scalability enabling sub-$1 transaction costs
-- Institutional custody solutions (Coinbase Prime) bringing regulated capital
+- High-throughput blockchains enabling sub-$1 transaction costs
+- Institutional custody solutions bringing regulated capital
 
 ### Target Audience
 
@@ -151,13 +151,6 @@ ARCade is the only gaming platform leveraging Arc's USDC-native architecture, el
 **Growth Scenario** (10,000 DAU, $50 average bet):
 - **Monthly Revenue**: $3,337,500
 
-**Cost Structure**:
-- Smart contract gas: $30-50/day (bulk settlement optimizations)
-- Infrastructure (Supabase, hosting): $500/month
-- Team (post-hackathon): $15,000/month (2 developers)
-
-**Gross Margin**: ~95% (minimal operational costs after deployment)
-
 ---
 
 ## Circle Integration & Developer Feedback
@@ -168,20 +161,7 @@ ARCade is the only gaming platform leveraging Arc's USDC-native architecture, el
 
 1. **Arc's Native USDC**: Using USDC for gas eliminates ETH/MATIC volatility that plagues competitors
 2. **Regulatory Clarity**: Circle's compliance (NYDFS BitLicense, EU MiCA) de-risks future expansion
-3. **Liquidity**: USDC's $25B market cap ensures deep liquidity for user on/off ramps
-
-**Implementation**
-
-```solidity
-// Vault contract uses standard ERC20 interface
-IERC20 public immutable usdc;
-
-function deposit(uint256 amount) external {
-    usdc.transferFrom(msg.sender, address(this), amount);
-    balances[msg.sender] += amount;
-    emit Deposit(msg.sender, amount);
-}
-```
+3. **Liquidity**: USDC's $75B market cap ensures deep liquidity for user on/off ramps
 
 **What Worked Well**
 - Circle's USDC contract on Arc Testnet had 100% uptime during development
@@ -209,43 +189,6 @@ function deposit(uint256 amount) external {
 
 **Why CCTP**: Circle's Cross-Chain Transfer Protocol enables native USDC burns on source chains and mints on Arc L1, maintaining fungibility without wrapped tokens. This is the only production-grade solution for Arc's USDC-native design.
 
-**Proposed Implementation**
-
-```typescript
-// Phase 1: Multi-chain balance detection
-async function detectUSDCBalances(address: string) {
-  const balances = await Promise.all([
-    getUSDCBalance(address, 'ethereum'),
-    getUSDCBalance(address, 'base'),
-    getUSDCBalance(address, 'polygon'),
-    getUSDCBalance(address, 'arbitrum'),
-  ]);
-
-  return balances.filter(b => b.amount > 0);
-}
-
-// Phase 2: CCTP bridging flow
-import { CircleBridge } from '@circle-fin/cctp-sdk';
-
-async function bridgeToArc(amount: number, sourceChain: string) {
-  // 1. Approve USDC on source chain
-  await approveUSDC(amount, CCTP_MESSENGER_ADDRESS);
-
-  // 2. Burn USDC via CCTP MessageTransmitter
-  const attestation = await circleBridge.depositForBurn({
-    amount,
-    destinationDomain: ARC_DOMAIN_ID, // Arc's domain ID
-    destinationAddress: user.address,
-  });
-
-  // 3. Wait for attestation (Circle's attestation service)
-  await waitForAttestation(attestation);
-
-  // 4. USDC minted on Arc — auto-deposit to Vault
-  await depositToVault(amount);
-}
-```
-
 **User Flow**
 ```
 User connects wallet
@@ -262,34 +205,6 @@ User connects wallet
 - Domain ID assignment from Circle
 - Attestation API access
 
-**What We Need from Circle**
-
-| Gap | Impact | Recommendation |
-|-----|--------|----------------|
-| No Arc L1 in CCTP SDK | Blocks implementation planning | Add Arc to `@circle-fin/cctp-sdk` with testnet domain IDs |
-| No Arc attestation service | Cannot test end-to-end flow | Deploy attestation API for Arc Testnet |
-| Unclear attestation UX | 30s wait feels like a hang | Add progress events to SDK: `status: 'burning' \| 'attesting' \| 'minting'` |
-
-**Code We Wish Existed**
-
-```typescript
-// Desired: One-line CCTP bridge with built-in UX
-import { bridge } from '@circle-fin/cctp-sdk';
-
-await bridge.transferUSDC({
-  from: { chain: 'base', address: user.base },
-  to: { chain: 'arc', address: user.arc },
-  amount: 100,
-  onProgress: (stage) => setStatus(stage), // Real-time progress
-});
-
-// Current Reality: 50+ lines managing attestations, nonces, domain IDs manually
-```
-
-**Impact if Addressed**: Reduces CCTP integration time from 4 weeks to 1 week for developers targeting Arc.
-
-**Timeline**: 4-6 weeks after Arc mainnet CCTP support launches
-
 ---
 
 ### 2. Circle Gateway Integration (Fiat On-Ramp)
@@ -297,32 +212,6 @@ await bridge.transferUSDC({
 **Problem**: Non-crypto users cannot acquire USDC without CEX accounts. This excludes 90% of the TAM (casual gamers unfamiliar with crypto).
 
 **Why Gateway**: Circle Gateway provides credit card → USDC conversion with built-in KYC/AML, avoiding regulatory risk. Users buy USDC directly on Arc L1 without leaving the app.
-
-**Proposed Implementation**
-
-```typescript
-import { Gateway } from '@circle-fin/gateway-sdk';
-
-const gateway = new Gateway({
-  apiKey: process.env.CIRCLE_API_KEY,
-  environment: 'production',
-});
-
-async function buyUSDC(amountUSD: number) {
-  const session = await gateway.createPaymentSession({
-    amount: amountUSD,
-    currency: 'USD',
-    destinationChain: 'arc-mainnet',
-    destinationAddress: user.address,
-    successUrl: 'https://arcadeonarc.fun/deposit/success',
-  });
-
-  // User completes card flow in Circle's widget
-  window.open(session.checkoutUrl);
-
-  // USDC arrives within 60 seconds → auto-deposit to Vault
-}
-```
 
 **User Flow**
 ```
@@ -338,53 +227,9 @@ New user → "Buy $50 USDC"
 - Onboarding time: <90 seconds (vs 30+ minutes via CEX)
 - Conversion rate: 45% (vs 8% when requiring external CEX)
 
-**What We Need from Circle**
-
-| Gap | Impact | Recommendation |
-|-----|--------|----------------|
-| Gateway doesn't support Arc L1 | Cannot onboard non-crypto users | Add Arc mainnet as supported destination chain |
-| No testnet sandbox | Cannot test fiat flows pre-launch | Provide staging environment with test credit cards |
-| Webhook signature verification unclear | Security risk | Add Node.js/Next.js code examples for webhook verification |
-
-**Timeline**: Dependent on Circle adding Arc mainnet support (estimated Q2 2026)
-
 ---
 
-### 3. Circle Programmable Wallets (Future Evaluation)
-
-**Current State**: Using Dynamic Labs for wallet abstraction (supports MetaMask, WalletConnect, Coinbase Wallet).
-
-**Why We Considered Circle Wallets**
-- Social recovery (email/phone vs seed phrases)
-- Account abstraction (gasless transactions)
-- Embedded wallets (email-only login for Web2 users)
-
-**Why We're Not Implementing Yet**
-
-1. **Switching Risk**: Dynamic Labs is already integrated. Migrating mid-development introduces regression risk.
-2. **Wrong Priority**: Circle Wallets improve UX but don't solve the #1 bottleneck (USDC access on Arc).
-3. **Complexity**: Account abstraction requires modifying all smart contracts to support ERC-4337 UserOperations.
-
-**Decision Framework**
-
-We'll evaluate Circle Wallets at:
-- **Month 3 post-launch**: Measure user complaints about seed phrase management
-- **Month 6 post-launch**: A/B test Circle Wallets vs Dynamic for new users
-- **Threshold**: Adopt only if Circle Wallets improve 30-day retention >15%
-
-**What Worked Well with Dynamic**
-- Zero-config multi-wallet support saved 2 weeks dev time
-- Built-in JWT auth integrates cleanly with Next.js API routes
-- Wallet connection modal is 180KB but loads async (no performance impact)
-
-**What Could Improve with Dynamic**
-- Connection modal is heavy (180KB bundle size)
-- No social recovery built-in
-- No account abstraction support
-
-**Recommendation for Circle**: If Circle Wallets added Arc L1 support + social recovery, we'd migrate. Current lack of Arc support is the blocker.
-
----
+## Technical Implementation
 
 ### Production Architecture with Circle Infrastructure
 
@@ -413,71 +258,6 @@ We'll evaluate Circle Wallets at:
     │  - Game Controllers (Dice, Crash, etc.)      │
     └──────────────────────────────────────────────┘
 ```
-
----
-
-### Pre-Mainnet Checklist
-
-**Circle Integrations** (6-8 weeks)
-- [ ] CCTP multi-chain balance detection UI
-- [ ] CCTP bridge flows (Ethereum, Base, Polygon, Arbitrum → Arc)
-- [ ] Circle Gateway fiat on-ramp integration
-- [ ] Webhook handlers for Gateway deposit confirmations
-- [ ] Error handling for failed bridges (USDC return mechanism)
-
-**Smart Contract Security** (4-6 weeks)
-- [ ] Vault contract audit (CertiK or Trail of Bits)
-- [ ] Game controller audits (all 5 games)
-- [ ] Remediate critical/high findings
-- [ ] Upgrade contracts with fixes
-- [ ] Re-audit if >50 LOC changed
-
-**Randomness Upgrade** (2-3 weeks)
-- [ ] Replace pseudo-random with Chainlink VRF
-- [ ] Optimize VRF callback gas costs
-- [ ] Implement fallback if VRF fails
-- [ ] Build historical proof verification UI
-
-**Operational Infrastructure** (3-4 weeks)
-- [ ] Multi-sig wallet for Vault admin (3-of-5 Gnosis Safe)
-- [ ] Grafana monitoring for contract events
-- [ ] PagerDuty alerts for settlement failures
-- [ ] Circuit breaker for >$10K hourly losses
-- [ ] Legal review (gaming licenses for target jurisdictions)
-
-**Testing & Launch** (2 weeks)
-- [ ] Mainnet dry run with $100K mock volume
-- [ ] Beta program (50 early users)
-- [ ] Bug bounty program ($50K pool via Immunefi)
-- [ ] Gradual liquidity scaling (start $10K vault → $100K → $1M)
-
-**Total Timeline**: 10-14 weeks from Arc mainnet launch
-
----
-
-## Future Prospects
-
-### Scalability
-
-Arc's deterministic finality and 500+ TPS throughput enable ARCade to scale to 10,000+ concurrent players without degradation. Planned optimizations:
-
-1. **Batch Settlement**: Aggregate multiple bets into single transactions (reduces gas costs 80%)
-2. **Multiplayer Tournaments**: 100-player tournaments with on-chain prize distribution
-3. **Liquidity Provider Incentives**: Allow external LPs to contribute to Vault in exchange for 30% of house edge
-
-### Impact on Arc Ecosystem
-
-ARCade demonstrates Arc's real-world utility for consumer-facing DeFi applications. Success could:
-
-1. **Onboard 50,000+ users to Arc** within 12 months of mainnet launch
-2. **Generate $40M+ annual USDC volume** on Arc L1 (1,000 DAU × $50 bet × 10 bets/day × 365 days)
-3. **Prove USDC-native architecture viability** for payment-heavy applications (NFT marketplaces, prediction markets, DEXs)
-
-ARCade serves as a reference implementation showing how Arc's sub-350ms finality unlocks use cases impossible on Ethereum or Layer 2s.
-
----
-
-## Technical Implementation
 
 ### Smart Contract Architecture
 
@@ -546,6 +326,28 @@ contract DiceController {
 | Failed Txs/1000 | 0.2 | 3.1 | Network congestion stress test |
 
 **Test Methodology**: Ran 10,000 automated bets during peak testnet usage (50+ concurrent users). Measured p50, p95, p99 latencies using custom instrumentation.
+
+---
+
+## Future Prospects
+
+### Scalability
+
+Arc's deterministic finality and 500+ TPS throughput enable ARCade to scale to 10,000+ concurrent players without degradation. Planned optimizations:
+
+1. **Batch Settlement**: Aggregate multiple bets into single transactions (reduces gas costs 80%)
+2. **Multiplayer Tournaments**: 100-player tournaments with on-chain prize distribution
+3. **Liquidity Provider Incentives**: Allow external LPs to contribute to Vault in exchange for 30% of house edge
+
+### Impact on Arc Ecosystem
+
+ARCade demonstrates Arc's real-world utility for consumer-facing DeFi applications. Success could:
+
+1. **Onboard 50,000+ users to Arc** within 12 months of mainnet launch
+2. **Generate $40M+ annual USDC volume** on Arc L1 (1,000 DAU × $50 bet × 10 bets/day × 365 days)
+3. **Prove USDC-native architecture viability** for payment-heavy applications (NFT marketplaces, prediction markets, DEXs)
+
+ARCade serves as a reference implementation showing how Arc's sub-350ms finality unlocks use cases impossible on Ethereum or Layer 2s.
 
 ---
 
