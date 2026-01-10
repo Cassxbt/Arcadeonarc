@@ -50,11 +50,11 @@ export const GAME_CONFIG = {
 };
 
 // Dynamic Labs environment ID from environment variables
-export const DYNAMIC_ENVIRONMENT_ID = process.env.NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID;
-
-if (!DYNAMIC_ENVIRONMENT_ID) {
+const envId = process.env.NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID;
+if (!envId) {
     throw new Error('NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID environment variable is required');
 }
+export const DYNAMIC_ENVIRONMENT_ID: string = envId;
 
 // API Endpoints
 export const API_ENDPOINTS = {
