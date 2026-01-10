@@ -86,6 +86,7 @@ export async function POST(request: NextRequest) {
                 lifetime_xp: 0,
                 current_streak: 0,
                 last_played_date: null,
+                server_balance: 0,
             })
             .select()
             .single();

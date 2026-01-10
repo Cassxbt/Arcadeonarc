@@ -113,8 +113,24 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
             const response = await fetch(`/api/users?wallet=${primaryWallet.address.toLowerCase()}`);
             const data = await response.json();
 
-            if (data.user && data.user.server_balance !== undefined) {
+            if (data.user && data.user.server_balance !== undefined && data.user.server_balance !== null) {
                 setBalance(data.user.server_balance);
+            } else if (data.user) {
+                // User exists but server_balance is null/undefined - sync from vault
+                setIsLoading(false);
+                const syncResponse = await fetch('/api/balance/sync', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ wallet: primaryWallet.address }),
+                });
+                if (syncResponse.ok) {
+                    const syncData = await syncResponse.json();
+                    setBalance(syncData.balance);
+                    broadcastBalanceUpdate(syncData.balance);
+                } else {
+                    setBalance(0);
+                }
+                return;
             } else {
                 setBalance(0);
             }
