@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { useProfile } from '@/lib/useProfile';
-import { Trophy, Star, Zap, DollarSign, Gamepad2, Crown, Shield, Activity, Calendar } from 'lucide-react';
+import { Trophy, Star, Zap, DollarSign, Gamepad2, Crown, Shield, Activity, Calendar, Flame, Copy, Check } from 'lucide-react';
 import styles from './page.module.css';
 
 export default function ProfilePage() {
@@ -12,12 +12,30 @@ export default function ProfilePage() {
     const isAuthenticated = !!user;
     const router = useRouter();
     const { profile, isLoading } = useProfile();
+    const [copiedAddress, setCopiedAddress] = useState(false);
 
     useEffect(() => {
         if (!isLoading && !isAuthenticated) {
             router.push('/');
         }
     }, [isLoading, isAuthenticated, router]);
+
+    const truncateAddress = (address: string, isMobile: boolean = false) => {
+        if (!address) return '';
+        const prefixLength = isMobile ? 4 : 6;
+        const suffixLength = isMobile ? 4 : 4;
+        return `${address.slice(0, prefixLength)}...${address.slice(-suffixLength)}`;
+    };
+
+    const copyAddress = async (address: string) => {
+        try {
+            await navigator.clipboard.writeText(address);
+            setCopiedAddress(true);
+            setTimeout(() => setCopiedAddress(false), 2000);
+        } catch (err) {
+            console.error('Failed to copy address:', err);
+        }
+    };
 
     if (isLoading) {
         return (
@@ -48,7 +66,23 @@ export default function ProfilePage() {
                         </div>
                         <div className={styles.userIdentity}>
                             <h1 className={styles.username}>{userData.username || 'Player'}</h1>
-                            <div className={styles.walletBadge}>{userData.wallet_address}</div>
+                            <div className={styles.walletBadge}>
+                                <span className={styles.walletAddress}>
+                                    <span className={styles.desktopAddress}>{truncateAddress(userData.wallet_address, false)}</span>
+                                    <span className={styles.mobileAddress}>{truncateAddress(userData.wallet_address, true)}</span>
+                                </span>
+                                <button
+                                    onClick={() => copyAddress(userData.wallet_address)}
+                                    className={styles.copyButton}
+                                    aria-label="Copy wallet address"
+                                >
+                                    {copiedAddress ? (
+                                        <Check size={14} color="var(--neon-green)" />
+                                    ) : (
+                                        <Copy size={14} color="var(--neon-cyan)" />
+                                    )}
+                                </button>
+                            </div>
                         </div>
                     </div>
                     <div className={styles.joinDate}>
@@ -82,7 +116,10 @@ export default function ProfilePage() {
                         <div className={styles.cardValue} style={{ color: 'var(--neon-green)' }}>
                             {weeklyPoints.toLocaleString()}
                         </div>
-                        <div className={styles.cardSubtext}>{userData.current_streak} Day Streak 🔥</div>
+                        <div className={styles.cardSubtext}>
+                            <Flame size={14} color="var(--neon-orange)" style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />
+                            {userData.current_streak} Day Streak
+                        </div>
                     </div>
 
 

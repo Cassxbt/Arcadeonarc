@@ -19,6 +19,7 @@
     animation: neonFlickerCyan 4s infinite;
 }
 
+/* Desktop cyan neon flicker - smooth gradual transitions */
 @keyframes neonFlickerCyan {
 
     0%,
@@ -65,6 +66,34 @@
             0 0 10px var(--neon-cyan),
             0 0 20px var(--neon-cyan),
             0 0 40px var(--neon-cyan);
+    }
+}
+
+/* Mobile-optimized cyan neon - sharp shadows with stepped flicker */
+@keyframes neonFlickerCyanMobile {
+
+    /* ON state - bright, sharp */
+    0%,
+    18%,
+    22%,
+    50%,
+    54%,
+    100% {
+        opacity: 1;
+        text-shadow:
+            0 0 2px #fff,
+            0 0 4px var(--neon-cyan),
+            0 0 8px var(--neon-cyan);
+    }
+
+    /* Quick flicker OFF */
+    19%,
+    21%,
+    51%,
+    53% {
+        opacity: 0.4;
+        text-shadow:
+            0 0 1px var(--neon-cyan);
     }
 }
 
@@ -224,6 +253,15 @@
 @media (max-width: 768px) {
     .title {
         font-size: 1.5rem;
+        /* Sharp shadow - small blur radii for crisp text on mobile */
+        color: #15f0ff;
+        /* Slightly brighter cyan */
+        text-shadow:
+            0 0 2px #fff,
+            0 0 4px var(--neon-cyan),
+            0 0 8px var(--neon-cyan);
+        /* Stepped animation = discrete jumps, no interpolation = works better on mobile */
+        animation: neonFlickerCyanMobile 2.5s infinite steps(1);
     }
 
     .faqTitle {
