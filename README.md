@@ -76,7 +76,7 @@ User Wallet (USDC + winnings)
 
 ### Total Addressable Market (TAM)
 
-The global online gambling market is projected at **$127.3B by 2027** (CAGR 11.7%). Blockchain-based platforms are capturing increasing share due to:
+The global online casino market is projected at **$127.3B by 2027** (CAGR 11.7%). Blockchain-based platforms are capturing increasing share due to:
 
 - Provable fairness (verifiable RNG vs black-box odds)
 - Instant withdrawals (crypto vs 3-5 day bank transfers)
@@ -443,7 +443,7 @@ We'll evaluate Circle Wallets at:
 - [ ] Grafana monitoring for contract events
 - [ ] PagerDuty alerts for settlement failures
 - [ ] Circuit breaker for >$10K hourly losses
-- [ ] Legal review (gambling licenses for target jurisdictions)
+- [ ] Legal review (gaming licenses for target jurisdictions)
 
 **Testing & Launch** (2 weeks)
 - [ ] Mainnet dry run with $100K mock volume
