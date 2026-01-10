@@ -91,6 +91,9 @@ export function DepositModal({ isOpen, onClose, mode }: DepositModalProps) {
             setSuccess(true);
             playSound(mode === 'deposit' ? 'COIN_DEPOSIT' : 'COIN_WITHDRAW');
 
+            // Wait for database propagation after sync (prevents race condition)
+            await new Promise(resolve => setTimeout(resolve, 300));
+
             // Refresh game context balance
             await refreshBalance();
 
