@@ -49,7 +49,12 @@ export const GAME_CONFIG = {
   QUICK_BETS: [1, 5, 10, 25, 50, 100],
 };
 
-export const DYNAMIC_ENVIRONMENT_ID = 'a3744fd0-3794-4b60-a36a-57dbdbda6855';
+// Dynamic Labs environment ID from environment variables
+export const DYNAMIC_ENVIRONMENT_ID = process.env.NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID;
+
+if (!DYNAMIC_ENVIRONMENT_ID) {
+    throw new Error('NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID environment variable is required');
+}
 
 // API Endpoints
 export const API_ENDPOINTS = {

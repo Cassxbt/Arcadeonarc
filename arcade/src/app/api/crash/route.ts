@@ -35,9 +35,8 @@ export async function POST(request: NextRequest) {
         const gameKey = `crash:${userAddress.toLowerCase()}:${nonce}`;
 
         if (action === 'start') {
-            // Generate crash point using fair distribution - CRYPTO SECURE
-            // 10% chance of instant crash (1.00x)
-            // Otherwise exponential distribution
+            // Generate crash point using cryptographically secure random distribution
+            // 10% chance of instant crash (1.00x), otherwise exponential distribution
             const random = secureRandomFloat();
             let crashPoint: number;
 

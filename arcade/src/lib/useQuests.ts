@@ -137,7 +137,7 @@ export function useQuests(): UseQuestsReturn {
         fetchQuests();
     }, [fetchQuests]);
 
-    // 🎯 NEW: Real-time subscription to quest updates
+    // Real-time subscription to quest updates
     useEffect(() => {
         if (!walletAddress) return;
 
@@ -159,7 +159,6 @@ export function useQuests(): UseQuestsReturn {
                 },
                 (payload) => {
                     // When database changes, refresh the quests
-                    console.log('Quest updated in database!', payload);
                     fetchQuests();
                 }
             )

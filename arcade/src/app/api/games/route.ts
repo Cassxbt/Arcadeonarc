@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Invalid bet amount' }, { status: 400 });
         }
 
-        // SECURITY FIX: Calculate payout server-side instead of trusting client
+        // Calculate payout server-side to prevent client-side manipulation
         let serverCalculated: { payout: number; multiplier: number; won: boolean };
         try {
             serverCalculated = calculateServerPayout(game, bet_amount, game_params);
