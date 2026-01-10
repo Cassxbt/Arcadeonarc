@@ -241,18 +241,9 @@ export function NavbarContent() {
                             </span>
                             <span className={styles.menuItemText}>Leaderboard</span>
                         </Link>
-                        <Link
-                            href="/profile"
-                            className={`${styles.mobileMenuItem} ${styles.menuItem} ${styles.menuItem6} ${isActiveLink('/profile') ? styles.mobileMenuItemActive : ''}`}
-                        >
-                            <span className={styles.menuItemIcon}>
-                                <Gamepad2 size={24} />
-                            </span>
-                            <span className={styles.menuItemText}>Profile</span>
-                        </Link>
                     </nav>
 
-                    <div className={`${styles.mobileControlsRow} ${styles.menuItem} ${styles.menuItem7}`}>
+                    <div className={`${styles.mobileControlsRow} ${styles.menuItem} ${styles.menuItem6}`}>
                         <button
                             onClick={toggleSound}
                             className={styles.mobileControlItem}
@@ -301,20 +292,13 @@ export function NavbarContent() {
                         </div>
                     )}
 
-                    <div className={`${styles.mobileControlsRow} ${styles.menuItem} ${styles.menuItem8}`}>
-
-                        <div className={`${styles.mobileSocialRow} ${styles.menuItem} ${styles.menuItem9}`}>
-                            <a href="https://twitter.com/ArcadeOnArc" target="_blank" rel="noopener noreferrer" className={styles.mobileSocialLink}>
-                                <Twitter size={20} />
-                            </a>
-                            <a href="https://discord.com/invite/arcnetwork" target="_blank" rel="noopener noreferrer" className={styles.mobileSocialLink}>
-                                <MessageCircle size={20} />
-                            </a>
-                        </div>
-
-                        <div className={`${styles.mobileWalletCTA} ${styles.menuItem} ${styles.menuItem9}`}>
-                            <DynamicWidget />
-                        </div>
+                    <div className={`${styles.mobileSocialRow} ${styles.menuItem} ${styles.menuItem8}`}>
+                        <a href="https://twitter.com/ArcadeOnArc" target="_blank" rel="noopener noreferrer" className={styles.mobileSocialLink}>
+                            <Twitter size={20} />
+                        </a>
+                        <a href="https://discord.com/invite/arcnetwork" target="_blank" rel="noopener noreferrer" className={styles.mobileSocialLink}>
+                            <MessageCircle size={20} />
+                        </a>
                     </div>
                 </div>
             </div>

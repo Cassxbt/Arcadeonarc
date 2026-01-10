@@ -25,6 +25,7 @@
     animation: neonFlickerPink 3.5s infinite;
 }
 
+/* Desktop pink neon flicker - smooth gradual transitions */
 @keyframes neonFlickerPink {
 
     0%,
@@ -62,6 +63,34 @@
 
     74% {
         opacity: 1;
+    }
+}
+
+/* Mobile-optimized pink neon - sharp shadows with stepped flicker */
+@keyframes neonFlickerPinkMobile {
+
+    /* ON state - bright, sharp */
+    0%,
+    18%,
+    22%,
+    50%,
+    54%,
+    100% {
+        opacity: 1;
+        text-shadow:
+            0 0 2px #fff,
+            0 0 4px var(--neon-pink),
+            0 0 8px var(--neon-pink);
+    }
+
+    /* Quick flicker OFF */
+    19%,
+    21%,
+    51%,
+    53% {
+        opacity: 0.4;
+        text-shadow:
+            0 0 1px var(--neon-pink);
     }
 }
 
@@ -590,6 +619,15 @@
 
     .title {
         font-size: 1.1rem;
+        /* Sharp shadow - small blur radii for crisp text on mobile */
+        color: #ff3a7d;
+        /* Slightly brighter pink */
+        text-shadow:
+            0 0 2px #fff,
+            0 0 4px var(--neon-pink),
+            0 0 8px var(--neon-pink);
+        /* Stepped animation = discrete jumps, no interpolation = works better on mobile */
+        animation: neonFlickerPinkMobile 2.5s infinite steps(1);
     }
 
     .bonusCard {

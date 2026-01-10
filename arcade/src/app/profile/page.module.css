@@ -64,12 +64,73 @@
 .walletBadge {
     display: inline-flex;
     align-items: center;
-    padding: 4px 10px;
+    gap: 8px;
+    padding: 6px 12px;
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
-    border-radius: 4px;
-    /* More angular/expert look */
+    border-radius: 8px;
     width: fit-content;
+    transition: all 0.2s ease;
+}
+
+.walletBadge:hover {
+    border-color: var(--neon-cyan);
+    background: rgba(5, 217, 232, 0.05);
+}
+
+.walletAddress {
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Courier New', monospace;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    letter-spacing: 0.02em;
+}
+
+/* Responsive address display */
+.desktopAddress {
+    display: inline;
+}
+
+.mobileAddress {
+    display: none;
+}
+
+.copyButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.copyButton:hover {
+    background: rgba(5, 217, 232, 0.1);
+}
+
+.copyButton:active {
+    transform: scale(0.95);
+}
+
+@media (max-width: 768px) {
+    .desktopAddress {
+        display: none;
+    }
+
+    .mobileAddress {
+        display: inline;
+    }
+
+    .walletBadge {
+        padding: 4px 8px;
+        gap: 6px;
+    }
+
+    .walletAddress {
+        font-size: 0.7rem;
+    }
 }
 
 .walletMono {
@@ -333,4 +394,109 @@
     .favGameStats {
         justify-content: center;
     }
+}
+
+/* Light Mode Overrides - Clean Gaming Aesthetic */
+:global([data-theme="light"]) .favoriteGameCard {
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.98));
+    border: 2px solid #00b8d4;
+    box-shadow:
+        0 0 0 1px rgba(0, 184, 212, 0.1),
+        0 4px 16px rgba(0, 184, 212, 0.15),
+        inset 0 0 40px rgba(0, 184, 212, 0.03);
+}
+
+:global([data-theme="light"]) .favGameTitle {
+    color: #00acc1;
+    text-shadow: 0 0 8px rgba(0, 172, 193, 0.3);
+}
+
+:global([data-theme="light"]) .favGameIcon {
+    color: #00b8d4;
+    filter: drop-shadow(0 0 12px rgba(0, 184, 212, 0.25));
+}
+
+/* Comprehensive Light Mode - Clean Gaming Aesthetic */
+:global([data-theme="light"]) .profilePage {
+    background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+:global([data-theme="light"]) .header {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+:global([data-theme="light"]) .rankIcon {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.9));
+    border: 2px solid rgba(0, 184, 212, 0.2);
+    box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.02),
+        0 4px 16px rgba(0, 184, 212, 0.12);
+}
+
+:global([data-theme="light"]) .walletBadge {
+    background: rgba(248, 250, 252, 0.9);
+    border: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+:global([data-theme="light"]) .walletBadge:hover {
+    border-color: #0891B2;
+    background: rgba(8, 145, 178, 0.05);
+}
+
+:global([data-theme="light"]) .copyButton:hover {
+    background: rgba(8, 145, 178, 0.12);
+}
+
+/* Bento Grid Cards - Light Mode */
+:global([data-theme="light"]) .card {
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.02),
+        0 2px 8px rgba(0, 0, 0, 0.04);
+    backdrop-filter: blur(20px);
+}
+
+:global([data-theme="light"]) .card:hover {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(0, 184, 212, 0.3);
+    box-shadow:
+        0 0 0 1px rgba(0, 184, 212, 0.1),
+        0 4px 16px rgba(0, 184, 212, 0.15);
+}
+
+/* Hero Card - Main XP Display */
+:global([data-theme="light"]) .heroValue {
+    background: linear-gradient(135deg, #0F172A 0%, #334155 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Card Labels - More Contrast */
+:global([data-theme="light"]) .cardLabel {
+    color: #64748B;
+    font-weight: 500;
+}
+
+/* Card Values - Strong Hierarchy */
+:global([data-theme="light"]) .cardValue {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+}
+
+/* Badges Section */
+:global([data-theme="light"]) .badgesGrid {
+    gap: 12px;
+}
+
+:global([data-theme="light"]) .badgeItem {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+:global([data-theme="light"]) .badgeItem:hover {
+    border-color: rgba(0, 184, 212, 0.4);
+    box-shadow: 0 4px 12px rgba(0, 184, 212, 0.12);
 }

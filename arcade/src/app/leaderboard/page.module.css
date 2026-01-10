@@ -23,6 +23,7 @@
     animation: neonFlickerYellow 3.5s infinite;
 }
 
+/* Desktop yellow neon flicker - smooth gradual transitions */
 @keyframes neonFlickerYellow {
 
     0%,
@@ -69,6 +70,34 @@
             0 0 10px var(--neon-yellow),
             0 0 20px var(--neon-yellow),
             0 0 40px var(--neon-yellow);
+    }
+}
+
+/* Mobile-optimized yellow neon - sharp shadows with stepped flicker */
+@keyframes neonFlickerYellowMobile {
+
+    /* ON state - bright, sharp */
+    0%,
+    18%,
+    22%,
+    50%,
+    54%,
+    100% {
+        opacity: 1;
+        text-shadow:
+            0 0 2px #fff,
+            0 0 4px var(--neon-yellow),
+            0 0 8px var(--neon-yellow);
+    }
+
+    /* Quick flicker OFF */
+    19%,
+    21%,
+    51%,
+    53% {
+        opacity: 0.4;
+        text-shadow:
+            0 0 1px var(--neon-yellow);
     }
 }
 
@@ -395,6 +424,15 @@
 @media (max-width: 768px) {
     .title {
         font-size: 1rem;
+        /* Sharp shadow - small blur radii for crisp text on mobile */
+        color: #fff820;
+        /* Slightly brighter yellow */
+        text-shadow:
+            0 0 2px #fff,
+            0 0 4px var(--neon-yellow),
+            0 0 8px var(--neon-yellow);
+        /* Stepped animation = discrete jumps, no interpolation = works better on mobile */
+        animation: neonFlickerYellowMobile 2.5s infinite steps(1);
     }
 
     .table th,

@@ -19,7 +19,7 @@
     animation: neonFlickerGreen 5s infinite;
 }
 
-/* Subtle green neon flicker */
+/* Desktop green neon flicker - smooth gradual transitions */
 @keyframes neonFlickerGreen {
 
     0%,
@@ -66,6 +66,34 @@
             0 0 10px var(--neon-green),
             0 0 20px var(--neon-green),
             0 0 40px var(--neon-green);
+    }
+}
+
+/* Mobile-optimized green neon - sharp shadows with stepped flicker */
+@keyframes neonFlickerGreenMobile {
+
+    /* ON state - bright, sharp */
+    0%,
+    18%,
+    22%,
+    50%,
+    54%,
+    100% {
+        opacity: 1;
+        text-shadow:
+            0 0 2px #fff,
+            0 0 4px var(--neon-green),
+            0 0 8px var(--neon-green);
+    }
+
+    /* Quick flicker OFF */
+    19%,
+    21%,
+    51%,
+    53% {
+        opacity: 0.4;
+        text-shadow:
+            0 0 1px var(--neon-green);
     }
 }
 
@@ -240,6 +268,15 @@
 @media (max-width: 768px) {
     .title {
         font-size: 1.5rem;
+        /* Sharp shadow - small blur radii for crisp text on mobile */
+        color: #45ff20;
+        /* Slightly brighter green */
+        text-shadow:
+            0 0 2px #fff,
+            0 0 4px var(--neon-green),
+            0 0 8px var(--neon-green);
+        /* Stepped animation = discrete jumps, no interpolation = works better on mobile */
+        animation: neonFlickerGreenMobile 2.5s infinite steps(1);
     }
 
     .statsGrid {

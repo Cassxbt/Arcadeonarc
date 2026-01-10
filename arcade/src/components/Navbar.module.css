@@ -209,46 +209,94 @@
     display: none;
     align-items: center;
     justify-content: center;
-    width: 44px;
-    height: 44px;
-    background: var(--bg-tertiary);
-    border: 2px solid var(--neon-cyan);
-    border-radius: var(--radius-md);
+    width: 48px;
+    height: 48px;
+    background: var(--bg-card);
+    border: 1.5px solid rgba(5, 217, 232, 0.3);
+    border-radius: 12px;
     cursor: pointer;
     padding: 0;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
 }
 
+.mobileMenuBtn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(5, 217, 232, 0.08), transparent);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+.mobileMenuBtn:hover {
+    border-color: var(--neon-cyan);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(5, 217, 232, 0.2);
+}
+
+.mobileMenuBtn:hover::before {
+    opacity: 1;
+}
+
+.mobileMenuBtn:active {
+    transform: translateY(0);
+}
+
+/* Modern hamburger with proper spacing and smooth animation */
 .hamburger {
     display: flex;
     flex-direction: column;
-    gap: 5px;
-    width: 20px;
+    justify-content: center;
+    align-items: center;
+    width: 24px;
+    height: 20px;
+    position: relative;
 }
 
 .hamburger span {
+    position: absolute;
     display: block;
-    height: 3px;
+    height: 2.5px;
     width: 100%;
     background: var(--neon-cyan);
-    border-radius: 3px;
-    transition: all 0.3s ease;
-    box-shadow: 0 0 5px var(--neon-cyan);
+    border-radius: 2px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    left: 0;
 }
 
+.hamburger span:nth-child(1) {
+    top: 0;
+}
+
+.hamburger span:nth-child(2) {
+    top: 50%;
+    transform: translateY(-50%);
+    width: 80%;
+    left: 10%;
+}
+
+.hamburger span:nth-child(3) {
+    bottom: 0;
+}
+
+/* Smooth X transformation when open */
 .hamburgerOpen span:nth-child(1) {
-    transform: rotate(45deg) translate(5px, 5px);
+    top: 50%;
+    transform: translateY(-50%) rotate(45deg);
     background: var(--neon-pink);
-    box-shadow: 0 0 5px var(--neon-pink);
 }
 
 .hamburgerOpen span:nth-child(2) {
     opacity: 0;
+    transform: translateY(-50%) scale(0.8);
 }
 
 .hamburgerOpen span:nth-child(3) {
-    transform: rotate(-45deg) translate(5px, -5px);
+    bottom: 50%;
+    transform: translateY(50%) rotate(-45deg);
     background: var(--neon-pink);
-    box-shadow: 0 0 5px var(--neon-pink);
 }
 
 @keyframes menuItemFadeIn {
@@ -667,33 +715,44 @@
     border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-/* Social Row - Fixed Alignment */
+/* Social Row - Fixed Alignment and Positioning */
 .mobileSocialRow {
     display: flex;
     justify-content: center;
-    /* Center them perfectly */
-    gap: 24px;
+    align-items: center;
+    gap: 20px;
     width: 100%;
-    padding: 10px 0;
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 16px 0;
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
 }
 
 .mobileSocialLink {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: var(--text-secondary);
-    transition: all 0.2s ease;
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    background: var(--bg-card);
+    border: 1.5px solid rgba(5, 217, 232, 0.2);
+    color: var(--neon-cyan);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    flex-shrink: 0;
 }
 
 .mobileSocialLink:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: var(--text-primary);
+    background: rgba(5, 217, 232, 0.08);
+    border-color: var(--neon-cyan);
+    color: var(--neon-cyan);
     transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(5, 217, 232, 0.2);
+}
+
+.mobileSocialLink:active {
+    transform: translateY(0);
 }
 
 /* Wallet CTA at Bottom */
@@ -895,6 +954,48 @@
     background: rgba(0, 0, 0, 0.05);
     border-color: rgba(0, 0, 0, 0.15);
     color: #1E293B;
+}
+
+/* Hamburger Menu Light Mode */
+:global([data-theme="light"]) .mobileMenuBtn {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: rgba(8, 145, 178, 0.25);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+:global([data-theme="light"]) .mobileMenuBtn::before {
+    background: linear-gradient(135deg, rgba(8, 145, 178, 0.08), transparent);
+}
+
+:global([data-theme="light"]) .mobileMenuBtn:hover {
+    border-color: #0891B2;
+    box-shadow: 0 4px 12px rgba(8, 145, 178, 0.2);
+}
+
+:global([data-theme="light"]) .hamburger span {
+    background: #0891B2;
+}
+
+:global([data-theme="light"]) .hamburgerOpen span {
+    background: #DB2777;
+}
+
+/* Mobile Social Links - Light Mode */
+:global([data-theme="light"]) .mobileSocialRow {
+    border-top-color: rgba(0, 0, 0, 0.08);
+    border-bottom-color: rgba(0, 0, 0, 0.08);
+}
+
+:global([data-theme="light"]) .mobileSocialLink {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: rgba(8, 145, 178, 0.25);
+    color: #0891B2;
+}
+
+:global([data-theme="light"]) .mobileSocialLink:hover {
+    background: rgba(8, 145, 178, 0.08);
+    border-color: #0891B2;
+    box-shadow: 0 4px 12px rgba(8, 145, 178, 0.2);
 }
 
 :global([data-theme="light"]) .closeBtn:hover {
