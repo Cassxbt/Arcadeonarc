@@ -5,6 +5,7 @@ import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { useVault } from '@/lib/useVault';
 import { useGame } from '@/lib/game-context';
 import { useSound } from '@/lib/sounds';
+import { authFetch } from '@/lib/auth-fetch';
 import { CircleDollarSign, Building2, CircleCheck } from './icons';
 import styles from './DepositModal.module.css';
 
@@ -56,9 +57,8 @@ export function DepositModal({ isOpen, onClose, mode }: DepositModalProps) {
             }
         } else {
             try {
-                const reserveResponse = await fetch('/api/balance/withdraw', {
+                const reserveResponse = await authFetch('/api/balance/withdraw', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         wallet: primaryWallet?.address,
                         amount: amountNum,
@@ -72,9 +72,8 @@ export function DepositModal({ isOpen, onClose, mode }: DepositModalProps) {
 
                 result = await withdraw(amountNum);
 
-                await fetch('/api/balance/withdraw', {
+                await authFetch('/api/balance/withdraw', {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         wallet: primaryWallet?.address,
                         amount: amountNum,
