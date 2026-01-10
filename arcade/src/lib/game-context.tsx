@@ -242,9 +242,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
         if (isRegistered && record.gameParams) {
             try {
-                const response = await fetch('/api/games', {
+                const response = await authFetch('/api/games', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         wallet: primaryWallet.address.toLowerCase(),
                         game: record.game,
