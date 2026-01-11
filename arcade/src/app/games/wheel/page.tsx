@@ -19,7 +19,7 @@ const WHEEL_GAME_RULES = [
     {
         icon: <BarChart3 size={20} style={{ color: 'var(--neon-green)' }} />,
         title: 'Multipliers',
-        content: 'The wheel has 20 segments with multipliers: 0x (loss), 1.5x, 1.8x, 2x, 3x, and 5x!',
+        content: 'The wheel has 20 segments with multipliers: 0x (loss), 1.1x, 1.3x, 1.5x, 2.2x, and 3.5x!',
     },
     {
         icon: <FerrisWheel size={20} style={{ color: 'var(--neon-purple)' }} />,
@@ -28,28 +28,30 @@ const WHEEL_GAME_RULES = [
     },
 ];
 
-// Wheel segment configuration (20 segments) - balanced with 8 losses (40%)
+// Wheel segment configuration (20 segments)
+// Distribution: 0x=8, 1.1x=4, 1.3x=3, 1.5x=2, 2.2x=2, 3.5x=1
+// Expected RTP: 96% (4% house edge)
 const SEGMENTS = [
-    { multiplier: 0, color: '#5a5a5a' },      // Gray (loss)
-    { multiplier: 1.5, color: '#39ff14' },    // Green
-    { multiplier: 0, color: '#5a5a5a' },      // Gray (loss)
-    { multiplier: 1.8, color: '#66ff33' },    // Light Green
-    { multiplier: 0, color: '#5a5a5a' },      // Gray (loss)
-    { multiplier: 2, color: '#ffdd00' },      // Yellow
-    { multiplier: 1.5, color: '#39ff14' },    // Green
-    { multiplier: 0, color: '#5a5a5a' },      // Gray (loss)
-    { multiplier: 3, color: '#ff9500' },      // Orange
-    { multiplier: 1.5, color: '#39ff14' },    // Green
-    { multiplier: 0, color: '#5a5a5a' },      // Gray (loss)
-    { multiplier: 1.8, color: '#66ff33' },    // Light Green
-    { multiplier: 0, color: '#5a5a5a' },      // Gray (loss)
-    { multiplier: 2, color: '#ffdd00' },      // Yellow
-    { multiplier: 5, color: '#9d4edd' },      // Purple (Jackpot)
-    { multiplier: 1.5, color: '#39ff14' },    // Green
-    { multiplier: 0, color: '#5a5a5a' },      // Gray (loss)
-    { multiplier: 1.8, color: '#66ff33' },    // Light Green
-    { multiplier: 0, color: '#5a5a5a' },      // Gray (loss)
-    { multiplier: 3, color: '#ff9500' },      // Orange
+    { multiplier: 0, color: '#5a5a5a' },      // 0: Gray (loss)
+    { multiplier: 1.1, color: '#39ff14' },    // 1: Green
+    { multiplier: 0, color: '#5a5a5a' },      // 2: Gray (loss)
+    { multiplier: 1.3, color: '#66ff33' },    // 3: Light Green
+    { multiplier: 0, color: '#5a5a5a' },      // 4: Gray (loss)
+    { multiplier: 1.5, color: '#ffdd00' },    // 5: Yellow
+    { multiplier: 1.1, color: '#39ff14' },    // 6: Green
+    { multiplier: 0, color: '#5a5a5a' },      // 7: Gray (loss)
+    { multiplier: 2.2, color: '#ff9500' },    // 8: Orange
+    { multiplier: 1.1, color: '#39ff14' },    // 9: Green
+    { multiplier: 0, color: '#5a5a5a' },      // 10: Gray (loss)
+    { multiplier: 1.3, color: '#66ff33' },    // 11: Light Green
+    { multiplier: 0, color: '#5a5a5a' },      // 12: Gray (loss)
+    { multiplier: 1.5, color: '#ffdd00' },    // 13: Yellow
+    { multiplier: 3.5, color: '#9d4edd' },    // 14: Purple (Jackpot)
+    { multiplier: 1.1, color: '#39ff14' },    // 15: Green
+    { multiplier: 0, color: '#5a5a5a' },      // 16: Gray (loss)
+    { multiplier: 1.3, color: '#66ff33' },    // 17: Light Green
+    { multiplier: 0, color: '#5a5a5a' },      // 18: Gray (loss)
+    { multiplier: 2.2, color: '#ff9500' },    // 19: Orange
 ];
 
 type GameState = 'idle' | 'spinning' | 'result';
@@ -263,7 +265,7 @@ export default function WheelGame() {
                     <div className={styles.card}>
                         <div className={styles.statRow}>
                             <span className={styles.statLabel}>Max Win</span>
-                            <span className={styles.statValue}>${(betAmount * 5).toFixed(2)}</span>
+                            <span className={styles.statValue}>${(betAmount * 3.5).toFixed(2)}</span>
                         </div>
                     </div>
 
@@ -382,11 +384,11 @@ export default function WheelGame() {
                     <div className={styles.legend}>
                         {[
                             { mult: '0x', color: '#5a5a5a', count: 8 },
-                            { mult: '1.5x', color: '#39ff14', count: 4 },
-                            { mult: '1.8x', color: '#66ff33', count: 3 },
-                            { mult: '2x', color: '#ffdd00', count: 2 },
-                            { mult: '3x', color: '#ff9500', count: 2 },
-                            { mult: '5x', color: '#9d4edd', count: 1 },
+                            { mult: '1.1x', color: '#39ff14', count: 4 },
+                            { mult: '1.3x', color: '#66ff33', count: 3 },
+                            { mult: '1.5x', color: '#ffdd00', count: 2 },
+                            { mult: '2.2x', color: '#ff9500', count: 2 },
+                            { mult: '3.5x', color: '#9d4edd', count: 1 },
                         ].map(item => (
                             <div key={item.mult} className={styles.legendItem}>
                                 <span className={styles.legendDot} style={{ backgroundColor: item.color }} />
