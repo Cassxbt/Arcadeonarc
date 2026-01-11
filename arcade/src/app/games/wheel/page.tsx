@@ -19,7 +19,7 @@ const WHEEL_GAME_RULES = [
     {
         icon: <BarChart3 size={20} style={{ color: 'var(--neon-green)' }} />,
         title: 'Multipliers',
-        content: 'The wheel has 20 segments with multipliers: 0x (loss), 1.5x, 1.8x, 2x, 3x, and 5x!',
+        content: 'The wheel has 20 segments: 8× 0x (loss), 4× 1.1x, 3× 1.3x, 2× 1.5x, 2× 2.2x, and 1× 3.5x jackpot!',
     },
     {
         icon: <FerrisWheel size={20} style={{ color: 'var(--neon-purple)' }} />,
@@ -28,28 +28,27 @@ const WHEEL_GAME_RULES = [
     },
 ];
 
-// Wheel segment configuration (20 segments) - balanced with 8 losses (40%)
 const SEGMENTS = [
-    { multiplier: 0, color: '#5a5a5a' },      // Gray (loss)
-    { multiplier: 1.5, color: '#39ff14' },    // Green
-    { multiplier: 0, color: '#5a5a5a' },      // Gray (loss)
-    { multiplier: 1.8, color: '#66ff33' },    // Light Green
-    { multiplier: 0, color: '#5a5a5a' },      // Gray (loss)
-    { multiplier: 2, color: '#ffdd00' },      // Yellow
-    { multiplier: 1.5, color: '#39ff14' },    // Green
-    { multiplier: 0, color: '#5a5a5a' },      // Gray (loss)
-    { multiplier: 3, color: '#ff9500' },      // Orange
-    { multiplier: 1.5, color: '#39ff14' },    // Green
-    { multiplier: 0, color: '#5a5a5a' },      // Gray (loss)
-    { multiplier: 1.8, color: '#66ff33' },    // Light Green
-    { multiplier: 0, color: '#5a5a5a' },      // Gray (loss)
-    { multiplier: 2, color: '#ffdd00' },      // Yellow
-    { multiplier: 5, color: '#9d4edd' },      // Purple (Jackpot)
-    { multiplier: 1.5, color: '#39ff14' },    // Green
-    { multiplier: 0, color: '#5a5a5a' },      // Gray (loss)
-    { multiplier: 1.8, color: '#66ff33' },    // Light Green
-    { multiplier: 0, color: '#5a5a5a' },      // Gray (loss)
-    { multiplier: 3, color: '#ff9500' },      // Orange
+    { multiplier: 0, color: '#5a5a5a' },
+    { multiplier: 1.1, color: '#39ff14' },
+    { multiplier: 0, color: '#5a5a5a' },
+    { multiplier: 1.3, color: '#00d4ff' },
+    { multiplier: 0, color: '#5a5a5a' },
+    { multiplier: 1.1, color: '#39ff14' },
+    { multiplier: 2.2, color: '#ff2a6d' },
+    { multiplier: 0, color: '#5a5a5a' },
+    { multiplier: 1.3, color: '#00d4ff' },
+    { multiplier: 1.1, color: '#39ff14' },
+    { multiplier: 0, color: '#5a5a5a' },
+    { multiplier: 1.5, color: '#ffdd00' },
+    { multiplier: 0, color: '#5a5a5a' },
+    { multiplier: 1.3, color: '#00d4ff' },
+    { multiplier: 3.5, color: '#9d4edd' },
+    { multiplier: 1.1, color: '#39ff14' },
+    { multiplier: 0, color: '#5a5a5a' },
+    { multiplier: 2.2, color: '#ff2a6d' },
+    { multiplier: 0, color: '#5a5a5a' },
+    { multiplier: 1.5, color: '#ffdd00' },
 ];
 
 type GameState = 'idle' | 'spinning' | 'result';
@@ -263,7 +262,7 @@ export default function WheelGame() {
                     <div className={styles.card}>
                         <div className={styles.statRow}>
                             <span className={styles.statLabel}>Max Win</span>
-                            <span className={styles.statValue}>${(betAmount * 5).toFixed(2)}</span>
+                            <span className={styles.statValue}>${(betAmount * 3.5).toFixed(2)}</span>
                         </div>
                     </div>
 
@@ -288,13 +287,14 @@ export default function WheelGame() {
                                     className={styles.recentResult}
                                     style={{
                                         backgroundColor: mult === 0 ? '#5a5a5a' :
-                                            mult === 5 ? '#9d4edd' :
-                                                mult >= 3 ? '#ff9500' :
-                                                    mult >= 2 ? '#ffdd00' : '#39ff14',
+                                            mult === 3.5 ? '#9d4edd' :
+                                                mult === 2.2 ? '#ff2a6d' :
+                                                    mult === 1.5 ? '#ffdd00' :
+                                                        mult === 1.3 ? '#00d4ff' : '#39ff14',
                                         opacity: 1 - (idx * 0.25)
                                     }}
                                 >
-                                    {mult.toFixed(2)}x
+                                    {mult.toFixed(1)}x
                                 </span>
                             ))}
                         </div>
@@ -364,7 +364,7 @@ export default function WheelGame() {
                                         className={styles.resultMultiplier}
                                         style={{ color: resultInfo.color }}
                                     >
-                                        {resultInfo.multiplier.toFixed(2)}x
+                                        {resultInfo.multiplier.toFixed(1)}x
                                     </div>
                                     <div className={styles.resultPayout}>
                                         {resultInfo.isWin ? '+' : ''}${resultInfo.payout.toFixed(2)}
@@ -382,11 +382,11 @@ export default function WheelGame() {
                     <div className={styles.legend}>
                         {[
                             { mult: '0x', color: '#5a5a5a', count: 8 },
-                            { mult: '1.5x', color: '#39ff14', count: 4 },
-                            { mult: '1.8x', color: '#66ff33', count: 3 },
-                            { mult: '2x', color: '#ffdd00', count: 2 },
-                            { mult: '3x', color: '#ff9500', count: 2 },
-                            { mult: '5x', color: '#9d4edd', count: 1 },
+                            { mult: '1.1x', color: '#39ff14', count: 4 },
+                            { mult: '1.3x', color: '#00d4ff', count: 3 },
+                            { mult: '1.5x', color: '#ffdd00', count: 2 },
+                            { mult: '2.2x', color: '#ff2a6d', count: 2 },
+                            { mult: '3.5x', color: '#9d4edd', count: 1 },
                         ].map(item => (
                             <div key={item.mult} className={styles.legendItem}>
                                 <span className={styles.legendDot} style={{ backgroundColor: item.color }} />
