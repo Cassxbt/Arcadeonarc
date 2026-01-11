@@ -24,7 +24,16 @@ export async function POST(request: NextRequest) {
         const body = await request.json();
         const { game, bet_amount, game_params } = body;
 
+        console.log('[DEBUG] /api/games POST request:', {
+            wallet,
+            game,
+            bet_amount,
+            game_params,
+            timestamp: new Date().toISOString()
+        });
+
         if (!game || bet_amount === undefined || !game_params) {
+            console.error('[DEBUG] Missing required fields:', { game, bet_amount, game_params });
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
@@ -40,14 +49,23 @@ export async function POST(request: NextRequest) {
         let serverCalculated: { payout: number; multiplier: number; won: boolean };
         try {
             serverCalculated = calculateServerPayout(game, bet_amount, game_params);
+            console.log('[DEBUG] Server calculated payout:', serverCalculated);
         } catch (err) {
-            console.error('Payout calculation failed:', err);
+            console.error('[DEBUG] Payout calculation failed:', err);
             return NextResponse.json({ error: 'Invalid game parameters' }, { status: 400 });
         }
 
         const { payout, multiplier, won } = serverCalculated;
 
         const supabase = createServerClient();
+
+        console.log('[DEBUG] Calling place_bet_atomic with:', {
+            p_wallet: wallet,
+            p_bet_amount: bet_amount,
+            p_payout: payout,
+            p_game: game,
+            p_multiplier: multiplier
+        });
 
         const { data, error } = await supabase.rpc('place_bet_atomic', {
             p_wallet: wallet,
@@ -57,14 +75,19 @@ export async function POST(request: NextRequest) {
             p_multiplier: multiplier
         });
 
+        console.log('[DEBUG] place_bet_atomic response:', { data, error });
+
         if (error) {
-            console.error('Atomic bet failed:', error);
+            console.error('[DEBUG] Atomic bet failed with error:', error);
             return NextResponse.json({ error: 'Database operation failed' }, { status: 500 });
         }
 
         const result = data as { success: boolean; error?: string; new_balance?: number; streak?: number; won?: boolean; available?: number; required?: number };
 
+        console.log('[DEBUG] Result parsed:', result);
+
         if (!result.success) {
+            console.error('[DEBUG] Result success=false:', result);
             const status = result.error === 'Insufficient balance' ? 400 : 500;
             return NextResponse.json({
                 error: result.error,
