@@ -129,6 +129,17 @@ temp/
 *.backup
 
 # =============================================
+# DEPLOYMENT SCRIPTS (TEMPORARY)
+# =============================================
+compile-wheel.mjs
+deploy-wheel.mjs
+/package.json
+/package-lock.json
+contracts/package.json
+contracts/package-lock.json
+contracts/script/DeployWheel.s.sol
+
+# =============================================
 # PYTHON (if any scripts)
 # =============================================
 __pycache__/
