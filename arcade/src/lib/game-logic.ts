@@ -4,8 +4,8 @@
 const HOUSE_EDGE = 0.10;
 
 const WHEEL_MULTIPLIERS = [
-    0, 1.5, 1.8, 1.5, 0, 2.0, 1.5, 3.0, 1.8, 1.5,
-    0, 1.5, 2.0, 1.8, 5.0, 1.5, 0, 2.0, 3.0, 1.8
+    0, 1.1, 0, 1.3, 0, 1.1, 2.2, 0, 1.3, 1.1,
+    0, 1.5, 0, 1.3, 3.5, 1.1, 0, 2.2, 0, 1.5
 ];
 
 const TOWER_ROWS = [7, 6, 5, 4, 3, 4, 5, 6, 7, 6, 5, 4, 3, 4, 5, 6, 7, 6, 5, 4];
@@ -37,12 +37,13 @@ export function calculateTowerPayout(
     betAmount: number,
     row: number
 ): { payout: number; multiplier: number } {
-    let multiplier = 1.0;
+    let cumulativeProb = 1.0;
     for (let i = 0; i <= row; i++) {
         const tilesInRow = TOWER_ROWS[i];
         const survivalRate = (tilesInRow - 1) / tilesInRow;
-        multiplier = multiplier * (1 / survivalRate) * (1 - HOUSE_EDGE);
+        cumulativeProb *= survivalRate;
     }
+    const multiplier = (1 / cumulativeProb) * (1 - HOUSE_EDGE);
     return { payout: betAmount * multiplier, multiplier: Number(multiplier.toFixed(4)) };
 }
 
@@ -62,8 +63,23 @@ export function calculateLaserPayout(
     betAmount: number,
     survivedTurns: number
 ): { payout: number; multiplier: number } {
-    const baseMultiplier = 1.15;
-    const multiplier = Math.pow(baseMultiplier, survivedTurns) * (1 - HOUSE_EDGE);
+    if (survivedTurns === 0) {
+        return { payout: 0, multiplier: 0 };
+    }
+
+    let cumulative = 1.0;
+    let colsRemaining = 10;
+    let rowsRemaining = 10;
+
+    for (let i = 0; i < survivedTurns; i++) {
+        const isColumnTurn = (i % 2 === 0);
+        const remaining = isColumnTurn ? colsRemaining : rowsRemaining;
+        cumulative *= remaining / (remaining - 1);
+        if (isColumnTurn) colsRemaining--;
+        else rowsRemaining--;
+    }
+
+    const multiplier = cumulative * 0.96;
     return { payout: betAmount * multiplier, multiplier: Number(multiplier.toFixed(4)) };
 }
 

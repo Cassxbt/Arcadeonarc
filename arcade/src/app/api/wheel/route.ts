@@ -10,14 +10,9 @@ if (!SIGNER_PRIVATE_KEY) {
 }
 const signer = privateKeyToAccount(SIGNER_PRIVATE_KEY as `0x${string}`);
 
-// Segment configuration (must match contract)
-// Distribution: 0x=8, 1.1x=4, 1.3x=3, 1.5x=2, 2.2x=2, 3.5x=1
-// Expected RTP: 96% (4% house edge)
 const SEGMENT_MULTIPLIERS = [
-    0, 11000, 0, 13000, 0,           // 0-4
-    15000, 11000, 0, 22000, 11000,   // 5-9
-    0, 13000, 0, 15000, 35000,       // 10-14
-    11000, 0, 13000, 0, 22000        // 15-19
+    0, 11000, 0, 13000, 0, 11000, 22000, 0, 13000, 11000,
+    0, 15000, 0, 13000, 35000, 11000, 0, 22000, 0, 15000
 ];
 
 export async function POST(request: NextRequest) {

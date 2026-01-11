@@ -13,40 +13,15 @@ interface IARCadeVault {
 
 /**
  * @title WheelGame
- * @notice 20-segment wheel spin game with multipliers from 0x to 5x
- * @dev Single-transaction game - player spins, server provides outcome
+ * @notice 20-segment wheel spin game
  */
 contract WheelGame is ReentrancyGuard, Ownable, Pausable {
-    
-    /* --- CONSTANTS --- */
-    
-    /// @notice Total number of segments on the wheel
+
     uint256 public constant TOTAL_SEGMENTS = 20;
-    
-    /// @notice Multipliers for each segment in basis points (10000 = 1x)
-    /// Distribution: 0x=8, 1.1x=4, 1.3x=3, 1.5x=2, 2.2x=2, 3.5x=1
-    /// Expected RTP: 96% (4% house edge)
+
     uint256[20] public SEGMENT_MULTIPLIERS = [
-        0,      // Segment 0: 0x (loss)
-        11000,  // Segment 1: 1.1x
-        0,      // Segment 2: 0x (loss)
-        13000,  // Segment 3: 1.3x
-        0,      // Segment 4: 0x (loss)
-        15000,  // Segment 5: 1.5x
-        11000,  // Segment 6: 1.1x
-        0,      // Segment 7: 0x (loss)
-        22000,  // Segment 8: 2.2x
-        11000,  // Segment 9: 1.1x
-        0,      // Segment 10: 0x (loss)
-        13000,  // Segment 11: 1.3x
-        0,      // Segment 12: 0x (loss)
-        15000,  // Segment 13: 1.5x
-        35000,  // Segment 14: 3.5x (jackpot)
-        11000,  // Segment 15: 1.1x
-        0,      // Segment 16: 0x (loss)
-        13000,  // Segment 17: 1.3x
-        0,      // Segment 18: 0x (loss)
-        22000   // Segment 19: 2.2x
+        0, 11000, 0, 13000, 0, 11000, 22000, 0, 13000, 11000,
+        0, 15000, 0, 13000, 35000, 11000, 0, 22000, 0, 15000
     ];
     
     uint256 public constant BPS_DENOMINATOR = 10000;

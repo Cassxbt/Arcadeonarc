@@ -19,7 +19,7 @@ const WHEEL_GAME_RULES = [
     {
         icon: <BarChart3 size={20} style={{ color: 'var(--neon-green)' }} />,
         title: 'Multipliers',
-        content: 'The wheel has 20 segments with multipliers: 0x (loss), 1.1x, 1.3x, 1.5x, 2.2x, and 3.5x!',
+        content: 'The wheel has 20 segments: 8× 0x (loss), 4× 1.1x, 3× 1.3x, 2× 1.5x, 2× 2.2x, and 1× 3.5x jackpot!',
     },
     {
         icon: <FerrisWheel size={20} style={{ color: 'var(--neon-purple)' }} />,
@@ -28,30 +28,27 @@ const WHEEL_GAME_RULES = [
     },
 ];
 
-// Wheel segment configuration (20 segments)
-// Distribution: 0x=8, 1.1x=4, 1.3x=3, 1.5x=2, 2.2x=2, 3.5x=1
-// Expected RTP: 96% (4% house edge)
 const SEGMENTS = [
-    { multiplier: 0, color: '#5a5a5a' },      // 0: Gray (loss)
-    { multiplier: 1.1, color: '#39ff14' },    // 1: Green
-    { multiplier: 0, color: '#5a5a5a' },      // 2: Gray (loss)
-    { multiplier: 1.3, color: '#66ff33' },    // 3: Light Green
-    { multiplier: 0, color: '#5a5a5a' },      // 4: Gray (loss)
-    { multiplier: 1.5, color: '#ffdd00' },    // 5: Yellow
-    { multiplier: 1.1, color: '#39ff14' },    // 6: Green
-    { multiplier: 0, color: '#5a5a5a' },      // 7: Gray (loss)
-    { multiplier: 2.2, color: '#ff9500' },    // 8: Orange
-    { multiplier: 1.1, color: '#39ff14' },    // 9: Green
-    { multiplier: 0, color: '#5a5a5a' },      // 10: Gray (loss)
-    { multiplier: 1.3, color: '#66ff33' },    // 11: Light Green
-    { multiplier: 0, color: '#5a5a5a' },      // 12: Gray (loss)
-    { multiplier: 1.5, color: '#ffdd00' },    // 13: Yellow
-    { multiplier: 3.5, color: '#9d4edd' },    // 14: Purple (Jackpot)
-    { multiplier: 1.1, color: '#39ff14' },    // 15: Green
-    { multiplier: 0, color: '#5a5a5a' },      // 16: Gray (loss)
-    { multiplier: 1.3, color: '#66ff33' },    // 17: Light Green
-    { multiplier: 0, color: '#5a5a5a' },      // 18: Gray (loss)
-    { multiplier: 2.2, color: '#ff9500' },    // 19: Orange
+    { multiplier: 0, color: '#5a5a5a' },
+    { multiplier: 1.1, color: '#39ff14' },
+    { multiplier: 0, color: '#5a5a5a' },
+    { multiplier: 1.3, color: '#00d4ff' },
+    { multiplier: 0, color: '#5a5a5a' },
+    { multiplier: 1.1, color: '#39ff14' },
+    { multiplier: 2.2, color: '#ff2a6d' },
+    { multiplier: 0, color: '#5a5a5a' },
+    { multiplier: 1.3, color: '#00d4ff' },
+    { multiplier: 1.1, color: '#39ff14' },
+    { multiplier: 0, color: '#5a5a5a' },
+    { multiplier: 1.5, color: '#ffdd00' },
+    { multiplier: 0, color: '#5a5a5a' },
+    { multiplier: 1.3, color: '#00d4ff' },
+    { multiplier: 3.5, color: '#9d4edd' },
+    { multiplier: 1.1, color: '#39ff14' },
+    { multiplier: 0, color: '#5a5a5a' },
+    { multiplier: 2.2, color: '#ff2a6d' },
+    { multiplier: 0, color: '#5a5a5a' },
+    { multiplier: 1.5, color: '#ffdd00' },
 ];
 
 type GameState = 'idle' | 'spinning' | 'result';
@@ -290,13 +287,14 @@ export default function WheelGame() {
                                     className={styles.recentResult}
                                     style={{
                                         backgroundColor: mult === 0 ? '#5a5a5a' :
-                                            mult === 5 ? '#9d4edd' :
-                                                mult >= 3 ? '#ff9500' :
-                                                    mult >= 2 ? '#ffdd00' : '#39ff14',
+                                            mult === 3.5 ? '#9d4edd' :
+                                                mult === 2.2 ? '#ff2a6d' :
+                                                    mult === 1.5 ? '#ffdd00' :
+                                                        mult === 1.3 ? '#00d4ff' : '#39ff14',
                                         opacity: 1 - (idx * 0.25)
                                     }}
                                 >
-                                    {mult.toFixed(2)}x
+                                    {mult.toFixed(1)}x
                                 </span>
                             ))}
                         </div>
@@ -366,7 +364,7 @@ export default function WheelGame() {
                                         className={styles.resultMultiplier}
                                         style={{ color: resultInfo.color }}
                                     >
-                                        {resultInfo.multiplier.toFixed(2)}x
+                                        {resultInfo.multiplier.toFixed(1)}x
                                     </div>
                                     <div className={styles.resultPayout}>
                                         {resultInfo.isWin ? '+' : ''}${resultInfo.payout.toFixed(2)}
@@ -385,9 +383,9 @@ export default function WheelGame() {
                         {[
                             { mult: '0x', color: '#5a5a5a', count: 8 },
                             { mult: '1.1x', color: '#39ff14', count: 4 },
-                            { mult: '1.3x', color: '#66ff33', count: 3 },
+                            { mult: '1.3x', color: '#00d4ff', count: 3 },
                             { mult: '1.5x', color: '#ffdd00', count: 2 },
-                            { mult: '2.2x', color: '#ff9500', count: 2 },
+                            { mult: '2.2x', color: '#ff2a6d', count: 2 },
                             { mult: '3.5x', color: '#9d4edd', count: 1 },
                         ].map(item => (
                             <div key={item.mult} className={styles.legendItem}>
