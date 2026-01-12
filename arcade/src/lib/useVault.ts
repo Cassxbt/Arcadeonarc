@@ -48,26 +48,56 @@ export function useVault() {
         if (!primaryWallet) return null;
 
         try {
+            if (typeof (primaryWallet as any).getWalletClient === 'function') {
+                const client = await (primaryWallet as any).getWalletClient();
+
+                if (!client) {
+                    console.error('getWalletClient returned null or undefined');
+                    return null;
+                }
+
+                if (typeof client.writeContract !== 'function') {
+                    console.error('Wallet client missing writeContract method');
+                    return null;
+                }
+
+                return client as WalletClient;
+            }
+
             const connector = primaryWallet.connector;
-
-            if (connector && typeof connector.getWalletClient === 'function') {
-                const client = await connector.getWalletClient();
-                if (client && typeof client.writeContract === 'function') {
-                    return client as WalletClient;
-                }
+            if (!connector) {
+                console.error('No connector available on primaryWallet');
+                return null;
             }
 
-            if (connector && typeof connector.getProvider === 'function') {
-                const provider = await connector.getProvider();
-                if (provider) {
-                    return createWalletClient({
-                        account: primaryWallet.address as `0x${string}`,
-                        chain: arcTestnet,
-                        transport: custom(provider)
-                    });
+            if (typeof (connector as any).getProvider === 'function') {
+                const provider = await (connector as any).getProvider();
+
+                if (!provider) {
+                    console.error('getProvider returned null');
+                    return null;
                 }
+
+                if (typeof provider.request !== 'function') {
+                    console.error('Provider missing request method (not EIP-1193 compliant)');
+                    return null;
+                }
+
+                const chainId = await provider.request({ method: 'eth_chainId' });
+                const currentChainId = typeof chainId === 'string' ? parseInt(chainId, 16) : chainId;
+
+                if (currentChainId !== arcTestnet.id) {
+                    console.warn(`Wallet on wrong chain: ${currentChainId}, expected: ${arcTestnet.id}`);
+                }
+
+                return createWalletClient({
+                    account: primaryWallet.address as `0x${string}`,
+                    chain: arcTestnet,
+                    transport: custom(provider)
+                });
             }
 
+            console.error('No method available to get wallet client');
             return null;
         } catch (err) {
             console.error('Failed to get wallet client:', err);
