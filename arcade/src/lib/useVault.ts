@@ -41,26 +41,12 @@ export function useVault() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    /**
-     * Get wallet client from Dynamic SDK
-     */
     const getWalletClient = useCallback(async (): Promise<WalletClient | null> => {
         if (!primaryWallet) return null;
-
         try {
-            // Dynamic SDK exposes getWalletClient on the connector
-            const connector = primaryWallet.connector;
-            if (connector && 'getWalletClient' in connector) {
-                return await (connector as { getWalletClient: () => Promise<WalletClient> }).getWalletClient();
+            if ('getWalletClient' in primaryWallet) {
+                return await (primaryWallet as unknown as { getWalletClient: () => Promise<WalletClient> }).getWalletClient();
             }
-
-            // Fallback: try to get signer and construct client
-            if ('getSigner' in primaryWallet) {
-                const signer = await (primaryWallet as { getSigner: () => Promise<WalletClient> }).getSigner();
-                // Return the signer which should be compatible with viem
-                return signer;
-            }
-
             return null;
         } catch (err) {
             console.error('Failed to get wallet client:', err);
