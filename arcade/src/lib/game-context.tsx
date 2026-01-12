@@ -165,9 +165,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         if (primaryWallet && isRegistered) {
-            refreshBalance();
+            syncBalanceAfterDeposit();
         }
-    }, [primaryWallet, isRegistered, refreshBalance]);
+    }, [primaryWallet, isRegistered, syncBalanceAfterDeposit]);
     // Supabase Realtime + cross-tab sync
     useEffect(() => {
         if (!primaryWallet?.address || demoMode) return;
