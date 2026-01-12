@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import { createPublicClient, createWalletClient, custom, http, parseUnits, formatUnits, type WalletClient } from 'viem';
+import { createPublicClient, http, parseUnits, formatUnits, type WalletClient } from 'viem';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { arcTestnet, CONTRACTS } from './constants';
 import { VAULT_ABI, ERC20_ABI } from './abi';
@@ -41,63 +41,12 @@ export function useVault() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    /**
-     * Get wallet client from Dynamic SDK
-     */
     const getWalletClient = useCallback(async (): Promise<WalletClient | null> => {
         if (!primaryWallet) return null;
-
         try {
-            if (typeof (primaryWallet as any).getWalletClient === 'function') {
-                const client = await (primaryWallet as any).getWalletClient();
-
-                if (!client) {
-                    console.error('getWalletClient returned null or undefined');
-                    return null;
-                }
-
-                if (typeof client.writeContract !== 'function') {
-                    console.error('Wallet client missing writeContract method');
-                    return null;
-                }
-
-                return client as WalletClient;
+            if ('getWalletClient' in primaryWallet) {
+                return await (primaryWallet as unknown as { getWalletClient: () => Promise<WalletClient> }).getWalletClient();
             }
-
-            const connector = primaryWallet.connector;
-            if (!connector) {
-                console.error('No connector available on primaryWallet');
-                return null;
-            }
-
-            if (typeof (connector as any).getProvider === 'function') {
-                const provider = await (connector as any).getProvider();
-
-                if (!provider) {
-                    console.error('getProvider returned null');
-                    return null;
-                }
-
-                if (typeof provider.request !== 'function') {
-                    console.error('Provider missing request method (not EIP-1193 compliant)');
-                    return null;
-                }
-
-                const chainId = await provider.request({ method: 'eth_chainId' });
-                const currentChainId = typeof chainId === 'string' ? parseInt(chainId, 16) : chainId;
-
-                if (currentChainId !== arcTestnet.id) {
-                    console.warn(`Wallet on wrong chain: ${currentChainId}, expected: ${arcTestnet.id}`);
-                }
-
-                return createWalletClient({
-                    account: primaryWallet.address as `0x${string}`,
-                    chain: arcTestnet,
-                    transport: custom(provider)
-                });
-            }
-
-            console.error('No method available to get wallet client');
             return null;
         } catch (err) {
             console.error('Failed to get wallet client:', err);
