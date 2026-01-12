@@ -153,8 +153,12 @@ export function calculateServerPayout(
         }
         case 'tower': {
             const row = gameParams.row as number;
+            const outcome = gameParams.outcome as string | undefined;
             if (typeof row !== 'number') {
                 throw new Error('Invalid tower game params');
+            }
+            if (outcome === 'loss') {
+                return { payout: 0, multiplier: 0, won: false };
             }
             const result = calculateTowerPayout(betAmount, row);
             return { ...result, won: true };

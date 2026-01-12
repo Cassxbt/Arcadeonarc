@@ -518,6 +518,30 @@
     justify-content: center;
     background: rgba(0, 0, 0, 0.85);
     z-index: 100;
+    cursor: pointer;
+}
+
+.overlayClose {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 32px;
+    height: 32px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    color: var(--text-muted);
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.overlayClose:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
 }
 
 .winContent,

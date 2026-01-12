@@ -67,6 +67,7 @@ export default function TowerGame() {
     const [showInfo, setShowInfo] = useState(false);
     const [gameNonce, setGameNonce] = useState(0);
     const [isRevealing, setIsRevealing] = useState(false);
+    const [lostBetAmount, setLostBetAmount] = useState(0);
 
     const cameraOffset = useMemo(() => {
         if (currentRow < 0) return 0;
@@ -171,6 +172,7 @@ export default function TowerGame() {
                 playSound('LOSE');
                 setIsShaking(true);
                 setTimeout(() => setIsShaking(false), 400);
+                setLostBetAmount(betAmount);
                 setGameState('lost');
                 addBetRecord({
                     game: 'tower',
@@ -178,7 +180,7 @@ export default function TowerGame() {
                     outcome: 'loss',
                     multiplier: 0,
                     payout: 0,
-                    gameParams: { row: rowIndex },
+                    gameParams: { row: rowIndex, outcome: 'loss' },
                 });
             } else {
                 playSound('CLICK');
@@ -210,7 +212,7 @@ export default function TowerGame() {
             outcome: 'win',
             multiplier: currentMultiplier,
             payout,
-            gameParams: { row: currentRow },
+            gameParams: { row: currentRow, outcome: 'win' },
         });
 
         setTiles(prev => prev.map((row, rowIndex) =>
@@ -366,7 +368,7 @@ export default function TowerGame() {
                                         </>
                                     ) : (
                                         <>
-                                            <span className={styles.resultLost}>-${betAmount.toFixed(2)}</span>
+                                            <span className={styles.resultLost}>-${lostBetAmount.toFixed(2)}</span>
                                             <span className={styles.resultLabel}>Better luck next time</span>
                                         </>
                                     )}
@@ -496,11 +498,12 @@ export default function TowerGame() {
 
                         {/* Lose Overlay */}
                         {gameState === 'lost' && (
-                            <div className={`${styles.overlay} ${styles.overlayLose}`}>
+                            <div className={`${styles.overlay} ${styles.overlayLose}`} onClick={() => setGameState('idle')}>
                                 <div className={styles.loseContent}>
                                     <Skull size={56} className={styles.loseIcon} />
                                     <h2>BUSTED!</h2>
-                                    <div className={styles.loseAmount}>-${betAmount.toFixed(2)}</div>
+                                    <div className={styles.loseAmount}>-${lostBetAmount.toFixed(2)}</div>
+                                    <button className={styles.overlayClose} onClick={() => setGameState('idle')}>×</button>
                                 </div>
                             </div>
                         )}
