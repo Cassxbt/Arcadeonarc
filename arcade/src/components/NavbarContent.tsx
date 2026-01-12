@@ -269,7 +269,7 @@ export function NavbarContent() {
                         </button>
                     </div>
 
-                    {primaryWallet && (
+                    {primaryWallet ? (
                         <div className={`${styles.mobileWalletSection} ${styles.menuItem} ${styles.menuItem7}`}>
                             <Link href="/profile" className={styles.mobileProfileBtn}>
                                 <div className={styles.mobileUserIcon}>
@@ -289,6 +289,10 @@ export function NavbarContent() {
                                     <span className={styles.btnIcon}>－</span> Withdraw
                                 </button>
                             </div>
+                        </div>
+                    ) : (
+                        <div className={`${styles.mobileLoginSection} ${styles.menuItem} ${styles.menuItem7}`}>
+                            <DynamicWidget />
                         </div>
                     )}
 
