@@ -48,8 +48,8 @@ export function useVault() {
         if (!primaryWallet) return null;
 
         try {
-            if (typeof primaryWallet.getWalletClient === 'function') {
-                const client = await primaryWallet.getWalletClient();
+            if (typeof (primaryWallet as any).getWalletClient === 'function') {
+                const client = await (primaryWallet as any).getWalletClient();
 
                 if (!client) {
                     console.error('getWalletClient returned null or undefined');
@@ -70,8 +70,8 @@ export function useVault() {
                 return null;
             }
 
-            if (typeof connector.getProvider === 'function') {
-                const provider = await connector.getProvider();
+            if (typeof (connector as any).getProvider === 'function') {
+                const provider = await (connector as any).getProvider();
 
                 if (!provider) {
                     console.error('getProvider returned null');
