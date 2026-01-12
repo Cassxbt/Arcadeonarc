@@ -190,6 +190,15 @@ export function useVault() {
             }
             console.log('[deposit] Wallet client acquired');
 
+            const actualBalance = await getWalletBalance(primaryWallet.address as `0x${string}`);
+            console.log('[deposit] Actual on-chain balance:', actualBalance, 'Trying to deposit:', amount);
+            if (actualBalance < amount) {
+                const errorMsg = `Insufficient balance: have ${actualBalance.toFixed(2)} USDC, need ${amount} USDC`;
+                console.error('[deposit]', errorMsg);
+                setError(errorMsg);
+                return false;
+            }
+
             const amountWei = parseUnits(amount.toString(), 6);
 
             const data = encodeFunctionData({
