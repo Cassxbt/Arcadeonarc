@@ -140,6 +140,7 @@ export function useVault() {
                 data,
                 chain: arcTestnet,
                 account: primaryWallet.address as `0x${string}`,
+                gas: 100000n,
             });
 
             await publicClient.waitForTransactionReceipt({ hash });
@@ -214,6 +215,7 @@ export function useVault() {
                     data,
                     chain: arcTestnet,
                     account: primaryWallet.address as `0x${string}`,
+                    gas: 150000n,
                 });
                 console.log('[deposit] Transaction sent:', hash);
                 await publicClient.waitForTransactionReceipt({ hash });
@@ -262,6 +264,7 @@ export function useVault() {
                     data,
                     chain: arcTestnet,
                     account: primaryWallet.address as `0x${string}`,
+                    gas: 150000n,
                 });
                 await publicClient.waitForTransactionReceipt({ hash });
             });
