@@ -223,14 +223,6 @@ export default function Leaderboard() {
                     <span className={styles.statLabel}>Active Players</span>
                 </div>
             </div>
-
-            {/* Info Note */}
-            <div className={styles.infoNote}>
-                <p>
-                    <Link size={18} style={{ marginRight: '0.5rem', verticalAlign: 'middle', color: 'var(--neon-cyan)' }} />
-                    Points are calculated weekly: (Wins + USDC/10 + Games) × Streak Multiplier
-                </p>
-            </div>
         </div>
     );
 }

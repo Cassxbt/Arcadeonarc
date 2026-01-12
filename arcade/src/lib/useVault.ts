@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import { createPublicClient, http, parseUnits, formatUnits, type WalletClient } from 'viem';
+import { createPublicClient, createWalletClient, custom, http, parseUnits, formatUnits, type WalletClient } from 'viem';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { arcTestnet, CONTRACTS } from './constants';
 import { VAULT_ABI, ERC20_ABI } from './abi';
@@ -48,17 +48,24 @@ export function useVault() {
         if (!primaryWallet) return null;
 
         try {
-            // Dynamic SDK exposes getWalletClient on the connector
             const connector = primaryWallet.connector;
-            if (connector && 'getWalletClient' in connector) {
-                return await (connector as { getWalletClient: () => Promise<WalletClient> }).getWalletClient();
+
+            if (connector && typeof connector.getWalletClient === 'function') {
+                const client = await connector.getWalletClient();
+                if (client && typeof client.writeContract === 'function') {
+                    return client as WalletClient;
+                }
             }
 
-            // Fallback: try to get signer and construct client
-            if ('getSigner' in primaryWallet) {
-                const signer = await (primaryWallet as { getSigner: () => Promise<WalletClient> }).getSigner();
-                // Return the signer which should be compatible with viem
-                return signer;
+            if (connector && typeof connector.getProvider === 'function') {
+                const provider = await connector.getProvider();
+                if (provider) {
+                    return createWalletClient({
+                        account: primaryWallet.address as `0x${string}`,
+                        chain: arcTestnet,
+                        transport: custom(provider)
+                    });
+                }
             }
 
             return null;
