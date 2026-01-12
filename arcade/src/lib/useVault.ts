@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import { createPublicClient, http, parseUnits, formatUnits, type WalletClient } from 'viem';
+import { createPublicClient, http, parseUnits, formatUnits, encodeFunctionData, type WalletClient } from 'viem';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { arcTestnet, CONTRACTS } from './constants';
 import { VAULT_ABI, ERC20_ABI } from './abi';
@@ -129,16 +129,19 @@ export function useVault() {
 
             const amountWei = parseUnits(amount.toString(), 6);
 
-            const hash = await walletClient.writeContract({
-                address: CONTRACTS.USDC,
+            const data = encodeFunctionData({
                 abi: ERC20_ABI,
                 functionName: 'approve',
                 args: [CONTRACTS.ARCADE_VAULT, amountWei],
+            });
+
+            const hash = await walletClient.sendTransaction({
+                to: CONTRACTS.USDC,
+                data,
                 chain: arcTestnet,
                 account: primaryWallet.address as `0x${string}`,
             });
 
-            // Wait for confirmation
             await publicClient.waitForTransactionReceipt({ hash });
             return true;
         } catch (err) {
@@ -163,32 +166,49 @@ export function useVault() {
         setError(null);
 
         try {
-            // Check allowance first
+            console.log('[deposit] Starting deposit for:', primaryWallet.address, 'amount:', amount);
+
             const allowance = await getAllowance(primaryWallet.address as `0x${string}`);
+            console.log('[deposit] Current allowance:', allowance);
+
             if (allowance < amount) {
-                // Approve max
+                console.log('[deposit] Allowance insufficient, approving...');
                 const approved = await approveUsdc(10000);
-                if (!approved) return false;
+                if (!approved) {
+                    console.log('[deposit] Approval failed');
+                    return false;
+                }
+                console.log('[deposit] Approval succeeded');
             }
 
+            console.log('[deposit] Getting wallet client...');
             const walletClient = await getWalletClient();
             if (!walletClient) {
+                console.error('[deposit] Failed to get wallet client');
                 setError('Could not get wallet client');
                 return false;
             }
+            console.log('[deposit] Wallet client acquired');
 
             const amountWei = parseUnits(amount.toString(), 6);
 
+            const data = encodeFunctionData({
+                abi: VAULT_ABI,
+                functionName: 'deposit',
+                args: [amountWei],
+            });
+
             await withRetry(async () => {
-                const hash = await walletClient.writeContract({
-                    address: CONTRACTS.ARCADE_VAULT,
-                    abi: VAULT_ABI,
-                    functionName: 'deposit',
-                    args: [amountWei],
+                console.log('[deposit] Sending deposit transaction...');
+                const hash = await walletClient.sendTransaction({
+                    to: CONTRACTS.ARCADE_VAULT,
+                    data,
                     chain: arcTestnet,
                     account: primaryWallet.address as `0x${string}`,
                 });
+                console.log('[deposit] Transaction sent:', hash);
                 await publicClient.waitForTransactionReceipt({ hash });
+                console.log('[deposit] Transaction confirmed');
             });
             return true;
         } catch (err) {
@@ -221,12 +241,16 @@ export function useVault() {
 
             const amountWei = parseUnits(amount.toString(), 6);
 
+            const data = encodeFunctionData({
+                abi: VAULT_ABI,
+                functionName: 'withdraw',
+                args: [amountWei],
+            });
+
             await withRetry(async () => {
-                const hash = await walletClient.writeContract({
-                    address: CONTRACTS.ARCADE_VAULT,
-                    abi: VAULT_ABI,
-                    functionName: 'withdraw',
-                    args: [amountWei],
+                const hash = await walletClient.sendTransaction({
+                    to: CONTRACTS.ARCADE_VAULT,
+                    data,
                     chain: arcTestnet,
                     account: primaryWallet.address as `0x${string}`,
                 });
