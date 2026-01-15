@@ -23,9 +23,14 @@ type EIP1193Provider = {
 
 const SUPPORTED_CHAINS: Chain[] = [ethereumSepolia, baseSepolia, arcTestnet];
 
+interface EmbeddedWalletContext {
+    walletClient: WalletClient;
+}
+
 function createEmbeddedWalletProvider(
     userAddress: `0x${string}`,
-    walletClient: WalletClient
+    walletContext: EmbeddedWalletContext,
+    switchWalletNetwork: (chainId: number) => Promise<WalletClient | null>
 ): EIP1193Provider {
     let currentChainId: number = ethereumSepolia.id;
 
@@ -43,12 +48,22 @@ function createEmbeddedWalletProvider(
                 return `0x${currentChainId.toString(16)}`;
             }
 
-            // Switch chain - update current chain ID
+            // Switch chain - actually switch the embedded wallet's network
             if (method === 'wallet_switchEthereumChain') {
                 const chainIdHex = (params as [{ chainId: string }])?.[0]?.chainId;
                 if (chainIdHex) {
-                    currentChainId = parseInt(chainIdHex, 16);
-                    console.log('[embedded-provider] Switched to chain:', currentChainId);
+                    const newChainId = parseInt(chainIdHex, 16);
+                    if (newChainId !== currentChainId) {
+                        console.log('[embedded-provider] Switching wallet to chain:', newChainId);
+                        const newWalletClient = await switchWalletNetwork(newChainId);
+                        if (newWalletClient) {
+                            walletContext.walletClient = newWalletClient;
+                            currentChainId = newChainId;
+                            console.log('[embedded-provider] Wallet switched to chain:', newChainId);
+                        } else {
+                            console.warn('[embedded-provider] Failed to switch wallet, continuing with current chain');
+                        }
+                    }
                 }
                 return null;
             }
@@ -65,7 +80,7 @@ function createEmbeddedWalletProvider(
                 }
 
                 // Use walletClient.sendTransaction with explicit chain
-                const hash = await walletClient.sendTransaction({
+                const hash = await walletContext.walletClient.sendTransaction({
                     account: userAddress,
                     chain: currentChain,
                     to: txParams.to as `0x${string}`,
@@ -87,7 +102,7 @@ function createEmbeddedWalletProvider(
 
             if (signingMethods.includes(method)) {
                 console.log('[embedded-provider] Forwarding signing method to wallet client');
-                return walletClient.request({ method, params } as Parameters<typeof walletClient.request>[0]);
+                return walletContext.walletClient.request({ method, params } as Parameters<typeof walletContext.walletClient.request>[0]);
             }
 
             // Read methods - forward to public RPC
@@ -242,6 +257,34 @@ export function useBridge(): UseBridgeReturn {
         }
     }, [primaryWallet, getProvider]);
 
+    // Switch wallet network and return new wallet client
+    const switchWalletAndGetClient = useCallback(async (chainId: number): Promise<WalletClient | null> => {
+        if (!primaryWallet) return null;
+        try {
+            console.log('[bridge] Switching embedded wallet to chain:', chainId);
+
+            // Switch the wallet's network first
+            if ('switchNetwork' in primaryWallet) {
+                await (primaryWallet as unknown as { switchNetwork: (chainId: number) => Promise<void> }).switchNetwork(chainId);
+                console.log('[bridge] Network switched, getting new wallet client');
+
+                // Small delay to ensure network switch is complete
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                // Get fresh wallet client for the new chain
+                const newClient = await getWalletClient();
+                if (newClient) {
+                    console.log('[bridge] Got new wallet client for chain:', chainId);
+                    return newClient;
+                }
+            }
+            return null;
+        } catch (err) {
+            console.error('[bridge] Failed to switch wallet network:', err);
+            return null;
+        }
+    }, [primaryWallet, getWalletClient]);
+
     const bridge = useCallback(async (sourceChainId: string, amount: string): Promise<boolean> => {
         if (!primaryWallet?.address) {
             setError('Wallet not connected');
@@ -266,14 +309,26 @@ export function useBridge(): UseBridgeReturn {
             let provider: EIP1193Provider;
 
             if (embedded) {
-                const walletClient = await getWalletClient();
+                // For embedded wallets, switch to source chain first
+                console.log('[bridge] Switching embedded wallet to source chain:', chainConfig.name);
+                const switched = await switchWalletAndGetClient(chainConfig.chainId);
+
+                const walletClient = switched || await getWalletClient();
                 if (!walletClient) {
                     throw new Error('Could not get wallet client. Please reconnect your wallet.');
                 }
 
                 console.log('[bridge] Creating embedded wallet provider');
                 const userAddress = primaryWallet!.address as `0x${string}`;
-                provider = createEmbeddedWalletProvider(userAddress, walletClient);
+
+                // Create a mutable context for the wallet client
+                const walletContext: EmbeddedWalletContext = { walletClient };
+
+                provider = createEmbeddedWalletProvider(
+                    userAddress,
+                    walletContext,
+                    switchWalletAndGetClient
+                );
             } else {
                 const externalProvider = await getProvider();
                 if (!externalProvider) {
@@ -354,7 +409,7 @@ export function useBridge(): UseBridgeReturn {
         } finally {
             setIsLoading(false);
         }
-    }, [primaryWallet, getProvider, getWalletClient, isEmbeddedWallet, switchToChain]);
+    }, [primaryWallet, getProvider, getWalletClient, isEmbeddedWallet, switchToChain, switchWalletAndGetClient]);
 
     return {
         bridge,
