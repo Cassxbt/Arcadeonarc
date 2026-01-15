@@ -84,8 +84,16 @@ export function useBridge(): UseBridgeReturn {
 
         try {
             // Get the wallet's provider
-            const connector = await (primaryWallet as unknown as { getWalletConnector: () => Promise<{ getProvider: () => Promise<unknown> }> }).getWalletConnector();
-            const provider = await connector.getProvider();
+            // Get the wallet's provider
+            // Dynamic SDK v2/v3: primaryWallet has a connector property
+            const wallet = primaryWallet as unknown as { connector: { getProvider?: () => Promise<unknown> } };
+
+            if (!wallet.connector?.getProvider) {
+                console.error('Wallet connector missing getProvider');
+                throw new Error('Wallet does not support bridging (missing provider)');
+            }
+
+            const provider = await wallet.connector.getProvider();
 
             const kit = new BridgeKit();
 
