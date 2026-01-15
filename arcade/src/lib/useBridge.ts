@@ -2,8 +2,9 @@
 
 import { useState, useCallback } from 'react';
 import { BridgeKit } from '@circle-fin/bridge-kit';
-import { createViemAdapterFromProvider } from '@circle-fin/adapter-viem-v2';
-import { createPublicClient, http, formatUnits } from 'viem';
+import { EthereumSepolia, BaseSepolia, ArcTestnet } from '@circle-fin/bridge-kit/chains';
+import { ViemAdapter } from '@circle-fin/adapter-viem-v2';
+import { createPublicClient, http, formatUnits, type WalletClient } from 'viem';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import {
     SOURCE_CHAINS,
@@ -12,6 +13,7 @@ import {
     type SourceChainConfig,
 } from './cctp-config';
 import { ERC20_ABI } from './abi';
+import { arcTestnet } from './constants';
 
 export type BridgeStep = 'idle' | 'bridging' | 'complete' | 'error';
 
@@ -65,6 +67,45 @@ export function useBridge(): UseBridgeReturn {
         }
     }, [primaryWallet?.address]);
 
+    const getWalletClient = useCallback(async (): Promise<WalletClient | null> => {
+        if (!primaryWallet) return null;
+        try {
+            if ('getWalletClient' in primaryWallet) {
+                return await (primaryWallet as unknown as { getWalletClient: () => Promise<WalletClient> }).getWalletClient();
+            }
+            return null;
+        } catch (err) {
+            console.error('Failed to get wallet client:', err);
+            return null;
+        }
+    }, [primaryWallet]);
+
+    const switchToChain = useCallback(async (chainId: number): Promise<boolean> => {
+        if (!primaryWallet) return false;
+        try {
+            // Try using Dynamic's switchNetwork if available
+            if ('switchNetwork' in primaryWallet) {
+                await (primaryWallet as unknown as { switchNetwork: (chainId: number) => Promise<void> }).switchNetwork(chainId);
+                return true;
+            }
+
+            // Fallback: use wallet client to request chain switch
+            const walletClient = await getWalletClient();
+            if (walletClient) {
+                await walletClient.request({
+                    method: 'wallet_switchEthereumChain',
+                    params: [{ chainId: `0x${chainId.toString(16)}` }],
+                });
+                return true;
+            }
+            return false;
+        } catch (err) {
+            console.error('Failed to switch network:', err);
+            // If chain not added, we might need to add it first
+            return false;
+        }
+    }, [primaryWallet, getWalletClient]);
+
     const bridge = useCallback(async (sourceChainId: string, amount: string): Promise<boolean> => {
         if (!primaryWallet?.address) {
             setError('Wallet not connected');
@@ -83,23 +124,38 @@ export function useBridge(): UseBridgeReturn {
         setCurrentStep('bridging');
 
         try {
-            // Get the wallet's provider
-            // Get the wallet's provider
-            // Dynamic SDK v2/v3: primaryWallet has a connector property
-            const wallet = primaryWallet as unknown as { connector: { getProvider?: () => Promise<unknown> } };
-
-            if (!wallet.connector?.getProvider) {
-                console.error('Wallet connector missing getProvider');
-                throw new Error('Wallet does not support bridging (missing provider)');
+            // Get the wallet client from Dynamic SDK
+            const walletClient = await getWalletClient();
+            if (!walletClient) {
+                throw new Error('Could not get wallet client. Please reconnect your wallet.');
             }
 
-            const provider = await wallet.connector.getProvider();
+            // Switch to source chain for the bridge transaction
+            console.log('[bridge] Switching to source chain:', chainConfig.name);
+            const switched = await switchToChain(chainConfig.chainId);
+            if (!switched) {
+                console.warn('[bridge] Could not switch network automatically');
+            }
+
+            // Create the adapter with factory functions
+            // ViemAdapter expects getPublicClient, getWalletClient and capabilities
+            const adapter = new ViemAdapter({
+                getPublicClient: ({ chain }) => createPublicClient({
+                    chain,
+                    transport: http(),
+                }),
+                getWalletClient: ({ chain }) => ({
+                    ...walletClient,
+                    chain,
+                }) as typeof walletClient,
+            }, {
+                addressContext: 'user-controlled',
+                supportedChains: [EthereumSepolia, BaseSepolia, ArcTestnet],
+            });
 
             const kit = new BridgeKit();
 
-            const adapter = await createViemAdapterFromProvider({
-                provider: provider as Parameters<typeof createViemAdapterFromProvider>[0]['provider'],
-            });
+            console.log('[bridge] Starting bridge from', chainConfig.name, 'to Arc Testnet, amount:', amount);
 
             const result = await kit.bridge({
                 from: {
@@ -132,6 +188,8 @@ export function useBridge(): UseBridgeReturn {
 
             if (result.state === 'success') {
                 setCurrentStep('complete');
+                // Switch back to Arc Testnet
+                await switchToChain(arcTestnet.id);
                 return true;
             } else {
                 setError('Bridge transfer failed');
@@ -155,7 +213,7 @@ export function useBridge(): UseBridgeReturn {
         } finally {
             setIsLoading(false);
         }
-    }, [primaryWallet]);
+    }, [primaryWallet, getWalletClient, switchToChain]);
 
     return {
         bridge,
