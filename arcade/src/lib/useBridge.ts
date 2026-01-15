@@ -2,9 +2,8 @@
 
 import { useState, useCallback } from 'react';
 import { BridgeKit } from '@circle-fin/bridge-kit';
-import { EthereumSepolia, BaseSepolia, ArcTestnet } from '@circle-fin/bridge-kit/chains';
-import { createAdapterFromProvider, ViemAdapter } from '@circle-fin/adapter-viem-v2';
-import { createPublicClient, createWalletClient, http, formatUnits, custom, type WalletClient } from 'viem';
+import { createAdapterFromProvider } from '@circle-fin/adapter-viem-v2';
+import { createPublicClient, http, formatUnits, type WalletClient, type Chain } from 'viem';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { isEthereumWallet } from '@dynamic-labs/ethereum';
 import {
@@ -21,6 +20,87 @@ import { arcTestnet } from './constants';
 type EIP1193Provider = {
     request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
 };
+
+const SUPPORTED_CHAINS: Chain[] = [ethereumSepolia, baseSepolia, arcTestnet];
+
+function createEmbeddedWalletProvider(
+    userAddress: `0x${string}`,
+    walletClient: WalletClient
+): EIP1193Provider {
+    let currentChainId: number = ethereumSepolia.id;
+
+    return {
+        async request({ method, params }: { method: string; params?: unknown[] }): Promise<unknown> {
+            console.log('[embedded-provider]', method, params);
+
+            // Account methods - return known address
+            if (method === 'eth_requestAccounts' || method === 'eth_accounts') {
+                return [userAddress];
+            }
+
+            // Chain ID - return current chain
+            if (method === 'eth_chainId') {
+                return `0x${currentChainId.toString(16)}`;
+            }
+
+            // Switch chain - update current chain ID
+            if (method === 'wallet_switchEthereumChain') {
+                const chainIdHex = (params as [{ chainId: string }])?.[0]?.chainId;
+                if (chainIdHex) {
+                    currentChainId = parseInt(chainIdHex, 16);
+                    console.log('[embedded-provider] Switched to chain:', currentChainId);
+                }
+                return null;
+            }
+
+            // Get the current chain for transaction context
+            const currentChain = SUPPORTED_CHAINS.find(c => c.id === currentChainId) || ethereumSepolia;
+
+            // Handle eth_sendTransaction with proper chain context
+            if (method === 'eth_sendTransaction') {
+                console.log('[embedded-provider] Sending transaction on chain:', currentChain.name);
+                const txParams = (params as [{ to: string; data?: string; value?: string; gas?: string }])?.[0];
+                if (!txParams) {
+                    throw new Error('Invalid transaction parameters');
+                }
+
+                // Use walletClient.sendTransaction with explicit chain
+                const hash = await walletClient.sendTransaction({
+                    account: userAddress,
+                    chain: currentChain,
+                    to: txParams.to as `0x${string}`,
+                    data: txParams.data as `0x${string}` | undefined,
+                    value: txParams.value ? BigInt(txParams.value) : undefined,
+                    gas: txParams.gas ? BigInt(txParams.gas) : undefined,
+                });
+                return hash;
+            }
+
+            // Other signing methods - forward to Dynamic wallet client
+            const signingMethods = [
+                'eth_signTransaction',
+                'personal_sign',
+                'eth_sign',
+                'eth_signTypedData',
+                'eth_signTypedData_v4',
+            ];
+
+            if (signingMethods.includes(method)) {
+                console.log('[embedded-provider] Forwarding signing method to wallet client');
+                return walletClient.request({ method, params } as Parameters<typeof walletClient.request>[0]);
+            }
+
+            // Read methods - forward to public RPC
+            const publicClient = createPublicClient({
+                chain: currentChain,
+                transport: http(),
+            });
+
+            console.log('[embedded-provider] Forwarding read method to RPC:', currentChain.name);
+            return publicClient.request({ method, params } as Parameters<typeof publicClient.request>[0]);
+        }
+    };
+}
 
 export type BridgeStep = 'idle' | 'bridging' | 'complete' | 'error';
 
@@ -104,7 +184,7 @@ export function useBridge(): UseBridgeReturn {
             }
 
             if (isEmbeddedWallet()) {
-                console.log('[bridge] Embedded wallet detected - will use ViemAdapter directly');
+                console.log('[bridge] Embedded wallet detected - will use custom provider');
                 return null;
             }
 
@@ -180,9 +260,10 @@ export function useBridge(): UseBridgeReturn {
         setCurrentStep('bridging');
 
         try {
-            let adapter;
             const embedded = isEmbeddedWallet();
             console.log('[bridge] Wallet type:', embedded ? 'embedded' : 'external');
+
+            let provider: EIP1193Provider;
 
             if (embedded) {
                 const walletClient = await getWalletClient();
@@ -190,36 +271,12 @@ export function useBridge(): UseBridgeReturn {
                     throw new Error('Could not get wallet client. Please reconnect your wallet.');
                 }
 
-                console.log('[bridge] Creating ViemAdapter for embedded wallet');
-                const chains = [ethereumSepolia, baseSepolia, arcTestnet];
-
-                adapter = new ViemAdapter({
-                    getPublicClient: ({ chain }) => {
-                        const matchedChain = chains.find(c => c.id === chain.id) || chain;
-                        return createPublicClient({
-                            chain: matchedChain,
-                            transport: http(),
-                        });
-                    },
-                    getWalletClient: async ({ chain }) => {
-                        const matchedChain = chains.find(c => c.id === chain.id) || chain;
-                        return createWalletClient({
-                            account: primaryWallet!.address as `0x${string}`,
-                            chain: matchedChain,
-                            transport: custom({
-                                async request({ method, params }) {
-                                    return walletClient.request({ method, params } as Parameters<typeof walletClient.request>[0]);
-                                },
-                            }),
-                        });
-                    },
-                }, {
-                    addressContext: 'user-controlled',
-                    supportedChains: [EthereumSepolia, BaseSepolia, ArcTestnet],
-                });
+                console.log('[bridge] Creating embedded wallet provider');
+                const userAddress = primaryWallet!.address as `0x${string}`;
+                provider = createEmbeddedWalletProvider(userAddress, walletClient);
             } else {
-                const provider = await getProvider();
-                if (!provider) {
+                const externalProvider = await getProvider();
+                if (!externalProvider) {
                     throw new Error('Could not get wallet provider. Please reconnect your wallet.');
                 }
 
@@ -229,11 +286,13 @@ export function useBridge(): UseBridgeReturn {
                     console.warn('[bridge] Could not switch network automatically');
                 }
 
-                console.log('[bridge] Creating adapter from provider');
-                adapter = await createAdapterFromProvider({
-                    provider: provider as Parameters<typeof createAdapterFromProvider>[0]['provider'],
-                });
+                provider = externalProvider;
             }
+
+            console.log('[bridge] Creating adapter from provider');
+            const adapter = await createAdapterFromProvider({
+                provider: provider as Parameters<typeof createAdapterFromProvider>[0]['provider'],
+            });
 
             const kit = new BridgeKit();
 
