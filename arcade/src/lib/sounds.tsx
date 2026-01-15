@@ -83,8 +83,6 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
         }
     }, []);
 
-    // Mobile audio unlock - iOS/Safari blocks audio until user interaction
-    // This unlocks the audio context on first touch/click WITHOUT playing game sounds
     const audioUnlocked = useRef(false);
 
     useEffect(() => {
@@ -111,7 +109,7 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
                     }
                 }
             } catch {
-                // AudioContext not supported, fallback to simpler unlock
+                // AudioContext not supported
             }
 
             audioRefs.current.forEach(audio => {

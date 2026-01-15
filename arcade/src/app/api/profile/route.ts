@@ -101,7 +101,6 @@ export async function GET(request: NextRequest) {
 
         if (weeklyError) throw weeklyError;
 
-        // Calculate weekly points: (Wins + USDC/10 + Games) * Streak Multiplier
         let weeklyWins = 0;
         let weeklyUsdc = 0;
         let weeklyGames = 0;

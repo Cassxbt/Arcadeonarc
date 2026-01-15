@@ -101,12 +101,10 @@ export default function WheelGame() {
 
         playSound('WHEEL_SPIN', { loop: true });
 
-        // Generate random segment (0-19)
         const targetSegment = Math.floor(Math.random() * 20);
 
         const segmentAngle = 360 / 20;
         const fullSpins = 5 + Math.floor(Math.random() * 3); // 5-7 full rotations
-        // Pointer is at top (0deg), adjust for segment positioning
         const segmentPosition = 360 - (targetSegment * segmentAngle) - (segmentAngle / 2);
         const targetRotation = currentRotation + (fullSpins * 360) + segmentPosition - (currentRotation % 360);
 

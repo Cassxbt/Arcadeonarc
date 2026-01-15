@@ -73,7 +73,6 @@ export const BADGE_DEFINITIONS: Record<BadgeType, BadgeDefinition> = {
 
 export async function checkAndAwardBadges(supabase: SupabaseClient, wallet: string) {
     try {
-        // 1. Fetch aggregated stats for the user
         const { data: userData, error: userError } = await supabase
             .from('users')
             .select('lifetime_xp, current_streak')
@@ -89,7 +88,6 @@ export async function checkAndAwardBadges(supabase: SupabaseClient, wallet: stri
 
         if (sessionError) throw sessionError;
 
-        // Calculate stats
         const wins = sessionStats?.filter(s => s.won).length || 0;
         const gamesPlayed = sessionStats?.length || 0;
         const totalWon = sessionStats?.reduce((sum, s) => sum + (s.payout || 0), 0) || 0;
@@ -104,7 +102,6 @@ export async function checkAndAwardBadges(supabase: SupabaseClient, wallet: stri
             maxBet
         };
 
-        // 2. Fetch existing badges
         const { data: existingBadges, error: badgeError } = await supabase
             .from('badges')
             .select('badge_type')
@@ -114,7 +111,6 @@ export async function checkAndAwardBadges(supabase: SupabaseClient, wallet: stri
 
         const ownedBadgeTypes = new Set(existingBadges?.map(b => b.badge_type) || []);
 
-        // 3. Check for new badges
         const newBadges: BadgeType[] = [];
 
         for (const [type, def] of Object.entries(BADGE_DEFINITIONS)) {
@@ -126,7 +122,6 @@ export async function checkAndAwardBadges(supabase: SupabaseClient, wallet: stri
             }
         }
 
-        // 4. Award new badges
         if (newBadges.length > 0) {
             const inserts = newBadges.map(type => ({
                 wallet_address: wallet,

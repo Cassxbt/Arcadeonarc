@@ -1,6 +1,5 @@
 import { parseAbi } from 'viem';
 
-// ARCadeVault ABI (minimal for frontend interactions)
 export const VAULT_ABI = parseAbi([
     // Read functions
     'function balances(address user) view returns (uint256)',

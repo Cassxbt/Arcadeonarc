@@ -35,9 +35,6 @@ export async function POST(request: NextRequest) {
         const gameKey = `crash:${userAddress.toLowerCase()}:${nonce}`;
 
         if (action === 'start') {
-            // Generate crash point using provably fair distribution
-            // Target: 5% total house edge (95% RTP)
-            // 10% instant crash + adjusted formula for remaining 90%
             const random = secureRandomFloat();
             let crashPoint: number;
 
@@ -45,25 +42,17 @@ export async function POST(request: NextRequest) {
             const TARGET_RTP_TOTAL = 0.95;
 
             if (random < INSTANT_CRASH_RATE) {
-                // 10% of games crash instantly at 1.00x
-                crashPoint = 10000; // 1.00x in basis points
+                crashPoint = 10000;
             } else {
-                // Remaining 90% need RTP of: 0.95/0.90 = 1.0556 (105.56%)
-                // to achieve 5% total house edge
                 const normalizedRandom = (random - INSTANT_CRASH_RATE) / (1 - INSTANT_CRASH_RATE);
-                const rtp = TARGET_RTP_TOTAL / (1 - INSTANT_CRASH_RATE); // 1.0556
-
-                // Industry-standard formula: crashPoint = (RTP / normalizedRandom) in basis points
+                const rtp = TARGET_RTP_TOTAL / (1 - INSTANT_CRASH_RATE);
                 const result = rtp / normalizedRandom;
                 crashPoint = Math.floor(result * 10000);
                 crashPoint = Math.max(10000, crashPoint);
             }
 
-            // Cap at 100x maximum
             crashPoint = Math.min(crashPoint, 1000000);
 
-            // Calculate when crash will occur based on multiplier formula: 1.06^(t*10)
-            // Solving for t: t = log(crashPoint/10000) / (10 * log(1.06))
             const crashMultiplier = crashPoint / 10000;
             const crashTimeOffset = Math.log(crashMultiplier) / (10 * Math.log(1.06)) * 1000;
             const startTime = Date.now();

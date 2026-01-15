@@ -17,7 +17,6 @@ const TILE_PATTERN = GAME_CONFIG.TOWER_PATTERN;
 const VISIBLE_ROWS = 4; // Only show 4 rows at a time
 const ROW_HEIGHT = 88; // Height of tile row + gap
 
-// Calculate multipliers based on probability
 function calculateMultiplier(row: number): number {
     let cumulativeProbability = 1;
     for (let i = 0; i <= row; i++) {
@@ -97,7 +96,6 @@ export default function TowerGame() {
         };
     }, [towerHistory]);
 
-    // Initialize game grid - NO death positions pre-generated (server reveals per tile)
     const initializeGame = useCallback(() => {
         const newTiles = TILE_PATTERN.map(tileCount =>
             Array.from({ length: tileCount }, () => ({

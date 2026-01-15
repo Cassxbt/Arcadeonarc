@@ -2,10 +2,10 @@
 
 import { useState, useCallback } from 'react';
 import { BridgeKit } from '@circle-fin/bridge-kit';
-import { EthereumSepolia, BaseSepolia, ArcTestnet } from '@circle-fin/bridge-kit/chains';
-import { ViemAdapter } from '@circle-fin/adapter-viem-v2';
-import { createPublicClient, http, formatUnits, type WalletClient } from 'viem';
+import { createAdapterFromProvider } from '@circle-fin/adapter-viem-v2';
+import { createPublicClient, http, formatUnits } from 'viem';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
+import { isEthereumWallet } from '@dynamic-labs/ethereum';
 import {
     SOURCE_CHAINS,
     ARC_TESTNET_CONFIG,
@@ -14,6 +14,11 @@ import {
 } from './cctp-config';
 import { ERC20_ABI } from './abi';
 import { arcTestnet } from './constants';
+
+// EIP-1193 Provider type
+type EIP1193Provider = {
+    request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
+};
 
 export type BridgeStep = 'idle' | 'bridging' | 'complete' | 'error';
 
@@ -67,15 +72,43 @@ export function useBridge(): UseBridgeReturn {
         }
     }, [primaryWallet?.address]);
 
-    const getWalletClient = useCallback(async (): Promise<WalletClient | null> => {
-        if (!primaryWallet) return null;
+    const getProvider = useCallback(async (): Promise<EIP1193Provider | null> => {
+        if (!primaryWallet) {
+            console.log('[bridge] No primary wallet');
+            return null;
+        }
+
         try {
-            if ('getWalletClient' in primaryWallet) {
-                return await (primaryWallet as unknown as { getWalletClient: () => Promise<WalletClient> }).getWalletClient();
+            if (!isEthereumWallet(primaryWallet)) {
+                console.log('[bridge] Wallet is not an Ethereum wallet');
+                return null;
             }
+
+            const walletClient = await primaryWallet.getWalletClient();
+            console.log('[bridge] Got wallet client:', !!walletClient);
+
+            if (walletClient) {
+                const transport = walletClient.transport as { value?: { provider?: EIP1193Provider } };
+                if (transport?.value?.provider) {
+                    console.log('[bridge] Got provider from wallet client transport');
+                    return transport.value.provider;
+                }
+
+                if ('request' in walletClient && typeof walletClient.request === 'function') {
+                    console.log('[bridge] Using wallet client as provider');
+                    return walletClient as unknown as EIP1193Provider;
+                }
+            }
+
+            if (typeof window !== 'undefined' && window.ethereum) {
+                console.log('[bridge] Falling back to window.ethereum');
+                return window.ethereum as EIP1193Provider;
+            }
+
+            console.log('[bridge] No provider found');
             return null;
         } catch (err) {
-            console.error('Failed to get wallet client:', err);
+            console.error('[bridge] Failed to get provider:', err);
             return null;
         }
     }, [primaryWallet]);
@@ -89,10 +122,10 @@ export function useBridge(): UseBridgeReturn {
                 return true;
             }
 
-            // Fallback: use wallet client to request chain switch
-            const walletClient = await getWalletClient();
-            if (walletClient) {
-                await walletClient.request({
+            // Fallback: use provider to request chain switch
+            const provider = await getProvider();
+            if (provider) {
+                await provider.request({
                     method: 'wallet_switchEthereumChain',
                     params: [{ chainId: `0x${chainId.toString(16)}` }],
                 });
@@ -101,10 +134,9 @@ export function useBridge(): UseBridgeReturn {
             return false;
         } catch (err) {
             console.error('Failed to switch network:', err);
-            // If chain not added, we might need to add it first
             return false;
         }
-    }, [primaryWallet, getWalletClient]);
+    }, [primaryWallet, getProvider]);
 
     const bridge = useCallback(async (sourceChainId: string, amount: string): Promise<boolean> => {
         if (!primaryWallet?.address) {
@@ -124,10 +156,9 @@ export function useBridge(): UseBridgeReturn {
         setCurrentStep('bridging');
 
         try {
-            // Get the wallet client from Dynamic SDK
-            const walletClient = await getWalletClient();
-            if (!walletClient) {
-                throw new Error('Could not get wallet client. Please reconnect your wallet.');
+            const provider = await getProvider();
+            if (!provider) {
+                throw new Error('Could not get wallet provider. Please reconnect your wallet.');
             }
 
             // Switch to source chain for the bridge transaction
@@ -137,20 +168,9 @@ export function useBridge(): UseBridgeReturn {
                 console.warn('[bridge] Could not switch network automatically');
             }
 
-            // Create the adapter with factory functions
-            // ViemAdapter expects getPublicClient, getWalletClient and capabilities
-            const adapter = new ViemAdapter({
-                getPublicClient: ({ chain }) => createPublicClient({
-                    chain,
-                    transport: http(),
-                }),
-                getWalletClient: ({ chain }) => ({
-                    ...walletClient,
-                    chain,
-                }) as typeof walletClient,
-            }, {
-                addressContext: 'user-controlled',
-                supportedChains: [EthereumSepolia, BaseSepolia, ArcTestnet],
+            console.log('[bridge] Creating adapter from provider');
+            const adapter = await createAdapterFromProvider({
+                provider: provider as Parameters<typeof createAdapterFromProvider>[0]['provider'],
             });
 
             const kit = new BridgeKit();
@@ -213,7 +233,7 @@ export function useBridge(): UseBridgeReturn {
         } finally {
             setIsLoading(false);
         }
-    }, [primaryWallet, getWalletClient, switchToChain]);
+    }, [primaryWallet, getProvider, switchToChain]);
 
     return {
         bridge,

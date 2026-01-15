@@ -35,14 +35,12 @@ const CRASH_GAME_RULES = [
 
 type GameState = 'idle' | 'flying' | 'crashed' | 'cashedOut';
 
-// Determine multiplier danger level for visual feedback
 function getMultiplierLevel(multiplier: number): 'low' | 'medium' | 'high' {
     if (multiplier >= 5) return 'high';
     if (multiplier >= 2.5) return 'medium';
     return 'low';
 }
 
-// Calculate straight diagonal trajectory path
 function getTrajectoryPath(multiplier: number): string {
     const startX = 15;
     const startY = 85;
@@ -87,7 +85,6 @@ export default function CrashGame() {
     const gameStateRef = useRef<GameState>(gameState);
     const isStartingRef = useRef<boolean>(false);
 
-    // Keep gameStateRef in sync - critical for animation loop to see latest state
     useEffect(() => {
         gameStateRef.current = gameState;
     }, [gameState]);
@@ -186,10 +183,9 @@ export default function CrashGame() {
     useEffect(() => {
         if (gameState !== 'flying') return;
 
-        const checkInterval = 150; // Check server every 150ms (reduced from 500ms for better timing)
+        const checkInterval = 150;
 
         const animate = async () => {
-            // Check ref for latest state - prevents animation continuing after cashout
             if (gameStateRef.current !== 'flying') return;
 
             const elapsed = (Date.now() - startTimeRef.current) / 1000;
@@ -449,7 +445,7 @@ export default function CrashGame() {
                         <div
                             className={styles.rocketContainer}
                             style={{
-                                left: `calc(15% + ${rocketProgress}% - 10px)`, // -10px puts the flame (bottom-left of 100px box) at the point
+                                left: `calc(15% + ${rocketProgress}% - 10px)`,
                                 bottom: `calc(15% + ${rocketProgress}% - 10px)`
                             }}
                         >

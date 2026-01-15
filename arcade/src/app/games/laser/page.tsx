@@ -28,7 +28,6 @@ const LASER_GAME_RULES = [
     },
 ];
 
-// Full multiplier ladder for thermometer (all turns 1-18)
 const FULL_MULTIPLIERS: { turn: number; multiplier: number }[] = [
     { turn: 1, multiplier: 1.06 },
     { turn: 2, multiplier: 1.18 },

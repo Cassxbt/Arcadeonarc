@@ -28,7 +28,6 @@ export function DepositModal({ isOpen, onClose, mode }: DepositModalProps) {
     const [success, setSuccess] = useState(false);
     const [showBridgeModal, setShowBridgeModal] = useState(false);
 
-    // Fetch balances on open
     useEffect(() => {
         if (isOpen && primaryWallet?.address) {
             const fetchBalances = async () => {
@@ -54,7 +53,6 @@ export function DepositModal({ isOpen, onClose, mode }: DepositModalProps) {
         if (mode === 'deposit') {
             result = await deposit(amountNum);
             if (result) {
-                // Sync vault balance to server after successful deposit
                 await syncBalanceAfterDeposit();
             }
         } else {
@@ -92,13 +90,9 @@ export function DepositModal({ isOpen, onClose, mode }: DepositModalProps) {
             setSuccess(true);
             playSound(mode === 'deposit' ? 'COIN_DEPOSIT' : 'COIN_WITHDRAW');
 
-            // Wait for database propagation after sync (prevents race condition)
             await new Promise(resolve => setTimeout(resolve, 300));
-
-            // Refresh game context balance
             await refreshBalance();
 
-            // Refresh modal's vault and wallet balances to show updated values
             if (primaryWallet?.address) {
                 const address = primaryWallet.address as `0x${string}`;
                 const [wallet, vault] = await Promise.all([

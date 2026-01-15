@@ -11,7 +11,6 @@ interface UseStreakReturn {
     recordPlay: (game: 'dice' | 'tower' | 'crash') => Promise<void>;
 }
 
-// Calculate streak multiplier: 1.0× at day 1, up to 2.0× at day 7+
 function getStreakMultiplier(streak: number): number {
     if (streak <= 0) return 1.0;
     if (streak >= 7) return 2.0;
@@ -26,7 +25,6 @@ export function useStreak(): UseStreakReturn {
 
     const walletAddress = primaryWallet?.address?.toLowerCase();
 
-    // Fetch streak data
     const fetchStreak = useCallback(async () => {
         if (!walletAddress) {
             setStreak(0);

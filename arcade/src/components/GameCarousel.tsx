@@ -69,7 +69,6 @@ export function GameCarousel({ games }: GameCarouselProps) {
         const diffX = Math.abs(currentX - startX);
         const diffY = Math.abs(currentY - startYRef.current);
 
-        // Determine swipe direction on first significant movement
         if (!touchDirectionRef.current && (diffX > 10 || diffY > 10)) {
             touchDirectionRef.current = diffX > diffY ? 'horizontal' : 'vertical';
         }
@@ -117,7 +116,6 @@ export function GameCarousel({ games }: GameCarouselProps) {
         setTilt({ x: 0, y: 0 });
     };
 
-    // Get card position relative to active
     const getCardStyle = (index: number): React.CSSProperties => {
         const diff = index - activeIndex;
 

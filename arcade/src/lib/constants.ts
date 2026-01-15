@@ -1,6 +1,5 @@
 import { defineChain } from 'viem';
 
-// Arc L1 Testnet Chain Configuration
 export const arcTestnet = defineChain({
   id: 5042002,
   name: 'Arc Testnet',
@@ -21,7 +20,6 @@ export const arcTestnet = defineChain({
   testnet: true,
 });
 
-// Contract Addresses (Arc Testnet - Deployed Dec 30, 2025)
 export const CONTRACTS = {
   USDC: '0x3600000000000000000000000000000000000000' as `0x${string}`,
   ARCADE_VAULT: '0x11Bc0BCE4455021D10F6c75A34f902Cf27B2AB95' as `0x${string}`,

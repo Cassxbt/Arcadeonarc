@@ -117,7 +117,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
             if (data.user && data.user.server_balance !== undefined && data.user.server_balance !== null) {
                 setBalance(data.user.server_balance);
             } else if (data.user) {
-                // User exists but server_balance is null/undefined - sync from vault
                 setIsLoading(false);
                 const syncResponse = await authFetch('/api/balance/sync', {
                     method: 'POST',
@@ -154,7 +153,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
             if (response.ok) {
                 const data = await response.json();
                 setBalance(data.balance);
-                // Broadcast balance update to ensure UI refreshes across all components and tabs
                 broadcastBalanceUpdate(data.balance);
             }
         } catch (error) {
@@ -213,7 +211,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
             setBalance(newBalance);
         });
 
-        // Fallback: refresh every 15s in case realtime fails (reduced from 60s)
         const fallbackInterval = setInterval(refreshBalance, 15000);
 
         return () => {
@@ -271,7 +268,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         }
     }, [primaryWallet?.address, isRegistered, demoMode, refreshBalance]);
 
-    // Add bet record - instant UI update, async server update
     const addBetRecord = useCallback((record: Omit<BetRecord, 'id' | 'timestamp'>) => {
         const newRecord: BetRecord = {
             ...record,

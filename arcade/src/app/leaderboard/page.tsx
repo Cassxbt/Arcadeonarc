@@ -31,7 +31,6 @@ export default function Leaderboard() {
         activePlayers: 0,
     });
 
-    // Fetch leaderboard data
     useEffect(() => {
         async function fetchLeaderboard() {
             if (!primaryWallet) {

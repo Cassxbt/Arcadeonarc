@@ -60,7 +60,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             return;
         }
 
-        // Need to authenticate (different wallet or not authenticated)
         if (!isAuthenticating) {
             authenticate();
         }

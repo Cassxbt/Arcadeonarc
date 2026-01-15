@@ -22,7 +22,6 @@ export function useUser(): UseUserReturn {
 
     const walletAddress = primaryWallet?.address?.toLowerCase();
 
-    // Fetch user from Supabase
     const fetchUser = useCallback(async () => {
         if (!walletAddress) {
             setUser(null);

@@ -1,6 +1,3 @@
-// Server-side game logic functions
-// Used by API routes to calculate and verify payouts
-
 const HOUSE_EDGE = 0.10;
 
 const WHEEL_MULTIPLIERS = [

@@ -5,7 +5,6 @@ const POOL_SIZE = 50000;
 const MIN_PARTICIPANTS = 3; // Minimum players needed to distribute
 
 export async function GET(request: NextRequest) {
-    // SECURITY: Verify cron secret to prevent unauthorized access
     const authHeader = request.headers.get('Authorization');
     const cronSecret = process.env.CRON_SECRET;
 
@@ -160,7 +159,6 @@ function aggregatePlayerStats(
             totalWon: 0,
         };
 
-        // Points formula: games_played + (wins * 2) + sqrt(total_wagered)
         existing.gamesPlayed += 1;
         if (game.won) {
             existing.wins += 1;

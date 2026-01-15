@@ -12,7 +12,6 @@ interface LeaderboardEntry {
     streak: number;
 }
 
-// GET /api/leaderboard?period=week|season|alltime&limit=50
 export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const period = searchParams.get('period') || 'week';
@@ -87,7 +86,6 @@ export async function GET(request: NextRequest) {
             };
 
 
-            // Points formula from cron: games + (wins * 2) + sqrt(total_won)
             for (const game of weeklyGames || []) {
                 const stats = getStats(game.wallet_address);
                 stats.games_played++;
@@ -137,12 +135,7 @@ export async function GET(request: NextRequest) {
                         const user = userMap.get(wallet);
 
 
-                        // Calculate Activity Points
                         const activityPoints = stats.games_played + (stats.wins * 2) + Math.floor(Math.sqrt(stats.total_won));
-
-                        // Total Weekly Points
-                        // Note: Daily bonus (25pts) is not retrospectively trackable for "this week" easily without a log table,
-                        // so we omit it for the weekly specific leaderboard to ensure accuracy of what we can prove.
                         const totalPoints = stats.quest_points + stats.milestone_points + activityPoints;
 
                         return {
@@ -155,9 +148,7 @@ export async function GET(request: NextRequest) {
                             streak: user?.current_streak || 0
                         };
                     })
-                    // Filter: Minimum 3 games required to appear
                     .filter(e => e.games_played >= 3)
-                    // Sort: Points DESC, then Games DESC, then Wins DESC (Strict Tie-breaking)
                     .sort((a, b) => {
                         if (b.points !== a.points) return b.points - a.points;
                         if (b.games_played !== a.games_played) return b.games_played - a.games_played;
@@ -165,7 +156,6 @@ export async function GET(request: NextRequest) {
                     })
                     .slice(0, limit);
 
-                // Assign Rank (1, 2, 3...)
                 leaderboard = entries.map((entry, index) => ({
                     rank: index + 1,
                     ...entry
@@ -212,8 +202,6 @@ export async function GET(request: NextRequest) {
                             username: user?.username_display || wallet.slice(0, 6) + '...' + wallet.slice(-4),
                             points: points,
                             streak: user?.current_streak || 0,
-                            // These stats aren't as relevant for 'Season' (which is just pool earnings), 
-                            // but we fill them for type compatibility.
                             games_played: 0,
                             wins: 0,
                             total_won: 0
@@ -234,8 +222,7 @@ export async function GET(request: NextRequest) {
                 .from('users')
                 .select('wallet_address, username_display, lifetime_xp, current_streak, created_at')
                 .order('lifetime_xp', { ascending: false })
-                // Secondary sorts handled by application code because we need complex joins for stats
-                .limit(limit * 2); // Fetch more to handle ties locally
+                .limit(limit * 2);
 
             if (error) throw error;
 
@@ -243,7 +230,6 @@ export async function GET(request: NextRequest) {
                 const wallets = users.map(u => u.wallet_address);
 
 
-                // Fetch stats for tie-breaking (Games, Wins)
                 const { data: allSessions } = await supabase
                     .from('game_sessions')
                     .select('wallet_address, won, payout')

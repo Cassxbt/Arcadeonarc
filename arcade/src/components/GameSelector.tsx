@@ -84,9 +84,7 @@ export function GameSelector({ onClose }: GameSelectorProps) {
 
         playSound('SLOT_MACHINE', { loop: true });
 
-        // Phase 1: Fast spinning (first 15 spins at 80ms each)
         const fastSpinCount = 15;
-        // Phase 2: Slowing down (remaining spins with increasing delay)
 
         let currentIteration = 0;
         let currentIdx = 0;
@@ -117,7 +115,6 @@ export function GameSelector({ onClose }: GameSelectorProps) {
                 return; // Stop animation
             }
 
-            // Calculate delay for next iteration
             let delay: number;
             if (currentIteration < fastSpinCount) {
                 // Fast phase
