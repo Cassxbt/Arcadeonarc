@@ -273,6 +273,61 @@
     letter-spacing: 0.05em;
 }
 
+.divider {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    margin: var(--space-lg) 0;
+}
+
+.divider::before,
+.divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border-color), transparent);
+}
+
+.divider span {
+    font-family: var(--font-arcade);
+    font-size: 0.625rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.bridgeBtn {
+    width: 100%;
+    padding: var(--space-md);
+    background: transparent;
+    color: var(--neon-cyan);
+    border: 2px solid var(--neon-cyan);
+    border-radius: var(--radius-md);
+    font-family: var(--font-arcade);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+}
+
+.bridgeBtn:hover {
+    background: rgba(5, 217, 232, 0.1);
+    box-shadow: 0 0 20px rgba(5, 217, 232, 0.3);
+    transform: translateY(-2px);
+}
+
+.bridgeBtn:active {
+    transform: translateY(0);
+}
+
+.bridgeIcon {
+    font-size: 1.25rem;
+}
+
 @keyframes fadeIn {
     from {
         opacity: 0;

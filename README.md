@@ -59,6 +59,7 @@ User Wallet (USDC + winnings)
 | **Authentication** | Dynamic SDK | Multi-wallet support (MetaMask, WalletConnect, browser wallets) |
 | **Database** | Supabase (PostgreSQL) | User stats, leaderboards, real-time subscriptions |
 | **State Management** | React Context + BroadcastChannel | Cross-tab balance synchronization |
+| **Cross-Chain** | Circle Bridge Kit SDK | CCTP-based USDC bridging from Ethereum/Base |
 
 ### Game Portfolio
 
@@ -183,27 +184,34 @@ ARCade is the only gaming platform leveraging Arc's USDC-native architecture, el
 
 **Identified Blocker**: User onboarding friction. Arc is a new L1—users don't have USDC there yet. Without cross-chain bridging and fiat on-ramps, mainnet adoption will stall at the "get USDC on Arc" step.
 
-### 1. Circle CCTP Integration (Cross-Chain Transfer Protocol)
+### 1. Circle CCTP Integration (Cross-Chain Transfer Protocol) ✅ IMPLEMENTED
 
-**Problem**: Most users hold USDC on Ethereum, Base, Polygon, or Arbitrum. Forcing manual bridging via third-party tools adds 3-5 friction steps and loses 80%+ of potential users.
+**Status**: Fully integrated using Bridge Kit SDK (`@circle-fin/bridge-kit`)
 
-**Why CCTP**: Circle's Cross-Chain Transfer Protocol enables native USDC burns on source chains and mints on Arc L1, maintaining fungibility without wrapped tokens. This is the only production-grade solution for Arc's USDC-native design.
+**Problem Solved**: Users holding USDC on Ethereum or Base can now bridge directly to Arc without leaving the app.
+
+**Implementation**
+- Bridge Kit SDK with `createViemAdapterFromProvider` for browser wallet integration
+- Supported source chains: Ethereum Sepolia, Base Sepolia
+- Destination: Arc Testnet
+- Transfer speed: Fast Transfer (~30-60 seconds)
 
 **User Flow**
 ```
-User connects wallet
-  → We detect $120 USDC on Base
-  → "Bridge to Arc in 30 seconds?"
-  → User clicks → CCTP burn/mint
-  → USDC appears on Arc
-  → Auto-deposits to Vault
-  → Ready to play (0 manual steps)
+User opens Deposit Modal
+  → Clicks "Bridge from another chain"
+  → Selects source chain (Ethereum/Base)
+  → Enters amount → Confirms
+  → CCTP burn on source chain
+  → Attestation via Circle API
+  → USDC minted on Arc Testnet
+  → Ready to deposit to Vault
 ```
 
-**Technical Requirements**
-- Arc L1 must be CCTP-enabled (requires Circle to add Arc as supported destination)
-- Domain ID assignment from Circle
-- Attestation API access
+**Key Files**
+- `arcade/src/lib/cctp-config.ts` - Chain configurations, USDC addresses
+- `arcade/src/lib/useBridge.ts` - Bridge Kit SDK hook
+- `arcade/src/components/BridgeModal.tsx` - Bridge UI with step progress
 
 ---
 
@@ -420,7 +428,7 @@ forge script script/Deploy.s.sol --rpc-url $ARC_TESTNET_RPC --broadcast --verify
 ## Acknowledgments
 
 - **Arc Network**: For providing the fastest USDC-native blockchain enabling real-time gaming
-- **Circle**: For USDC infrastructure and testnet faucet (faucet.circle.com)
+- **Circle**: For USDC infrastructure, CCTP Bridge Kit SDK, and testnet faucet (faucet.circle.com)
 - **Dynamic Labs**: For seamless multi-wallet authentication
 - **Supabase**: For real-time database synchronization
 - **Foundry**: For best-in-class Solidity testing framework

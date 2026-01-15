@@ -7,6 +7,7 @@ import { useGame } from '@/lib/game-context';
 import { useSound } from '@/lib/sounds';
 import { authFetch } from '@/lib/auth-fetch';
 import { CircleDollarSign, Building2, CircleCheck } from './icons';
+import { BridgeModal } from './BridgeModal';
 import styles from './DepositModal.module.css';
 
 interface DepositModalProps {
@@ -25,6 +26,7 @@ export function DepositModal({ isOpen, onClose, mode }: DepositModalProps) {
     const [walletBalance, setWalletBalance] = useState(0);
     const [vaultBalance, setVaultBalance] = useState(0);
     const [success, setSuccess] = useState(false);
+    const [showBridgeModal, setShowBridgeModal] = useState(false);
 
     // Fetch balances on open
     useEffect(() => {
@@ -208,7 +210,43 @@ export function DepositModal({ isOpen, onClose, mode }: DepositModalProps) {
                         ? 'Deposit USDC from your wallet to play games.'
                         : 'Withdraw USDC from your vault to your wallet.'}
                 </p>
+
+                {mode === 'deposit' && (
+                    <>
+                        <div className={styles.divider}>
+                            <span>or</span>
+                        </div>
+
+                        <button
+                            type="button"
+                            className={styles.bridgeBtn}
+                            onClick={() => setShowBridgeModal(true)}
+                        >
+                            Bridge from another chain
+                        </button>
+                    </>
+                )}
             </div>
+
+            {showBridgeModal && (
+                <BridgeModal
+                    isOpen={showBridgeModal}
+                    onClose={() => setShowBridgeModal(false)}
+                    onSuccess={async () => {
+                        setShowBridgeModal(false);
+                        await syncBalanceAfterDeposit();
+                        if (primaryWallet?.address) {
+                            const address = primaryWallet.address as `0x${string}`;
+                            const [wallet, vault] = await Promise.all([
+                                getWalletBalance(address),
+                                getVaultBalance(address),
+                            ]);
+                            setWalletBalance(wallet);
+                            setVaultBalance(vault);
+                        }
+                    }}
+                />
+            )}
         </div>
     );
 }
