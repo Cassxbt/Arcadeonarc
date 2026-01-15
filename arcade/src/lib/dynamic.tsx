@@ -20,6 +20,36 @@ const evmNetworks = [
         rpcUrls: ['https://rpc.testnet.arc.network'],
         vanityName: 'Arc Testnet',
     },
+    {
+        blockExplorerUrls: ['https://sepolia.etherscan.io'],
+        chainId: 11155111,
+        chainName: 'Ethereum Sepolia',
+        iconUrls: ['https://app.dynamic.xyz/assets/networks/eth.svg'],
+        name: 'Ethereum Sepolia',
+        nativeCurrency: {
+            decimals: 18,
+            name: 'Sepolia ETH',
+            symbol: 'ETH',
+        },
+        networkId: 11155111,
+        rpcUrls: ['https://ethereum-sepolia-rpc.publicnode.com'],
+        vanityName: 'Sepolia',
+    },
+    {
+        blockExplorerUrls: ['https://sepolia.basescan.org'],
+        chainId: 84532,
+        chainName: 'Base Sepolia',
+        iconUrls: ['https://app.dynamic.xyz/assets/networks/base.svg'],
+        name: 'Base Sepolia',
+        nativeCurrency: {
+            decimals: 18,
+            name: 'Sepolia ETH',
+            symbol: 'ETH',
+        },
+        networkId: 84532,
+        rpcUrls: ['https://sepolia.base.org'],
+        vanityName: 'Base Sepolia',
+    },
 ];
 
 interface DynamicProviderProps {
