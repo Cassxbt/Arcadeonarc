@@ -2,8 +2,9 @@
 
 import { useState, useCallback } from 'react';
 import { BridgeKit } from '@circle-fin/bridge-kit';
-import { createAdapterFromProvider } from '@circle-fin/adapter-viem-v2';
-import { createPublicClient, http, formatUnits } from 'viem';
+import { EthereumSepolia, BaseSepolia, ArcTestnet } from '@circle-fin/bridge-kit/chains';
+import { createAdapterFromProvider, ViemAdapter } from '@circle-fin/adapter-viem-v2';
+import { createPublicClient, createWalletClient, http, formatUnits, custom, type WalletClient } from 'viem';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { isEthereumWallet } from '@dynamic-labs/ethereum';
 import {
@@ -11,11 +12,12 @@ import {
     ARC_TESTNET_CONFIG,
     getSourceChainById,
     type SourceChainConfig,
+    ethereumSepolia,
+    baseSepolia,
 } from './cctp-config';
 import { ERC20_ABI } from './abi';
 import { arcTestnet } from './constants';
 
-// EIP-1193 Provider type
 type EIP1193Provider = {
     request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
 };
@@ -72,6 +74,23 @@ export function useBridge(): UseBridgeReturn {
         }
     }, [primaryWallet?.address]);
 
+    const isEmbeddedWallet = useCallback((): boolean => {
+        if (!primaryWallet) return false;
+        const connector = primaryWallet.connector as { isEmbeddedWallet?: boolean } | undefined;
+        return connector?.isEmbeddedWallet === true;
+    }, [primaryWallet]);
+
+    const getWalletClient = useCallback(async (): Promise<WalletClient | null> => {
+        if (!primaryWallet) return null;
+        try {
+            if (!isEthereumWallet(primaryWallet)) return null;
+            return await primaryWallet.getWalletClient();
+        } catch (err) {
+            console.error('[bridge] Failed to get wallet client:', err);
+            return null;
+        }
+    }, [primaryWallet]);
+
     const getProvider = useCallback(async (): Promise<EIP1193Provider | null> => {
         if (!primaryWallet) {
             console.log('[bridge] No primary wallet');
@@ -81,6 +100,11 @@ export function useBridge(): UseBridgeReturn {
         try {
             if (!isEthereumWallet(primaryWallet)) {
                 console.log('[bridge] Wallet is not an Ethereum wallet');
+                return null;
+            }
+
+            if (isEmbeddedWallet()) {
+                console.log('[bridge] Embedded wallet detected - will use ViemAdapter directly');
                 return null;
             }
 
@@ -111,7 +135,7 @@ export function useBridge(): UseBridgeReturn {
             console.error('[bridge] Failed to get provider:', err);
             return null;
         }
-    }, [primaryWallet]);
+    }, [primaryWallet, isEmbeddedWallet]);
 
     const switchToChain = useCallback(async (chainId: number): Promise<boolean> => {
         if (!primaryWallet) return false;
@@ -156,22 +180,60 @@ export function useBridge(): UseBridgeReturn {
         setCurrentStep('bridging');
 
         try {
-            const provider = await getProvider();
-            if (!provider) {
-                throw new Error('Could not get wallet provider. Please reconnect your wallet.');
-            }
+            let adapter;
+            const embedded = isEmbeddedWallet();
+            console.log('[bridge] Wallet type:', embedded ? 'embedded' : 'external');
 
-            // Switch to source chain for the bridge transaction
-            console.log('[bridge] Switching to source chain:', chainConfig.name);
-            const switched = await switchToChain(chainConfig.chainId);
-            if (!switched) {
-                console.warn('[bridge] Could not switch network automatically');
-            }
+            if (embedded) {
+                const walletClient = await getWalletClient();
+                if (!walletClient) {
+                    throw new Error('Could not get wallet client. Please reconnect your wallet.');
+                }
 
-            console.log('[bridge] Creating adapter from provider');
-            const adapter = await createAdapterFromProvider({
-                provider: provider as Parameters<typeof createAdapterFromProvider>[0]['provider'],
-            });
+                console.log('[bridge] Creating ViemAdapter for embedded wallet');
+                const chains = [ethereumSepolia, baseSepolia, arcTestnet];
+
+                adapter = new ViemAdapter({
+                    getPublicClient: ({ chain }) => {
+                        const matchedChain = chains.find(c => c.id === chain.id) || chain;
+                        return createPublicClient({
+                            chain: matchedChain,
+                            transport: http(),
+                        });
+                    },
+                    getWalletClient: async ({ chain }) => {
+                        const matchedChain = chains.find(c => c.id === chain.id) || chain;
+                        return createWalletClient({
+                            account: primaryWallet!.address as `0x${string}`,
+                            chain: matchedChain,
+                            transport: custom({
+                                async request({ method, params }) {
+                                    return walletClient.request({ method, params } as Parameters<typeof walletClient.request>[0]);
+                                },
+                            }),
+                        });
+                    },
+                }, {
+                    addressContext: 'user-controlled',
+                    supportedChains: [EthereumSepolia, BaseSepolia, ArcTestnet],
+                });
+            } else {
+                const provider = await getProvider();
+                if (!provider) {
+                    throw new Error('Could not get wallet provider. Please reconnect your wallet.');
+                }
+
+                console.log('[bridge] Switching to source chain:', chainConfig.name);
+                const switched = await switchToChain(chainConfig.chainId);
+                if (!switched) {
+                    console.warn('[bridge] Could not switch network automatically');
+                }
+
+                console.log('[bridge] Creating adapter from provider');
+                adapter = await createAdapterFromProvider({
+                    provider: provider as Parameters<typeof createAdapterFromProvider>[0]['provider'],
+                });
+            }
 
             const kit = new BridgeKit();
 
@@ -179,11 +241,11 @@ export function useBridge(): UseBridgeReturn {
 
             const result = await kit.bridge({
                 from: {
-                    adapter,
+                    adapter: adapter as Parameters<typeof kit.bridge>[0]['from']['adapter'],
                     chain: chainConfig.bridgeKitChain,
                 },
                 to: {
-                    adapter,
+                    adapter: adapter as Parameters<typeof kit.bridge>[0]['to']['adapter'],
                     chain: ARC_TESTNET_CONFIG.bridgeKitChain,
                 },
                 amount,
@@ -233,7 +295,7 @@ export function useBridge(): UseBridgeReturn {
         } finally {
             setIsLoading(false);
         }
-    }, [primaryWallet, getProvider, switchToChain]);
+    }, [primaryWallet, getProvider, getWalletClient, isEmbeddedWallet, switchToChain]);
 
     return {
         bridge,
