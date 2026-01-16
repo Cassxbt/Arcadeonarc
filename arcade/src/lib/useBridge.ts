@@ -383,7 +383,31 @@ export function useBridge(): UseBridgeReturn {
 
             console.log('[bridge] Starting bridge from', chainConfig.name, 'to Arc Testnet, amount:', amount);
 
-            const result = await kit.bridge({
+            // Process steps helper
+            interface BridgeResultStep {
+                name: string;
+                state: string;
+                txHash?: string;
+                explorerUrl?: string;
+                error?: string;
+            }
+
+            const processSteps = (steps: BridgeResultStep[]): BridgeStepInfo[] => {
+                return steps.map((step) => ({
+                    name: step.name.charAt(0).toUpperCase() + step.name.slice(1),
+                    status: step.state === 'success' ? 'complete' : step.state === 'error' ? 'error' : 'pending',
+                    txHash: step.txHash,
+                    explorerUrl: step.explorerUrl,
+                }));
+            };
+
+            // Check if attestation step failed
+            const isAttestationFailure = (steps: BridgeResultStep[]): boolean => {
+                const attestationStep = steps.find(s => s.name === 'fetchAttestation');
+                return attestationStep?.state === 'error';
+            };
+
+            let result = await kit.bridge({
                 from: {
                     adapter: adapter as Parameters<typeof kit.bridge>[0]['from']['adapter'],
                     chain: chainConfig.bridgeKitChain,
@@ -395,21 +419,41 @@ export function useBridge(): UseBridgeReturn {
                 amount,
             });
 
-            // Process steps from result
-            interface BridgeResultStep {
-                name: string;
-                state: string;
-                txHash?: string;
-                explorerUrl?: string;
+            // Retry logic for attestation failures (testnets can be slow)
+            const MAX_RETRIES = 3;
+            let retryCount = 0;
+
+            while (
+                result.state === 'error' &&
+                isAttestationFailure(result.steps as BridgeResultStep[]) &&
+                retryCount < MAX_RETRIES
+            ) {
+                retryCount++;
+                console.log(`[bridge] Attestation fetch failed, retrying (${retryCount}/${MAX_RETRIES})...`);
+
+                // Update UI to show retry
+                const retrySteps = processSteps(result.steps as BridgeResultStep[]);
+                const attestationIdx = retrySteps.findIndex(s => s.name === 'Fetchattestation' || s.name === 'FetchAttestation');
+                if (attestationIdx !== -1) {
+                    retrySteps[attestationIdx] = {
+                        ...retrySteps[attestationIdx],
+                        name: `FetchAttestation (retry ${retryCount})`,
+                        status: 'pending',
+                    };
+                }
+                setCompletedSteps(retrySteps);
+
+                // Wait before retry (attestations can take time)
+                await new Promise(resolve => setTimeout(resolve, 5000));
+
+                // Retry using BridgeKit's retry method
+                result = await kit.retry(result, {
+                    from: adapter as Parameters<typeof kit.retry>[1]['from'],
+                    to: adapter as Parameters<typeof kit.retry>[1]['to'],
+                });
             }
 
-            const processedSteps: BridgeStepInfo[] = (result.steps as BridgeResultStep[]).map((step) => ({
-                name: step.name.charAt(0).toUpperCase() + step.name.slice(1),
-                status: step.state === 'success' ? 'complete' : step.state === 'error' ? 'error' : 'pending',
-                txHash: step.txHash,
-                explorerUrl: step.explorerUrl,
-            }));
-
+            const processedSteps = processSteps(result.steps as BridgeResultStep[]);
             setCompletedSteps(processedSteps);
 
             if (result.state === 'success') {
@@ -418,7 +462,10 @@ export function useBridge(): UseBridgeReturn {
                 await switchToChain(arcTestnet.id);
                 return true;
             } else {
-                setError('Bridge transfer failed');
+                const failedStep = (result.steps as BridgeResultStep[]).find(s => s.state === 'error');
+                const errorMsg = failedStep?.error || 'Bridge transfer failed';
+                console.error('[bridge] Transfer failed at step:', failedStep?.name, errorMsg);
+                setError(`Bridge failed: ${failedStep?.name || 'unknown step'}`);
                 setCurrentStep('error');
                 return false;
             }
