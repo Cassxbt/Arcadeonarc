@@ -32,7 +32,7 @@ const evmNetworks = [
             symbol: 'ETH',
         },
         networkId: 421614,
-        rpcUrls: ['https://sepolia-rollup.arbitrum.io/rpc'],
+        rpcUrls: ['https://arbitrum-sepolia-rpc.publicnode.com'],
         vanityName: 'Arbitrum Sepolia',
     },
     {
@@ -62,7 +62,7 @@ const evmNetworks = [
             symbol: 'ETH',
         },
         networkId: 11155420,
-        rpcUrls: ['https://sepolia.optimism.io'],
+        rpcUrls: ['https://optimism-sepolia-rpc.publicnode.com'],
         vanityName: 'OP Sepolia',
     },
     {

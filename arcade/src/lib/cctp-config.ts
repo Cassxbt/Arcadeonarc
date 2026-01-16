@@ -66,8 +66,9 @@ export const arbitrumSepolia = defineChain({
     rpcUrls: {
         default: {
             http: [
-                'https://sepolia-rollup.arbitrum.io/rpc',
                 'https://arbitrum-sepolia-rpc.publicnode.com',
+                'https://arb-sepolia.g.alchemy.com/v2/demo',
+                'https://sepolia-rollup.arbitrum.io/rpc',
             ],
         },
     },
@@ -88,8 +89,9 @@ export const optimismSepolia = defineChain({
     rpcUrls: {
         default: {
             http: [
-                'https://sepolia.optimism.io',
                 'https://optimism-sepolia-rpc.publicnode.com',
+                'https://opt-sepolia.g.alchemy.com/v2/demo',
+                'https://sepolia.optimism.io',
             ],
         },
     },
