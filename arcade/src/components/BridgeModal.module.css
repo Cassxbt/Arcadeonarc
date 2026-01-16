@@ -136,6 +136,19 @@
     color: var(--text-primary);
 }
 
+.chainInfo {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.chainIcon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    object-fit: contain;
+}
+
 .chevron {
     color: var(--neon-cyan);
 }

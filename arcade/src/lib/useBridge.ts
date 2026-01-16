@@ -13,6 +13,8 @@ import {
     type SourceChainConfig,
     ethereumSepolia,
     baseSepolia,
+    arbitrumSepolia,
+    optimismSepolia,
 } from './cctp-config';
 import { ERC20_ABI } from './abi';
 import { arcTestnet } from './constants';
@@ -21,7 +23,7 @@ type EIP1193Provider = {
     request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
 };
 
-const SUPPORTED_CHAINS: Chain[] = [ethereumSepolia, baseSepolia, arcTestnet];
+const SUPPORTED_CHAINS: Chain[] = [ethereumSepolia, baseSepolia, arbitrumSepolia, optimismSepolia, arcTestnet];
 
 interface EmbeddedWalletContext {
     walletClient: WalletClient;

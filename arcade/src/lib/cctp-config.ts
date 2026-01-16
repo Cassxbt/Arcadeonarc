@@ -3,6 +3,8 @@ import { BridgeChain } from '@circle-fin/bridge-kit';
 
 export const CCTP_DOMAINS = {
     ETHEREUM_SEPOLIA: 0,
+    OPTIMISM_SEPOLIA: 2,
+    ARBITRUM_SEPOLIA: 3,
     BASE_SEPOLIA: 6,
     ARC_TESTNET: 26,
 } as const;
@@ -21,7 +23,6 @@ export const ethereumSepolia = defineChain({
                 'https://ethereum-sepolia-rpc.publicnode.com',
                 'https://1rpc.io/sepolia',
                 'https://sepolia.drpc.org',
-                'https://rpc.sepolia.org',
             ],
         },
     },
@@ -41,11 +42,59 @@ export const baseSepolia = defineChain({
     },
     rpcUrls: {
         default: {
-            http: ['https://sepolia.base.org'],
+            http: [
+                'https://base-sepolia-rpc.publicnode.com',
+                'https://sepolia.base.org',
+                'https://base-sepolia.drpc.org',
+            ],
         },
     },
     blockExplorers: {
         default: { name: 'BaseScan', url: 'https://sepolia.basescan.org' },
+    },
+    testnet: true,
+});
+
+export const arbitrumSepolia = defineChain({
+    id: 421614,
+    name: 'Arbitrum Sepolia',
+    nativeCurrency: {
+        decimals: 18,
+        name: 'Sepolia Ether',
+        symbol: 'ETH',
+    },
+    rpcUrls: {
+        default: {
+            http: [
+                'https://sepolia-rollup.arbitrum.io/rpc',
+                'https://arbitrum-sepolia-rpc.publicnode.com',
+            ],
+        },
+    },
+    blockExplorers: {
+        default: { name: 'Arbiscan', url: 'https://sepolia.arbiscan.io' },
+    },
+    testnet: true,
+});
+
+export const optimismSepolia = defineChain({
+    id: 11155420,
+    name: 'OP Sepolia',
+    nativeCurrency: {
+        decimals: 18,
+        name: 'Sepolia Ether',
+        symbol: 'ETH',
+    },
+    rpcUrls: {
+        default: {
+            http: [
+                'https://sepolia.optimism.io',
+                'https://optimism-sepolia-rpc.publicnode.com',
+            ],
+        },
+    },
+    blockExplorers: {
+        default: { name: 'Optimism Explorer', url: 'https://sepolia-optimism.etherscan.io' },
     },
     testnet: true,
 });
@@ -64,15 +113,15 @@ export interface SourceChainConfig {
 
 export const SOURCE_CHAINS: SourceChainConfig[] = [
     {
-        id: 'ethereum_sepolia',
-        name: 'Ethereum Sepolia',
-        chainId: 11155111,
-        domain: CCTP_DOMAINS.ETHEREUM_SEPOLIA,
-        usdc: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
-        bridgeKitChain: BridgeChain.Ethereum_Sepolia,
-        chain: ethereumSepolia,
-        explorer: 'https://sepolia.etherscan.io',
-        logo: '/chains/ethereum.svg',
+        id: 'arbitrum_sepolia',
+        name: 'Arbitrum Sepolia',
+        chainId: 421614,
+        domain: CCTP_DOMAINS.ARBITRUM_SEPOLIA,
+        usdc: '0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d',
+        bridgeKitChain: BridgeChain.Arbitrum_Sepolia,
+        chain: arbitrumSepolia,
+        explorer: 'https://sepolia.arbiscan.io',
+        logo: '/chains/arbitrum.svg',
     },
     {
         id: 'base_sepolia',
@@ -84,6 +133,28 @@ export const SOURCE_CHAINS: SourceChainConfig[] = [
         chain: baseSepolia,
         explorer: 'https://sepolia.basescan.org',
         logo: '/chains/base.svg',
+    },
+    {
+        id: 'optimism_sepolia',
+        name: 'OP Sepolia',
+        chainId: 11155420,
+        domain: CCTP_DOMAINS.OPTIMISM_SEPOLIA,
+        usdc: '0x5fd84259d66Cd46123540766Be93DFE6D43130D7',
+        bridgeKitChain: BridgeChain.Optimism_Sepolia,
+        chain: optimismSepolia,
+        explorer: 'https://sepolia-optimism.etherscan.io',
+        logo: '/chains/optimism.svg',
+    },
+    {
+        id: 'ethereum_sepolia',
+        name: 'Ethereum Sepolia',
+        chainId: 11155111,
+        domain: CCTP_DOMAINS.ETHEREUM_SEPOLIA,
+        usdc: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
+        bridgeKitChain: BridgeChain.Ethereum_Sepolia,
+        chain: ethereumSepolia,
+        explorer: 'https://sepolia.etherscan.io',
+        logo: '/chains/ethereum.svg',
     },
 ];
 

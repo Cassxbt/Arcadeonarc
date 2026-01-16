@@ -176,7 +176,14 @@ export function BridgeModal({ isOpen, onClose, onSuccess }: BridgeModalProps) {
                         >
                             {selectedChain ? (
                                 <>
-                                    <span className={styles.chainName}>{selectedChain.name}</span>
+                                    <div className={styles.chainInfo}>
+                                        <img
+                                            src={selectedChain.logo}
+                                            alt={selectedChain.name}
+                                            className={styles.chainIcon}
+                                        />
+                                        <span className={styles.chainName}>{selectedChain.name}</span>
+                                    </div>
                                     <motion.div
                                         animate={{ rotate: isDropdownOpen ? 180 : 0 }}
                                         transition={{ duration: 0.2 }}
@@ -204,6 +211,11 @@ export function BridgeModal({ isOpen, onClose, onSuccess }: BridgeModalProps) {
                                             className={`${styles.dropdownItem} ${selectedChain?.id === chain.id ? styles.selected : ''}`}
                                             onClick={() => handleChainSelect(chain)}
                                         >
+                                            <img
+                                                src={chain.logo}
+                                                alt={chain.name}
+                                                className={styles.chainIcon}
+                                            />
                                             <span className={styles.chainName}>{chain.name}</span>
                                         </button>
                                     ))}
