@@ -30,9 +30,12 @@ interface EmbeddedWalletContext {
 function createEmbeddedWalletProvider(
     userAddress: `0x${string}`,
     walletContext: EmbeddedWalletContext,
-    switchWalletNetwork: (chainId: number) => Promise<WalletClient | null>
+    switchWalletNetwork: (chainId: number) => Promise<WalletClient | null>,
+    initialChainId: number
 ): EIP1193Provider {
-    let currentChainId: number = ethereumSepolia.id;
+    // Initialize to the actual source chain we're bridging from, not a hardcoded value
+    let currentChainId: number = initialChainId;
+    console.log('[embedded-provider] Initialized with chain:', initialChainId);
 
     return {
         async request({ method, params }: { method: string; params?: unknown[] }): Promise<unknown> {
@@ -259,28 +262,52 @@ export function useBridge(): UseBridgeReturn {
 
     // Switch wallet network and return new wallet client
     const switchWalletAndGetClient = useCallback(async (chainId: number): Promise<WalletClient | null> => {
-        if (!primaryWallet) return null;
-        try {
-            console.log('[bridge] Switching embedded wallet to chain:', chainId);
-
-            // Switch the wallet's network first
-            if ('switchNetwork' in primaryWallet) {
-                await (primaryWallet as unknown as { switchNetwork: (chainId: number) => Promise<void> }).switchNetwork(chainId);
-                console.log('[bridge] Network switched, getting new wallet client');
-
-                // Small delay to ensure network switch is complete
-                await new Promise(resolve => setTimeout(resolve, 500));
-
-                // Get fresh wallet client for the new chain
-                const newClient = await getWalletClient();
-                if (newClient) {
-                    console.log('[bridge] Got new wallet client for chain:', chainId);
-                    return newClient;
-                }
-            }
+        if (!primaryWallet) {
+            console.error('[bridge] No primary wallet available');
             return null;
+        }
+
+        console.log('[bridge] Switching embedded wallet to chain:', chainId);
+
+        try {
+            // Check if switchNetwork is available
+            if (!('switchNetwork' in primaryWallet)) {
+                console.error('[bridge] switchNetwork not available on wallet');
+                return null;
+            }
+
+            // Switch the wallet's network
+            await (primaryWallet as unknown as { switchNetwork: (chainId: number) => Promise<void> }).switchNetwork(chainId);
+            console.log('[bridge] Network switch completed for chain:', chainId);
+
+            // Longer delay to ensure network switch is fully complete
+            // Dynamic embedded wallets need time to reconfigure
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            // Get fresh wallet client for the new chain
+            const newClient = await getWalletClient();
+            if (newClient) {
+                console.log('[bridge] Got new wallet client for chain:', chainId);
+
+                // Verify we can make a basic request with the new client
+                try {
+                    const chain = newClient.chain;
+                    console.log('[bridge] Wallet client chain:', chain?.id, chain?.name);
+                } catch {
+                    console.log('[bridge] Could not verify wallet client chain (non-critical)');
+                }
+
+                return newClient;
+            } else {
+                console.error('[bridge] getWalletClient returned null after switch');
+                return null;
+            }
         } catch (err) {
             console.error('[bridge] Failed to switch wallet network:', err);
+            // Log specific error details
+            if (err instanceof Error) {
+                console.error('[bridge] Error details:', err.message);
+            }
             return null;
         }
     }, [primaryWallet, getWalletClient]);
@@ -311,14 +338,16 @@ export function useBridge(): UseBridgeReturn {
             if (embedded) {
                 // For embedded wallets, switch to source chain first
                 console.log('[bridge] Switching embedded wallet to source chain:', chainConfig.name);
-                const switched = await switchWalletAndGetClient(chainConfig.chainId);
+                const walletClient = await switchWalletAndGetClient(chainConfig.chainId);
 
-                const walletClient = switched || await getWalletClient();
+                // IMPORTANT: Don't fall back to getWalletClient() if switch fails
+                // The walletClient MUST be configured for the source chain
                 if (!walletClient) {
-                    throw new Error('Could not get wallet client. Please reconnect your wallet.');
+                    console.error('[bridge] Failed to switch to source chain:', chainConfig.name);
+                    throw new Error(`Could not switch to ${chainConfig.name}. Please try again or use a different source chain.`);
                 }
 
-                console.log('[bridge] Creating embedded wallet provider');
+                console.log('[bridge] Creating embedded wallet provider for chain:', chainConfig.chainId);
                 const userAddress = primaryWallet!.address as `0x${string}`;
 
                 // Create a mutable context for the wallet client
@@ -327,7 +356,8 @@ export function useBridge(): UseBridgeReturn {
                 provider = createEmbeddedWalletProvider(
                     userAddress,
                     walletContext,
-                    switchWalletAndGetClient
+                    switchWalletAndGetClient,
+                    chainConfig.chainId  // Pass the actual source chain ID
                 );
             } else {
                 const externalProvider = await getProvider();
