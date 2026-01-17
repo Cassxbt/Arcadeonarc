@@ -4,10 +4,14 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { useBridge, type BridgeStep } from '@/lib/useBridge';
+import { useGateway, type GatewayStep } from '@/lib/useGateway';
 import { useGame } from '@/lib/game-context';
 import { useSound } from '@/lib/sounds';
 import { SOURCE_CHAINS, type SourceChainConfig } from '@/lib/cctp-config';
+import { type GatewayChainConfig } from '@/lib/gateway-config';
 import styles from './BridgeModal.module.css';
+
+type TabMode = 'cctp' | 'gateway';
 
 interface BridgeModalProps {
     isOpen: boolean;
@@ -65,18 +69,36 @@ export function BridgeModal({ isOpen, onClose, onSuccess }: BridgeModalProps) {
         sourceChains,
     } = useBridge();
 
+    const {
+        deposit: gatewayDeposit,
+        getSourceBalance: getGatewaySourceBalance,
+        isLoading: isGatewayLoading,
+        error: gatewayError,
+        currentStep: gatewayCurrentStep,
+        completedSteps: gatewayCompletedSteps,
+        gatewayChains,
+    } = useGateway();
+
+    const [activeTab, setActiveTab] = useState<TabMode>('cctp');
     const [selectedChain, setSelectedChain] = useState<SourceChainConfig | null>(null);
+    const [selectedGatewayChain, setSelectedGatewayChain] = useState<GatewayChainConfig | null>(null);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [amount, setAmount] = useState('');
+    const [gatewayAmount, setGatewayAmount] = useState('');
     const [sourceBalance, setSourceBalance] = useState(0);
+    const [gatewaySourceBalance, setGatewaySourceBalance] = useState(0);
     const [isFetchingBalance, setIsFetchingBalance] = useState(false);
+    const [isFetchingGatewayBalance, setIsFetchingGatewayBalance] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         if (isOpen && sourceChains.length > 0 && !selectedChain) {
             setSelectedChain(sourceChains[0]);
         }
-    }, [isOpen, sourceChains, selectedChain]);
+        if (isOpen && gatewayChains.length > 0 && !selectedGatewayChain) {
+            setSelectedGatewayChain(gatewayChains[0]);
+        }
+    }, [isOpen, sourceChains, selectedChain, gatewayChains, selectedGatewayChain]);
 
     useEffect(() => {
         if (!selectedChain || !primaryWallet?.address) return;
@@ -92,6 +114,19 @@ export function BridgeModal({ isOpen, onClose, onSuccess }: BridgeModalProps) {
     }, [selectedChain, primaryWallet?.address, getSourceBalance]);
 
     useEffect(() => {
+        if (!selectedGatewayChain || !primaryWallet?.address) return;
+
+        const fetchGatewayBalance = async () => {
+            setIsFetchingGatewayBalance(true);
+            const balance = await getGatewaySourceBalance(selectedGatewayChain.id);
+            setGatewaySourceBalance(balance);
+            setIsFetchingGatewayBalance(false);
+        };
+
+        fetchGatewayBalance();
+    }, [selectedGatewayChain, primaryWallet?.address, getGatewaySourceBalance]);
+
+    useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
                 setIsDropdownOpen(false);
@@ -103,14 +138,14 @@ export function BridgeModal({ isOpen, onClose, onSuccess }: BridgeModalProps) {
     }, []);
 
     useEffect(() => {
-        if (currentStep === 'complete') {
+        if (currentStep === 'complete' || gatewayCurrentStep === 'complete') {
             playSound('COIN_DEPOSIT');
             setTimeout(async () => {
                 await syncBalanceAfterDeposit();
                 onSuccess();
             }, 1500);
         }
-    }, [currentStep, playSound, syncBalanceAfterDeposit, onSuccess]);
+    }, [currentStep, gatewayCurrentStep, playSound, syncBalanceAfterDeposit, onSuccess]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -129,9 +164,34 @@ export function BridgeModal({ isOpen, onClose, onSuccess }: BridgeModalProps) {
         setAmount('');
     };
 
+    const handleGatewayChainSelect = (chain: GatewayChainConfig) => {
+        setSelectedGatewayChain(chain);
+        setIsDropdownOpen(false);
+        setGatewayAmount('');
+    };
+
+    const handleGatewaySubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedGatewayChain || !gatewayAmount || isGatewayLoading) return;
+
+        const amountNum = parseFloat(gatewayAmount);
+        if (isNaN(amountNum) || amountNum <= 0) return;
+        if (amountNum > gatewaySourceBalance) return;
+
+        await gatewayDeposit(selectedGatewayChain.id, gatewayAmount);
+    };
+
+    const handleTabChange = (tab: TabMode) => {
+        if (isLoading || isGatewayLoading) return;
+        setActiveTab(tab);
+        setAmount('');
+        setGatewayAmount('');
+        setIsDropdownOpen(false);
+    };
+
     if (!isOpen) return null;
 
-    const isInProgress = currentStep === 'bridging';
+    const isInProgress = currentStep === 'bridging' || gatewayCurrentStep === 'approving' || gatewayCurrentStep === 'depositing';
 
     return (
         <AnimatePresence>
@@ -167,187 +227,399 @@ export function BridgeModal({ isOpen, onClose, onSuccess }: BridgeModalProps) {
                         Transfer USDC from another chain to Arc Testnet
                     </p>
 
-                    <div className={styles.chainSelector} ref={dropdownRef}>
-                        <label className={styles.label}>From Chain</label>
+                    <div className={styles.tabs}>
                         <button
-                            className={styles.chainButton}
-                            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                            className={`${styles.tab} ${activeTab === 'cctp' ? styles.tabActive : ''}`}
+                            onClick={() => handleTabChange('cctp')}
                             disabled={isLoading}
                         >
-                            {selectedChain ? (
-                                <>
-                                    <div className={styles.chainInfo}>
-                                        <img
-                                            src={selectedChain.logo}
-                                            alt={selectedChain.name}
-                                            className={styles.chainIcon}
-                                        />
-                                        <span className={styles.chainName}>{selectedChain.name}</span>
-                                    </div>
-                                    <motion.div
-                                        animate={{ rotate: isDropdownOpen ? 180 : 0 }}
-                                        transition={{ duration: 0.2 }}
-                                    >
-                                        <ChevronDown className={styles.chevron} />
-                                    </motion.div>
-                                </>
-                            ) : (
-                                <span className={styles.placeholder}>Select chain</span>
-                            )}
+                            CCTP Bridge
                         </button>
-
-                        <AnimatePresence>
-                            {isDropdownOpen && (
-                                <motion.div
-                                    className={styles.dropdown}
-                                    initial={{ opacity: 0, y: -10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: -10 }}
-                                    transition={{ duration: 0.15 }}
-                                >
-                                    {sourceChains.map((chain) => (
-                                        <button
-                                            key={chain.id}
-                                            className={`${styles.dropdownItem} ${selectedChain?.id === chain.id ? styles.selected : ''}`}
-                                            onClick={() => handleChainSelect(chain)}
-                                        >
-                                            <img
-                                                src={chain.logo}
-                                                alt={chain.name}
-                                                className={styles.chainIcon}
-                                            />
-                                            <span className={styles.chainName}>{chain.name}</span>
-                                        </button>
-                                    ))}
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-                    </div>
-
-                    <div className={styles.balanceRow}>
-                        <span className={styles.balanceLabel}>Available Balance</span>
-                        <span className={styles.balanceValue}>
-                            {isFetchingBalance ? (
-                                <SpinnerIcon />
-                            ) : (
-                                `$${sourceBalance.toFixed(2)}`
-                            )}
-                        </span>
-                    </div>
-
-                    <form onSubmit={handleSubmit} className={styles.form}>
-                        <div className={styles.inputGroup}>
-                            <span className={styles.currency}>$</span>
-                            <input
-                                type="number"
-                                value={amount}
-                                onChange={(e) => setAmount(e.target.value)}
-                                placeholder="0.00"
-                                min="0.5"
-                                max={sourceBalance}
-                                step="0.01"
-                                className={styles.input}
-                                disabled={isLoading}
-                            />
-                            <button
-                                type="button"
-                                onClick={() => setAmount(sourceBalance.toString())}
-                                className={styles.maxBtn}
-                                disabled={isLoading || sourceBalance === 0}
-                            >
-                                MAX
-                            </button>
-                        </div>
-
-                        <div className={styles.quickAmounts}>
-                            {[5, 10, 25, 50].map((amt) => (
-                                <button
-                                    key={amt}
-                                    type="button"
-                                    onClick={() => setAmount(amt.toString())}
-                                    className={styles.quickBtn}
-                                    disabled={amt > sourceBalance || isLoading}
-                                >
-                                    ${amt}
-                                </button>
-                            ))}
-                        </div>
-
-                        {(isInProgress || completedSteps.length > 0) && (
-                            <motion.div
-                                className={styles.stepsContainer}
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: 'auto' }}
-                                transition={{ duration: 0.3 }}
-                            >
-                                {isInProgress && completedSteps.length === 0 && (
-                                    <div className={`${styles.step} ${styles.stepActive}`}>
-                                        <div className={styles.stepIndicator}>
-                                            <SpinnerIcon />
-                                        </div>
-                                        <div className={styles.stepContent}>
-                                            <span className={styles.stepName}>Processing bridge...</span>
-                                        </div>
-                                    </div>
-                                )}
-                                {completedSteps.map((step, index) => (
-                                    <div
-                                        key={step.name}
-                                        className={`${styles.step} ${styles[`step${step.status.charAt(0).toUpperCase() + step.status.slice(1)}`]}`}
-                                    >
-                                        <div className={styles.stepIndicator}>
-                                            {step.status === 'complete' ? (
-                                                <CheckIcon />
-                                            ) : step.status === 'error' ? (
-                                                <span className={styles.stepNumber}>✕</span>
-                                            ) : (
-                                                <SpinnerIcon />
-                                            )}
-                                        </div>
-                                        <div className={styles.stepContent}>
-                                            <span className={styles.stepName}>{step.name}</span>
-                                            {step.explorerUrl && (
-                                                <a
-                                                    href={step.explorerUrl}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className={styles.txLink}
-                                                >
-                                                    View tx <ExternalLinkIcon />
-                                                </a>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))}
-                            </motion.div>
-                        )}
-
-                        {currentStep === 'complete' && (
-                            <motion.div
-                                className={styles.successMessage}
-                                initial={{ opacity: 0, scale: 0.9 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                            >
-                                <CheckIcon /> Bridge complete! USDC transferred to Arc.
-                            </motion.div>
-                        )}
-
-                        {error && <p className={styles.error}>{error}</p>}
-
                         <button
-                            type="submit"
-                            disabled={isLoading || !amount || parseFloat(amount) <= 0 || parseFloat(amount) > sourceBalance}
-                            className={styles.submitBtn}
+                            className={`${styles.tab} ${activeTab === 'gateway' ? styles.tabActive : ''}`}
+                            onClick={() => handleTabChange('gateway')}
+                            disabled={isLoading}
                         >
-                            {isLoading ? 'Bridging...' : 'Bridge to Arc'}
+                            Gateway
                         </button>
-                    </form>
+                    </div>
 
-                    <p className={styles.note}>
-                        Fast Transfer (~30-60s) • Native USDC, no wrapped tokens
-                    </p>
+                    <AnimatePresence mode="wait">
+                        {activeTab === 'cctp' ? (
+                            <motion.div
+                                key="cctp"
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: 10 }}
+                                transition={{ duration: 0.15 }}
+                                className={styles.tabContent}
+                            >
+                                <div className={styles.chainSelector} ref={dropdownRef}>
+                                    <label className={styles.label}>From Chain</label>
+                                    <button
+                                        className={styles.chainButton}
+                                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                        disabled={isLoading}
+                                    >
+                                        {selectedChain ? (
+                                            <>
+                                                <div className={styles.chainInfo}>
+                                                    <img
+                                                        src={selectedChain.logo}
+                                                        alt={selectedChain.name}
+                                                        className={styles.chainIcon}
+                                                    />
+                                                    <span className={styles.chainName}>{selectedChain.name}</span>
+                                                </div>
+                                                <motion.div
+                                                    animate={{ rotate: isDropdownOpen ? 180 : 0 }}
+                                                    transition={{ duration: 0.2 }}
+                                                >
+                                                    <ChevronDown className={styles.chevron} />
+                                                </motion.div>
+                                            </>
+                                        ) : (
+                                            <span className={styles.placeholder}>Select chain</span>
+                                        )}
+                                    </button>
+
+                                    <AnimatePresence>
+                                        {isDropdownOpen && (
+                                            <motion.div
+                                                className={styles.dropdown}
+                                                initial={{ opacity: 0, y: -10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                exit={{ opacity: 0, y: -10 }}
+                                                transition={{ duration: 0.15 }}
+                                            >
+                                                {sourceChains.map((chain) => (
+                                                    <button
+                                                        key={chain.id}
+                                                        className={`${styles.dropdownItem} ${selectedChain?.id === chain.id ? styles.selected : ''}`}
+                                                        onClick={() => handleChainSelect(chain)}
+                                                    >
+                                                        <img
+                                                            src={chain.logo}
+                                                            alt={chain.name}
+                                                            className={styles.chainIcon}
+                                                        />
+                                                        <span className={styles.chainName}>{chain.name}</span>
+                                                    </button>
+                                                ))}
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
+
+                                <div className={styles.balanceRow}>
+                                    <span className={styles.balanceLabel}>Available Balance</span>
+                                    <span className={styles.balanceValue}>
+                                        {isFetchingBalance ? (
+                                            <SpinnerIcon />
+                                        ) : (
+                                            `$${sourceBalance.toFixed(2)}`
+                                        )}
+                                    </span>
+                                </div>
+
+                                <form onSubmit={handleSubmit} className={styles.form}>
+                                    <div className={styles.inputGroup}>
+                                        <span className={styles.currency}>$</span>
+                                        <input
+                                            type="number"
+                                            value={amount}
+                                            onChange={(e) => setAmount(e.target.value)}
+                                            placeholder="0.00"
+                                            min="0.5"
+                                            max={sourceBalance}
+                                            step="0.01"
+                                            className={styles.input}
+                                            disabled={isLoading}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setAmount(sourceBalance.toString())}
+                                            className={styles.maxBtn}
+                                            disabled={isLoading || sourceBalance === 0}
+                                        >
+                                            MAX
+                                        </button>
+                                    </div>
+
+                                    <div className={styles.quickAmounts}>
+                                        {[5, 10, 25, 50].map((amt) => (
+                                            <button
+                                                key={amt}
+                                                type="button"
+                                                onClick={() => setAmount(amt.toString())}
+                                                className={styles.quickBtn}
+                                                disabled={amt > sourceBalance || isLoading}
+                                            >
+                                                ${amt}
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    {(isInProgress || completedSteps.length > 0) && (
+                                        <motion.div
+                                            className={styles.stepsContainer}
+                                            initial={{ opacity: 0, height: 0 }}
+                                            animate={{ opacity: 1, height: 'auto' }}
+                                            transition={{ duration: 0.3 }}
+                                        >
+                                            {isInProgress && completedSteps.length === 0 && (
+                                                <div className={`${styles.step} ${styles.stepActive}`}>
+                                                    <div className={styles.stepIndicator}>
+                                                        <SpinnerIcon />
+                                                    </div>
+                                                    <div className={styles.stepContent}>
+                                                        <span className={styles.stepName}>Processing bridge...</span>
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {completedSteps.map((step, index) => (
+                                                <div
+                                                    key={step.name}
+                                                    className={`${styles.step} ${styles[`step${step.status.charAt(0).toUpperCase() + step.status.slice(1)}`]}`}
+                                                >
+                                                    <div className={styles.stepIndicator}>
+                                                        {step.status === 'complete' ? (
+                                                            <CheckIcon />
+                                                        ) : step.status === 'error' ? (
+                                                            <span className={styles.stepNumber}>✕</span>
+                                                        ) : (
+                                                            <SpinnerIcon />
+                                                        )}
+                                                    </div>
+                                                    <div className={styles.stepContent}>
+                                                        <span className={styles.stepName}>{step.name}</span>
+                                                        {step.explorerUrl && (
+                                                            <a
+                                                                href={step.explorerUrl}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className={styles.txLink}
+                                                            >
+                                                                View tx <ExternalLinkIcon />
+                                                            </a>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </motion.div>
+                                    )}
+
+                                    {currentStep === 'complete' && (
+                                        <motion.div
+                                            className={styles.successMessage}
+                                            initial={{ opacity: 0, scale: 0.9 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                        >
+                                            <CheckIcon /> Bridge complete! USDC transferred to Arc.
+                                        </motion.div>
+                                    )}
+
+                                    {error && <p className={styles.error}>{error}</p>}
+
+                                    <button
+                                        type="submit"
+                                        disabled={isLoading || !amount || parseFloat(amount) <= 0 || parseFloat(amount) > sourceBalance}
+                                        className={styles.submitBtn}
+                                    >
+                                        {isLoading ? 'Bridging...' : 'Bridge to Arc'}
+                                    </button>
+                                </form>
+
+                                <p className={styles.note}>
+                                    Fast Transfer (~30-60s) • Native USDC, no wrapped tokens
+                                </p>
+                            </motion.div>
+                        ) : (
+                            <motion.div
+                                key="gateway"
+                                initial={{ opacity: 0, x: 10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -10 }}
+                                transition={{ duration: 0.15 }}
+                                className={styles.tabContent}
+                            >
+                                <div className={styles.chainSelector} ref={dropdownRef}>
+                                    <label className={styles.label}>From Chain</label>
+                                    <button
+                                        className={styles.chainButton}
+                                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                        disabled={isLoading}
+                                    >
+                                        {selectedGatewayChain ? (
+                                            <>
+                                                <div className={styles.chainInfo}>
+                                                    <img
+                                                        src={selectedGatewayChain.logo}
+                                                        alt={selectedGatewayChain.name}
+                                                        className={styles.chainIcon}
+                                                    />
+                                                    <span className={styles.chainName}>{selectedGatewayChain.name}</span>
+                                                </div>
+                                                <motion.div
+                                                    animate={{ rotate: isDropdownOpen ? 180 : 0 }}
+                                                    transition={{ duration: 0.2 }}
+                                                >
+                                                    <ChevronDown className={styles.chevron} />
+                                                </motion.div>
+                                            </>
+                                        ) : (
+                                            <span className={styles.placeholder}>Select chain</span>
+                                        )}
+                                    </button>
+
+                                    <AnimatePresence>
+                                        {isDropdownOpen && (
+                                            <motion.div
+                                                className={styles.dropdown}
+                                                initial={{ opacity: 0, y: -10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                exit={{ opacity: 0, y: -10 }}
+                                                transition={{ duration: 0.15 }}
+                                            >
+                                                {gatewayChains.map((chain) => (
+                                                    <button
+                                                        key={chain.id}
+                                                        className={`${styles.dropdownItem} ${selectedGatewayChain?.id === chain.id ? styles.selected : ''}`}
+                                                        onClick={() => handleGatewayChainSelect(chain)}
+                                                    >
+                                                        <img
+                                                            src={chain.logo}
+                                                            alt={chain.name}
+                                                            className={styles.chainIcon}
+                                                        />
+                                                        <span className={styles.chainName}>{chain.name}</span>
+                                                    </button>
+                                                ))}
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
+
+                                <div className={styles.balanceRow}>
+                                    <span className={styles.balanceLabel}>Available Balance</span>
+                                    <span className={styles.balanceValue}>
+                                        {isFetchingGatewayBalance ? (
+                                            <SpinnerIcon />
+                                        ) : (
+                                            `$${gatewaySourceBalance.toFixed(2)}`
+                                        )}
+                                    </span>
+                                </div>
+
+                                <form onSubmit={handleGatewaySubmit} className={styles.form}>
+                                    <div className={styles.inputGroup}>
+                                        <span className={styles.currency}>$</span>
+                                        <input
+                                            type="number"
+                                            value={gatewayAmount}
+                                            onChange={(e) => setGatewayAmount(e.target.value)}
+                                            placeholder="0.00"
+                                            min="0.5"
+                                            max={gatewaySourceBalance}
+                                            step="0.01"
+                                            className={styles.input}
+                                            disabled={isGatewayLoading}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setGatewayAmount(gatewaySourceBalance.toString())}
+                                            className={styles.maxBtn}
+                                            disabled={isGatewayLoading || gatewaySourceBalance === 0}
+                                        >
+                                            MAX
+                                        </button>
+                                    </div>
+
+                                    <div className={styles.quickAmounts}>
+                                        {[5, 10, 25, 50].map((amt) => (
+                                            <button
+                                                key={amt}
+                                                type="button"
+                                                onClick={() => setGatewayAmount(amt.toString())}
+                                                className={styles.quickBtn}
+                                                disabled={amt > gatewaySourceBalance || isGatewayLoading}
+                                            >
+                                                ${amt}
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    {(isGatewayLoading || gatewayCompletedSteps.length > 0) && (
+                                        <motion.div
+                                            className={styles.stepsContainer}
+                                            initial={{ opacity: 0, height: 0 }}
+                                            animate={{ opacity: 1, height: 'auto' }}
+                                            transition={{ duration: 0.3 }}
+                                        >
+                                            {gatewayCompletedSteps.map((step) => (
+                                                <div
+                                                    key={step.name}
+                                                    className={`${styles.step} ${styles[`step${step.status.charAt(0).toUpperCase() + step.status.slice(1)}`]}`}
+                                                >
+                                                    <div className={styles.stepIndicator}>
+                                                        {step.status === 'complete' ? (
+                                                            <CheckIcon />
+                                                        ) : step.status === 'error' ? (
+                                                            <span className={styles.stepNumber}>✕</span>
+                                                        ) : step.status === 'active' ? (
+                                                            <SpinnerIcon />
+                                                        ) : (
+                                                            <span className={styles.stepNumber}>○</span>
+                                                        )}
+                                                    </div>
+                                                    <div className={styles.stepContent}>
+                                                        <span className={styles.stepName}>{step.name}</span>
+                                                        {step.explorerUrl && (
+                                                            <a
+                                                                href={step.explorerUrl}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className={styles.txLink}
+                                                            >
+                                                                View tx <ExternalLinkIcon />
+                                                            </a>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </motion.div>
+                                    )}
+
+                                    {gatewayCurrentStep === 'complete' && (
+                                        <motion.div
+                                            className={styles.successMessage}
+                                            initial={{ opacity: 0, scale: 0.9 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                        >
+                                            <CheckIcon /> Deposit complete! USDC deposited to Gateway.
+                                        </motion.div>
+                                    )}
+
+                                    {gatewayError && <p className={styles.error}>{gatewayError}</p>}
+
+                                    <button
+                                        type="submit"
+                                        disabled={isGatewayLoading || !gatewayAmount || parseFloat(gatewayAmount) <= 0 || parseFloat(gatewayAmount) > gatewaySourceBalance}
+                                        className={styles.submitBtn}
+                                    >
+                                        {isGatewayLoading ? 'Processing...' : 'Deposit to Gateway'}
+                                    </button>
+                                </form>
+
+                                <p className={styles.note}>
+                                    Deposit to Gateway • Unified cross-chain balance
+                                </p>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </motion.div>
             </motion.div>
         </AnimatePresence>
     );
 }
+

@@ -51,7 +51,7 @@ export const DYNAMIC_ENVIRONMENT_ID = 'a3744fd0-3794-4b60-a36a-57dbdbda6855';
 
 // API Endpoints
 export const API_ENDPOINTS = {
-  FAUCET: 'https://faucet.circle.com',
+  FAUCET: '/faucet',
   EXPLORER: 'https://testnet.arcscan.app',
 };
 

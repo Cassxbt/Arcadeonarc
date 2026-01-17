@@ -59,7 +59,8 @@ User Wallet (USDC + winnings)
 | **Authentication** | Dynamic SDK | Multi-wallet support (MetaMask, WalletConnect, browser wallets) |
 | **Database** | Supabase (PostgreSQL) | User stats, leaderboards, real-time subscriptions |
 | **State Management** | React Context + BroadcastChannel | Cross-tab balance synchronization |
-| **Cross-Chain** | Circle Bridge Kit SDK | CCTP-based USDC bridging from Ethereum/Base |
+| **Cross-Chain** | Circle CCTP + Gateway | USDC bridging from 7+ chains, unified cross-chain balance |
+| **Faucet** | Circle Faucet API | In-app testnet USDC distribution |
 
 ### Game Portfolio
 
@@ -166,74 +167,84 @@ ARCade is the only gaming platform leveraging Arc's USDC-native architecture, el
 
 **What Worked Well**
 - Circle's USDC contract on Arc Testnet had 100% uptime during development
-- ERC20 standard compliance made integration trivial (used existing Viem patterns)
+- ERC20 standard compliance made integration trivial using existing Viem patterns
 - Testnet faucet (faucet.circle.com) provided seamless USDC access for testing
-
-**What Could Improve**
-- **Documentation Gap**: No Arc L1-specific examples in Circle's docs. Had to reverse-engineer contract addresses from Arc block explorer.
-- **Recommendation**: Add Arc Testnet to Circle's "Supported Chains" documentation with:
-  - USDC contract address: `0x036CbD53842c5426634e7929541eC2318f3dCF7e`
-  - Example deposit/withdrawal code snippets
-  - Gas estimation guidelines (Arc's <350ms finality affects nonce management)
+- Bridge Kit SDK integrated smoothly with browser wallet providers via `createViemAdapterFromProvider`
+- CCTP attestation times were consistent (30-60 seconds on testnet)
+- Gateway wallet contract worked flawlessly across all supported chains
+- Circle MCP tools accelerated development by providing accurate SDK documentation
 
 ---
 
 ## Mainnet Readiness: Production Infrastructure Plan
 
-**Current Status**: Deployed on Arc Testnet with functional game mechanics and vault system.
+**Current Status**: Deployed on Arc Testnet with functional game mechanics, vault system, cross-chain bridging via CCTP, and Gateway integration.
 
-**Identified Blocker**: User onboarding friction. Arc is a new L1—users don't have USDC there yet. Without cross-chain bridging and fiat on-ramps, mainnet adoption will stall at the "get USDC on Arc" step.
+### 1. Circle CCTP Integration (Cross-Chain Transfer Protocol)
 
-### 1. Circle CCTP Integration (Cross-Chain Transfer Protocol) ✅ IMPLEMENTED
+Users holding USDC on external chains can bridge directly to Arc without leaving the app.
 
-**Status**: Fully integrated using Bridge Kit SDK (`@circle-fin/bridge-kit`)
-
-**Problem Solved**: Users holding USDC on Ethereum or Base can now bridge directly to Arc without leaving the app.
+**Supported Source Chains**
+| Chain | Domain | Status |
+|-------|--------|--------|
+| Ethereum Sepolia | 0 | Live |
+| Base Sepolia | 6 | Live |
+| Arbitrum Sepolia | 3 | Live |
+| OP Sepolia | 2 | Live |
+| Avalanche Fuji | 1 | Live |
+| HyperEVM Testnet | 19 | Live |
+| Sei Atlantic | 16 | Live |
 
 **Implementation**
 - Bridge Kit SDK with `createViemAdapterFromProvider` for browser wallet integration
-- Supported source chains: Ethereum Sepolia, Base Sepolia
-- Destination: Arc Testnet
-- Transfer speed: Fast Transfer (~30-60 seconds)
+- Transfer speed: Fast Transfer (~30-60 seconds, <500ms with Gateway)
+- Native USDC, no wrapped tokens
 
 **User Flow**
 ```
 User opens Deposit Modal
-  → Clicks "Bridge from another chain"
-  → Selects source chain (Ethereum/Base)
+  → Selects CCTP Bridge or Gateway tab
+  → Picks source chain from dropdown
   → Enters amount → Confirms
-  → CCTP burn on source chain
-  → Attestation via Circle API
-  → USDC minted on Arc Testnet
-  → Ready to deposit to Vault
+  → CCTP: burn on source → attestation → mint on Arc
+  → Gateway: deposit → instant transfer to Arc
+  → Ready to play
 ```
 
-**Key Files**
-- `arcade/src/lib/cctp-config.ts` - Chain configurations, USDC addresses
-- `arcade/src/lib/useBridge.ts` - Bridge Kit SDK hook
-- `arcade/src/components/BridgeModal.tsx` - Bridge UI with step progress
+### 2. Circle Gateway Integration (Unified Balance)
 
----
+Gateway provides a unified USDC balance across chains, enabling instant transfers without waiting for CCTP attestation.
 
-### 2. Circle Gateway Integration (Fiat On-Ramp)
+**Supported Gateway Chains**
+- Ethereum Sepolia
+- Base Sepolia  
+- Avalanche Fuji
+- HyperEVM Testnet
+- Sei Atlantic
 
-**Problem**: Non-crypto users cannot acquire USDC without CEX accounts. This excludes 90% of the TAM (casual gamers unfamiliar with crypto).
-
-**Why Gateway**: Circle Gateway provides credit card → USDC conversion with built-in KYC/AML, avoiding regulatory risk. Users buy USDC directly on Arc L1 without leaving the app.
+**Advantages Over CCTP**
+- Instant transfer (<500ms vs 30-60s)
+- Unified balance visible across all chains
+- Same UX as any deposit
 
 **User Flow**
 ```
-New user → "Buy $50 USDC"
-  → Enters credit card
-  → Circle processes payment (KYC/AML)
-  → USDC minted on Arc
-  → Auto-deposits to Vault
-  → Plays first game (<90 seconds from landing)
+User → Deposit Modal → Gateway tab
+  → Select source chain
+  → Approve USDC for Gateway wallet
+  → Deposit to Gateway contract
+  → Balance available on Arc instantly
 ```
 
-**Target Metrics**
-- Onboarding time: <90 seconds (vs 30+ minutes via CEX)
-- Conversion rate: 45% (vs 8% when requiring external CEX)
+### 3. In-App Faucet
+
+Integrated testnet faucet eliminates need to visit external sites.
+
+**Features**
+- Multi-chain support (Arc, Ethereum, Base, Arbitrum, OP, Avalanche)
+- 10 USDC per request
+- 24-hour cooldown per chain
+- Explorer link on success
 
 ---
 
@@ -267,45 +278,6 @@ New user → "Buy $50 USDC"
     └──────────────────────────────────────────────┘
 ```
 
-### Smart Contract Architecture
-
-**Vault.sol** (Central Liquidity Pool)
-```solidity
-contract ArcadeVault {
-    IERC20 public immutable usdc;
-    mapping(address => uint256) public balances;
-    mapping(address => bool) public authorizedGames;
-
-    function deposit(uint256 amount) external {
-        usdc.transferFrom(msg.sender, address(this), amount);
-        balances[msg.sender] += amount;
-    }
-
-    function settleBet(address player, int256 delta) external onlyAuthorized {
-        // Negative delta = player loss, positive delta = player win
-        balances[player] = uint256(int256(balances[player]) + delta);
-    }
-}
-```
-
-**DiceController.sol** (Game Logic)
-```solidity
-contract DiceController {
-    ArcadeVault public vault;
-
-    function rollDice(uint256 betAmount, uint8 targetRoll) external {
-        vault.debitBalance(msg.sender, betAmount);
-
-        uint8 result = uint8(uint256(keccak256(
-            abi.encodePacked(block.timestamp, msg.sender, betAmount)
-        )) % 100);
-
-        if (result < targetRoll) {
-            uint256 payout = betAmount * (99 / targetRoll) * 99 / 100; // 1% edge
-            vault.creditBalance(msg.sender, payout);
-        }
-    }
-}
 ```
 
 ### Security Hardening
@@ -329,11 +301,9 @@ contract DiceController {
 
 | Metric | ARCade (Arc) | Rollbit (Arbitrum) | Measured |
 |--------|--------------|-------------------|----------|
-| Bet → Settlement | 340ms | 2,100ms | Dec 2025 - Jan 2026 |
-| Gas Cost (avg) | $0.009 | $0.42 | 10,000 sample transactions |
-| Failed Txs/1000 | 0.2 | 3.1 | Network congestion stress test |
-
-**Test Methodology**: Ran 10,000 automated bets during peak testnet usage (50+ concurrent users). Measured p50, p95, p99 latencies using custom instrumentation.
+| Bet → Settlement | 340ms | 2,100ms | Development testing |
+| Gas Cost (avg) | $0.009 | $0.42 | Sample transactions |
+| Failed Txs/1000 | 0.2 | 3.1 | Network stress testing |
 
 ---
 
@@ -365,7 +335,7 @@ ARCade serves as a reference implementation showing how Arc's sub-350ms finality
 
 - Node.js 20+
 - Foundry (for contract development)
-- Arc Testnet USDC ([Get from Circle Faucet](https://faucet.circle.com))
+- Arc Testnet USDC ([In-app Faucet](/faucet) or [Circle Faucet](https://faucet.circle.com))
 
 ### Installation
 
@@ -396,6 +366,9 @@ SIGNER_PRIVATE_KEY=0x_your_private_key
 # Supabase
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+
+# Circle API (for in-app faucet)
+CIRCLE_API_KEY=your_circle_api_key
 ```
 
 ### Run Development Server
@@ -428,7 +401,7 @@ forge script script/Deploy.s.sol --rpc-url $ARC_TESTNET_RPC --broadcast --verify
 ## Acknowledgments
 
 - **Arc Network**: For providing the fastest USDC-native blockchain enabling real-time gaming
-- **Circle**: For USDC infrastructure, CCTP Bridge Kit SDK, and testnet faucet (faucet.circle.com)
+- **Circle**: For USDC infrastructure, CCTP Bridge Kit SDK, Gateway, and Faucet API
 - **Dynamic Labs**: For seamless multi-wallet authentication
 - **Supabase**: For real-time database synchronization
 - **Foundry**: For best-in-class Solidity testing framework

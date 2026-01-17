@@ -42,6 +42,9 @@ import {
     FerrisWheel,
     Grid3x3,
     X,
+    Droplets,
+    AlertCircle,
+    ExternalLink,
     type LucideIcon,
 } from 'lucide-react';
 
@@ -88,6 +91,9 @@ export {
     FerrisWheel,
     Grid3x3,
     X,
+    Droplets,
+    AlertCircle,
+    ExternalLink,
     type LucideIcon,
 };
 

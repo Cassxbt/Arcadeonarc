@@ -114,15 +114,10 @@ export default function Home() {
             <Play size={18} style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} />
             Start Playing
           </button>
-          <a
-            href="https://faucet.circle.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.secondaryBtn}
-          >
+          <Link href="/faucet" className={styles.secondaryBtn}>
             <Wallet size={18} style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} />
             Get Test USDC
-          </a>
+          </Link>
         </div>
       </section>
 

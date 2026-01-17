@@ -3,11 +3,15 @@ import { BridgeChain } from '@circle-fin/bridge-kit';
 
 export const CCTP_DOMAINS = {
     ETHEREUM_SEPOLIA: 0,
+    AVALANCHE_FUJI: 1,
     OPTIMISM_SEPOLIA: 2,
     ARBITRUM_SEPOLIA: 3,
     BASE_SEPOLIA: 6,
+    SEI_ATLANTIC: 16,
+    HYPEREVM_TESTNET: 19,
     ARC_TESTNET: 26,
 } as const;
+
 
 export const ethereumSepolia = defineChain({
     id: 11155111,
@@ -101,7 +105,72 @@ export const optimismSepolia = defineChain({
     testnet: true,
 });
 
+export const avalancheFuji = defineChain({
+    id: 43113,
+    name: 'Avalanche Fuji',
+    nativeCurrency: {
+        decimals: 18,
+        name: 'Avalanche',
+        symbol: 'AVAX',
+    },
+    rpcUrls: {
+        default: {
+            http: [
+                'https://api.avax-test.network/ext/bc/C/rpc',
+                'https://avalanche-fuji-c-chain-rpc.publicnode.com',
+            ],
+        },
+    },
+    blockExplorers: {
+        default: { name: 'Snowtrace', url: 'https://testnet.snowtrace.io' },
+    },
+    testnet: true,
+});
+
+export const hyperEvmTestnet = defineChain({
+    id: 998,
+    name: 'HyperEVM Testnet',
+    nativeCurrency: {
+        decimals: 18,
+        name: 'Hyperliquid',
+        symbol: 'HYPE',
+    },
+    rpcUrls: {
+        default: {
+            http: [
+                'https://rpc.hyperliquid-testnet.xyz/evm',
+            ],
+        },
+    },
+    blockExplorers: {
+        default: { name: 'Purrsec', url: 'https://testnet.purrsec.com' },
+    },
+    testnet: true,
+});
+
+export const seiAtlantic = defineChain({
+    id: 1328,
+    name: 'Sei Atlantic',
+    nativeCurrency: {
+        decimals: 18,
+        name: 'Sei',
+        symbol: 'SEI',
+    },
+    rpcUrls: {
+        default: {
+            http: [
+                'https://evm-rpc-testnet.sei-apis.com',
+            ],
+        },
+    },
+    blockExplorers: {
+        default: { name: 'Seitrace', url: 'https://seitrace.com' },
+    },
+    testnet: true,
+});
+
 export interface SourceChainConfig {
+
     id: string;
     name: string;
     chainId: number;
@@ -158,7 +227,41 @@ export const SOURCE_CHAINS: SourceChainConfig[] = [
         explorer: 'https://sepolia.etherscan.io',
         logo: '/chains/ethereum.svg',
     },
+    {
+        id: 'avalanche_fuji',
+        name: 'Avalanche Fuji',
+        chainId: 43113,
+        domain: CCTP_DOMAINS.AVALANCHE_FUJI,
+        usdc: '0x5425890298aed601595a70AB815c96711a31Bc65',
+        bridgeKitChain: BridgeChain.Avalanche_Fuji,
+        chain: avalancheFuji,
+        explorer: 'https://testnet.snowtrace.io',
+        logo: '/chains/avalanche.svg',
+    },
+    {
+        id: 'hyperevm_testnet',
+        name: 'HyperEVM',
+        chainId: 998,
+        domain: CCTP_DOMAINS.HYPEREVM_TESTNET,
+        usdc: '0x2B3370eE501B4a559b57D449569354196457D8Ab',
+        bridgeKitChain: BridgeChain.HyperEVM_Testnet,
+        chain: hyperEvmTestnet,
+        explorer: 'https://testnet.purrsec.com',
+        logo: '/chains/hyperevm.svg',
+    },
+    {
+        id: 'sei_atlantic',
+        name: 'Sei Atlantic',
+        chainId: 1328,
+        domain: CCTP_DOMAINS.SEI_ATLANTIC,
+        usdc: '0x4fCF1784B31630811181f670Aea7A7bEF803eaED',
+        bridgeKitChain: BridgeChain.Sei_Testnet,
+        chain: seiAtlantic,
+        explorer: 'https://seitrace.com',
+        logo: '/chains/sei.svg',
+    },
 ];
+
 
 export const ARC_TESTNET_CONFIG = {
     bridgeKitChain: BridgeChain.Arc_Testnet,
