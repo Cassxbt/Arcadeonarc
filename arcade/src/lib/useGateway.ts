@@ -18,7 +18,10 @@ const GATEWAY_WALLET_ABI = [
         name: 'deposit',
         type: 'function',
         stateMutability: 'nonpayable',
-        inputs: [{ name: 'amount', type: 'uint256' }],
+        inputs: [
+            { name: 'token', type: 'address' },
+            { name: 'value', type: 'uint256' },
+        ],
         outputs: [],
     },
     {
@@ -199,7 +202,7 @@ export function useGateway(): UseGatewayReturn {
                 address: chainConfig.gatewayWallet,
                 abi: GATEWAY_WALLET_ABI,
                 functionName: 'deposit',
-                args: [amountBigInt],
+                args: [chainConfig.usdc, amountBigInt],
                 account: userAddress,
                 chain: walletClient.chain,
             });
