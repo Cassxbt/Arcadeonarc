@@ -68,20 +68,39 @@ export async function POST(request: NextRequest) {
             }),
         });
 
-        const data = await response.json();
+        const responseText = await response.text();
+        let data: Record<string, unknown> | null = null;
+
+        try {
+            if (responseText) {
+                data = JSON.parse(responseText);
+            }
+        } catch {
+            console.error('[faucet] Failed to parse response:', responseText);
+        }
 
         if (!response.ok) {
-            console.error('[faucet] Circle API error:', data);
+            console.error('[faucet] Circle API error:', response.status, responseText);
 
-            if (response.status === 429 || data?.message?.includes('rate')) {
+            if (response.status === 429) {
                 return NextResponse.json(
                     { error: 'Rate limit exceeded. Try again in 24 hours.' },
                     { status: 429 }
                 );
             }
 
+            if (response.status === 401 || response.status === 403) {
+                return NextResponse.json(
+                    { error: 'Faucet authentication failed' },
+                    { status: 500 }
+                );
+            }
+
+            const errorMessage = (data as { message?: string })?.message ||
+                (data as { error?: string })?.error ||
+                'Faucet request failed';
             return NextResponse.json(
-                { error: data?.message || 'Faucet request failed' },
+                { error: errorMessage },
                 { status: response.status }
             );
         }

@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
-import { Droplets, ChevronDown, Check, AlertCircle, ExternalLink } from '@/components/icons';
+import Link from 'next/link';
+import { Droplets, ChevronDown, Check, AlertCircle, ExternalLink, ChevronLeft } from '@/components/icons';
 import styles from './page.module.css';
 
 interface FaucetChain {
@@ -95,6 +96,11 @@ export default function FaucetPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4 }}
             >
+                <Link href="/" className={styles.backLink}>
+                    <ChevronLeft size={18} />
+                    Back to Home
+                </Link>
+
                 <div className={styles.header}>
                     <div className={styles.iconWrapper}>
                         <Droplets size={32} />
