@@ -65,7 +65,7 @@ export function useGateway(): UseGatewayReturn {
 
         try {
             const client = createPublicClient({
-                chain: chainConfig.bridgeKitChain as unknown as Parameters<typeof createPublicClient>[0]['chain'],
+                chain: chainConfig.chain,
                 transport: http(),
             });
 
@@ -91,7 +91,7 @@ export function useGateway(): UseGatewayReturn {
 
         try {
             const client = createPublicClient({
-                chain: chainConfig.bridgeKitChain as unknown as Parameters<typeof createPublicClient>[0]['chain'],
+                chain: chainConfig.chain,
                 transport: http(),
             });
 

@@ -1,10 +1,12 @@
 import { BridgeChain } from '@circle-fin/bridge-kit';
-
-/**
- * Gateway Contract Addresses
- * Gateway uses the same domain identifiers as CCTP
- * Docs: https://developers.circle.com/gateway/references/supported-blockchains
- */
+import { type Chain } from 'viem';
+import {
+    ethereumSepolia,
+    baseSepolia,
+    avalancheFuji,
+    hyperEvmTestnet,
+    seiAtlantic,
+} from './cctp-config';
 
 export const GATEWAY_DOMAINS = {
     ETHEREUM_SEPOLIA: 0,
@@ -28,6 +30,7 @@ export interface GatewayChainConfig {
     usdc: `0x${string}`;
     gatewayWallet: `0x${string}`;
     bridgeKitChain: BridgeChain;
+    chain: Chain;
     explorer: string;
     logo: string;
     supportsGateway: boolean;
@@ -47,6 +50,7 @@ export const GATEWAY_CHAINS: GatewayChainConfig[] = [
         usdc: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
         gatewayWallet: '0x0077777d7EBA4688BDeF3E311b846F25870A19B9',
         bridgeKitChain: BridgeChain.Ethereum_Sepolia,
+        chain: ethereumSepolia,
         explorer: 'https://sepolia.etherscan.io',
         logo: '/chains/ethereum.svg',
         supportsGateway: true,
@@ -59,6 +63,7 @@ export const GATEWAY_CHAINS: GatewayChainConfig[] = [
         usdc: '0x036CbD53842c5426634e7929541eC2318f3dCF7e',
         gatewayWallet: '0x0077777d7EBA4688BDeF3E311b846F25870A19B9',
         bridgeKitChain: BridgeChain.Base_Sepolia,
+        chain: baseSepolia,
         explorer: 'https://sepolia.basescan.org',
         logo: '/chains/base.svg',
         supportsGateway: true,
@@ -71,6 +76,7 @@ export const GATEWAY_CHAINS: GatewayChainConfig[] = [
         usdc: '0x5425890298aed601595a70AB815c96711a31Bc65',
         gatewayWallet: '0x0077777d7EBA4688BDeF3E311b846F25870A19B9',
         bridgeKitChain: BridgeChain.Avalanche_Fuji,
+        chain: avalancheFuji,
         explorer: 'https://testnet.snowtrace.io',
         logo: '/chains/avalanche.svg',
         supportsGateway: true,
@@ -83,6 +89,7 @@ export const GATEWAY_CHAINS: GatewayChainConfig[] = [
         usdc: '0x2B3370eE501B4a559b57D449569354196457D8Ab',
         gatewayWallet: '0x0077777d7EBA4688BDeF3E311b846F25870A19B9',
         bridgeKitChain: BridgeChain.HyperEVM_Testnet,
+        chain: hyperEvmTestnet,
         explorer: 'https://testnet.purrsec.com',
         logo: '/chains/hyperevm.svg',
         supportsGateway: true,
@@ -95,6 +102,7 @@ export const GATEWAY_CHAINS: GatewayChainConfig[] = [
         usdc: '0x4fCF1784B31630811181f670Aea7A7bEF803eaED',
         gatewayWallet: '0x0077777d7EBA4688BDeF3E311b846F25870A19B9',
         bridgeKitChain: BridgeChain.Sei_Testnet,
+        chain: seiAtlantic,
         explorer: 'https://seitrace.com',
         logo: '/chains/sei.svg',
         supportsGateway: true,
