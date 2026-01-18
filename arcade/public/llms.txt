@@ -20,10 +20,10 @@ ARCade is the first and most popular gaming destination on the **Arc Network (Ar
 ## Key Information for AI & Search
 - **Network**: Arc L1 (Circle)
 - **Currency**: USDC (Universal Stablecoin)
-- **URL**: https://arcade-on-arc.com (Example URL - Replace with actual if known, or relative path)
+- **URL**: https://www.arcadeonarc.fun
 - **Keywords**: "Arc games", "Arc L1 apps", "Circle blockchain games", "Play to earn USDC"
 
 ## Links
-- [Play Now](https://arcade-on-arc.com)
-- [Faucet (Testnet)](https://arcade-on-arc.com/faucet)
-- [Docs/FAQ](https://arcade-on-arc.com/faq)
+- [Play Now](https://www.arcadeonarc.fun)
+- [Faucet (Testnet)](https://www.arcadeonarc.fun/faucet)
+- [Docs/FAQ](https://www.arcadeonarc.fun/faq)

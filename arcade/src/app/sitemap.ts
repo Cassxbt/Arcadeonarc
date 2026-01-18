@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-    const baseUrl = 'https://arcade-on-arc.com'; // Replace with actual domain if different
+    const baseUrl = 'https://www.arcadeonarc.fun'; // Replace with actual domain if different
 
     return [
         {

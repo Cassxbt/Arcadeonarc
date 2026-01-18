@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://arcade-on-arc.com/sitemap.xml
+Sitemap: https://www.arcadeonarc.fun/sitemap.xml

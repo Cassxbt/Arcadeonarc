@@ -38,6 +38,9 @@ export const metadata: Metadata = {
     ],
   },
   manifest: '/site.webmanifest',
+  verification: {
+    google: 'Mol4dK-qh_g-IgvAVh86Lm7CpmjYzSCDhQjXztgmKS8',
+  },
 };
 
 // Structured Data for Rich Results (Google Knowledge Graph)
