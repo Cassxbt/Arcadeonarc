@@ -24,9 +24,10 @@ export const ethereumSepolia = defineChain({
     rpcUrls: {
         default: {
             http: [
+                'https://rpc.sepolia.org',
+                'https://rpc2.sepolia.org',
                 'https://ethereum-sepolia-rpc.publicnode.com',
                 'https://1rpc.io/sepolia',
-                'https://sepolia.drpc.org',
             ],
         },
     },
@@ -47,8 +48,8 @@ export const baseSepolia = defineChain({
     rpcUrls: {
         default: {
             http: [
-                'https://base-sepolia-rpc.publicnode.com',
                 'https://sepolia.base.org',
+                'https://base-sepolia-rpc.publicnode.com',
                 'https://base-sepolia.drpc.org',
             ],
         },
@@ -70,9 +71,9 @@ export const arbitrumSepolia = defineChain({
     rpcUrls: {
         default: {
             http: [
+                'https://sepolia-rollup.arbitrum.io/rpc',
                 'https://arbitrum-sepolia-rpc.publicnode.com',
                 'https://arb-sepolia.g.alchemy.com/v2/demo',
-                'https://sepolia-rollup.arbitrum.io/rpc',
             ],
         },
     },
@@ -93,9 +94,9 @@ export const optimismSepolia = defineChain({
     rpcUrls: {
         default: {
             http: [
+                'https://sepolia.optimism.io',
                 'https://optimism-sepolia-rpc.publicnode.com',
                 'https://opt-sepolia.g.alchemy.com/v2/demo',
-                'https://sepolia.optimism.io',
             ],
         },
     },

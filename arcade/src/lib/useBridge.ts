@@ -239,21 +239,65 @@ export function useBridge(): UseBridgeReturn {
 
     const switchToChain = useCallback(async (chainId: number): Promise<boolean> => {
         if (!primaryWallet) return false;
+
+        const chainConfig = SOURCE_CHAINS.find(c => c.chainId === chainId);
+
         try {
             // Try using Dynamic's switchNetwork if available
             if ('switchNetwork' in primaryWallet) {
-                await (primaryWallet as unknown as { switchNetwork: (chainId: number) => Promise<void> }).switchNetwork(chainId);
-                return true;
+                try {
+                    await (primaryWallet as unknown as { switchNetwork: (chainId: number) => Promise<void> }).switchNetwork(chainId);
+                    return true;
+                } catch (error: any) {
+                    console.warn('[bridge] Dynamic switchNetwork failed, trying fallback:', error);
+                    // Continue to fallback
+                }
             }
 
-            // Fallback: use provider to request chain switch
+            // Fallback: use provider to request chain switch/add
             const provider = await getProvider();
             if (provider) {
-                await provider.request({
-                    method: 'wallet_switchEthereumChain',
-                    params: [{ chainId: `0x${chainId.toString(16)}` }],
-                });
-                return true;
+                try {
+                    await provider.request({
+                        method: 'wallet_switchEthereumChain',
+                        params: [{ chainId: `0x${chainId.toString(16)}` }],
+                    });
+                    return true;
+                } catch (switchError: any) {
+                    // This error code 4902 means the chain has not been added to the wallet.
+                    // Some wallets return a different error code or message for this.
+                    if (
+                        switchError.code === 4902 ||
+                        switchError.data?.originalError?.code === 4902 ||
+                        switchError.message?.includes('Unrecognized chain ID') ||
+                        switchError.message?.includes('check your wallet')
+                    ) {
+                        if (!chainConfig) {
+                            console.error('[bridge] Cannot add chain: config not found for ID', chainId);
+                            return false;
+                        }
+
+                        console.log('[bridge] Chain not found, attempting to add:', chainConfig.name);
+                        try {
+                            await provider.request({
+                                method: 'wallet_addEthereumChain',
+                                params: [{
+                                    chainId: `0x${chainId.toString(16)}`,
+                                    chainName: chainConfig.name,
+                                    nativeCurrency: chainConfig.chain.nativeCurrency,
+                                    rpcUrls: [...chainConfig.chain.rpcUrls.default.http],
+                                    blockExplorerUrls: [chainConfig.explorer],
+                                }],
+                            });
+                            return true;
+                        } catch (addError) {
+                            console.error('[bridge] Failed to add chain:', addError);
+                            return false;
+                        }
+                    } else {
+                        throw switchError;
+                    }
+                }
             }
             return false;
         } catch (err) {
