@@ -24,10 +24,11 @@ export const ethereumSepolia = defineChain({
     rpcUrls: {
         default: {
             http: [
-                'https://rpc.sepolia.org',
-                'https://rpc2.sepolia.org',
-                'https://ethereum-sepolia-rpc.publicnode.com',
+                'https://ethereum-sepolia-rpc.publicnode.com', // Research: Privacy-first, fast
+                'https://rpc.sepolia.org', // Research: Official
+                'https://rpc2.sepolia.org', // Research: Official backup
                 'https://1rpc.io/sepolia',
+                'https://sepolia.gateway.tenderly.co',
             ],
         },
     },
@@ -71,9 +72,9 @@ export const arbitrumSepolia = defineChain({
     rpcUrls: {
         default: {
             http: [
-                'https://sepolia-rollup.arbitrum.io/rpc',
-                'https://arbitrum-sepolia-rpc.publicnode.com',
-                'https://arb-sepolia.g.alchemy.com/v2/demo',
+                'https://sepolia-rollup.arbitrum.io/rpc', // Research: Official, generally reliable
+                'https://arbitrum-sepolia-rpc.publicnode.com', // Research: High uptime
+                'https://arbitrum-sepolia.drpc.org', // Research: Reliable backup
             ],
         },
     },
@@ -139,7 +140,8 @@ export const hyperEvmTestnet = defineChain({
     rpcUrls: {
         default: {
             http: [
-                'https://rpc.hyperliquid-testnet.xyz/evm',
+                'https://rpc.hyperliquid-testnet.xyz/evm', // Research: Official
+                'https://rpcs.chain.link/hyperevm/testnet', // Research: Chainlink (reliable)
             ],
         },
     },
