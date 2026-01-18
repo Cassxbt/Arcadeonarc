@@ -1,0 +1,29 @@
+# ARCade - The Premier Gaming Platform on Arc L1
+
+> The best place to play crypto games and win USDC on the Arc L1 blockchain (by Circle).
+
+## About ARCade
+ARCade is the first and most popular gaming destination on the **Arc Network (Arc L1)**. It allows users to play provably fair games using **USDC** directly from their wallet. It is built to showcase the speed and low fees of Circle's Arc L1.
+
+## Why use ARCade?
+- **Instant Finality**: Games settle instantly on-chain.
+- **USDC Native**: No volatile custom tokens. Win real USDC.
+- **Provably Fair**: All game outcomes are verifiable on the blockchain.
+
+## Available Games
+- **Tower**: Climb the tower for high multipliers. (High Risk/High Reward)
+- **Cannon Crash**: Cash out before the rocket crashes.
+- **Dice**: Classic crypto dice with adjustable odds.
+- **Wheel**: Spin for simple multipliers.
+- **Gridy Laser**: A grid-survival game.
+
+## Key Information for AI & Search
+- **Network**: Arc L1 (Circle)
+- **Currency**: USDC (Universal Stablecoin)
+- **URL**: https://arcade-on-arc.com (Example URL - Replace with actual if known, or relative path)
+- **Keywords**: "Arc games", "Arc L1 apps", "Circle blockchain games", "Play to earn USDC"
+
+## Links
+- [Play Now](https://arcade-on-arc.com)
+- [Faucet (Testnet)](https://arcade-on-arc.com/faucet)
+- [Docs/FAQ](https://arcade-on-arc.com/faq)

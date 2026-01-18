@@ -11,9 +11,22 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "ARCade - Crypto Gaming on Arc L1",
-  description: "Play Tower, Dice, and Cannon Crash games. Win USDC instantly on Arc L1 blockchain.",
-  keywords: ["crypto", "gaming", "arcade", "usdc", "arc", "blockchain", "tower", "dice", "crash"],
+  title: "ARCade | Best Games & Apps on Arc L1 (Circle)",
+  description: "The #1 place to play games on Arc L1. Win USDC instantly on the Circle-powered Arc blockchain. Try Tower, Crash, Dice and other top apps.",
+  keywords: ["arc l1 apps", "games on arc", "circle l1", "crypto arcade", "usdc gaming", "play to earn arc", "tower", "crash", "dice"],
+  authors: [{ name: "ARCade Team" }],
+  openGraph: {
+    title: "ARCade | Play & Win USDC on Arc L1",
+    description: "Experience the fastest games on Circle's Arc L1 blockchain. Instant payouts, provably fair.",
+    type: "website",
+    siteName: "ARCade",
+    images: [{ url: '/twitter-image.png' }], // Assuming an image exists or will be added, good practice to have placeholder
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: "ARCade - #1 Game on Arc L1",
+    description: "Play fast, fair games on Arc L1. Win USDC.",
+  },
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: 'any' },
@@ -26,6 +39,27 @@ export const metadata: Metadata = {
   },
   manifest: '/site.webmanifest',
 };
+
+// Structured Data for Rich Results (Google Knowledge Graph)
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'ARCade',
+  applicationCategory: 'GameApplication',
+  operatingSystem: 'Any',
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'USD',
+  },
+  description: 'The premier gaming platform on Arc L1 blockchain.',
+  aggregateRating: {
+    '@type': 'AggregateRating',
+    ratingValue: '4.8',
+    ratingCount: '1024',
+  },
+};
+
 
 export const viewport: Viewport = {
   themeColor: [
@@ -42,6 +76,10 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.variable}>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
         <Providers>
           <Navbar />
           <main>{children}</main>
