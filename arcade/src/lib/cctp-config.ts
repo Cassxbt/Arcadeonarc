@@ -8,6 +8,7 @@ export const CCTP_DOMAINS = {
     ARBITRUM_SEPOLIA: 3,
     BASE_SEPOLIA: 6,
     SEI_ATLANTIC: 16,
+    MONAD_TESTNET: 15,
     HYPEREVM_TESTNET: 19,
     ARC_TESTNET: 26,
 } as const;
@@ -151,6 +152,28 @@ export const hyperEvmTestnet = defineChain({
     testnet: true,
 });
 
+export const monadTestnet = defineChain({
+    id: 10143,
+    name: 'Monad Testnet',
+    nativeCurrency: {
+        decimals: 18,
+        name: 'Monad',
+        symbol: 'MON',
+    },
+    rpcUrls: {
+        default: {
+            http: [
+                'https://testnet-rpc.monad.xyz',
+                'https://monad-testnet.drpc.org',
+            ],
+        },
+    },
+    blockExplorers: {
+        default: { name: 'MonadScan', url: 'https://testnet.monadscan.com' },
+    },
+    testnet: true,
+});
+
 export const seiAtlantic = defineChain({
     id: 1328,
     name: 'Sei Atlantic',
@@ -251,6 +274,17 @@ export const SOURCE_CHAINS: SourceChainConfig[] = [
         chain: hyperEvmTestnet,
         explorer: 'https://testnet.purrsec.com',
         logo: '/chains/hyperevm.svg',
+    },
+    {
+        id: 'monad_testnet',
+        name: 'Monad Testnet',
+        chainId: 10143,
+        domain: CCTP_DOMAINS.MONAD_TESTNET,
+        usdc: '0x534b2f3A21130d7a60830c2Df862319e593943A3',
+        bridgeKitChain: BridgeChain.Monad_Testnet,
+        chain: monadTestnet,
+        explorer: 'https://testnet.monadscan.com',
+        logo: '/chains/monad.svg',
     },
     {
         id: 'sei_atlantic',
