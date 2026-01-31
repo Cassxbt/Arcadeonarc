@@ -11,10 +11,6 @@ import {
     ARC_TESTNET_CONFIG,
     getSourceChainById,
     type SourceChainConfig,
-    ethereumSepolia,
-    baseSepolia,
-    arbitrumSepolia,
-    optimismSepolia,
 } from './cctp-config';
 import { ERC20_ABI } from './abi';
 import { arcTestnet } from './constants';
@@ -23,7 +19,7 @@ type EIP1193Provider = {
     request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
 };
 
-const SUPPORTED_CHAINS: Chain[] = [ethereumSepolia, baseSepolia, arbitrumSepolia, optimismSepolia, arcTestnet];
+const SUPPORTED_CHAINS: Chain[] = [...SOURCE_CHAINS.map(c => c.chain), arcTestnet];
 
 interface EmbeddedWalletContext {
     walletClient: WalletClient;
@@ -74,7 +70,7 @@ function createEmbeddedWalletProvider(
             }
 
             // Get the current chain for transaction context
-            const currentChain = SUPPORTED_CHAINS.find(c => c.id === currentChainId) || ethereumSepolia;
+            const currentChain = SUPPORTED_CHAINS.find(c => c.id === currentChainId) || SUPPORTED_CHAINS[0];
 
             // Handle eth_sendTransaction with proper chain context
             if (method === 'eth_sendTransaction') {
