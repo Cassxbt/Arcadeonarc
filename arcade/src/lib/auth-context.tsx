@@ -21,6 +21,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [sessionWallet, setSessionWallet] = useState<string | null>(null);
     const [authError, setAuthError] = useState<string | null>(null);
     const [hasCheckedSession, setHasCheckedSession] = useState(false);
+    const [authAttemptFailed, setAuthAttemptFailed] = useState(false);
 
     useEffect(() => {
         const checkSession = async () => {
@@ -42,11 +43,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         checkSession();
     }, []);
 
+    // Reset failed flag when wallet changes
+    useEffect(() => {
+        setAuthAttemptFailed(false);
+    }, [primaryWallet?.address]);
+
     // Auto-authenticate when wallet connects
     useEffect(() => {
         if (!hasCheckedSession) return;
         if (!primaryWallet?.address) {
-            // Wallet disconnected, clear auth state
             if (isAuthenticated) {
                 setIsAuthenticated(false);
                 setSessionWallet(null);
@@ -60,10 +65,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             return;
         }
 
-        if (!isAuthenticating) {
+        if (!isAuthenticating && !authAttemptFailed) {
             authenticate();
         }
-    }, [primaryWallet?.address, hasCheckedSession, isAuthenticated, sessionWallet, isAuthenticating]);
+    }, [primaryWallet?.address, hasCheckedSession, isAuthenticated, sessionWallet, isAuthenticating, authAttemptFailed]);
 
     const authenticate = useCallback(async (): Promise<boolean> => {
         if (!primaryWallet?.address) {
@@ -120,9 +125,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } catch (error) {
             const message = error instanceof Error ? error.message : 'Authentication failed';
 
-            // Don't set error for user rejection
             if (!message.includes('rejected') && !message.includes('denied')) {
                 setAuthError(message);
+                setAuthAttemptFailed(true);
             }
             return false;
         } finally {

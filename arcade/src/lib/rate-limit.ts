@@ -4,7 +4,7 @@ import { redis } from './redis';
 export const rateLimiter = new Ratelimit({
     redis,
     limiter: Ratelimit.slidingWindow(20, '60 s'),
-    analytics: true,
+    analytics: false,
     prefix: 'arcade:ratelimit',
 });
 
