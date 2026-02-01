@@ -59,7 +59,7 @@ User Wallet (USDC + winnings)
 | **Authentication** | Dynamic SDK | Multi-wallet support (MetaMask, WalletConnect, browser wallets) |
 | **Database** | Supabase (PostgreSQL) | User stats, leaderboards, real-time subscriptions |
 | **State Management** | React Context + BroadcastChannel | Cross-tab balance synchronization |
-| **Cross-Chain** | Circle CCTP + Gateway | USDC bridging from 7+ chains, unified cross-chain balance |
+| **Cross-Chain** | Circle CCTP | USDC bridging from 7+ chains |
 | **Faucet** | Circle Faucet API | In-app testnet USDC distribution |
 
 ### Game Portfolio
@@ -167,16 +167,15 @@ ARCade is the only gaming platform leveraging Arc's USDC-native architecture, el
 
 **What Worked Well**
 - Circle's USDC contract on Arc Testnet had 100% uptime during development
-- ERC20 standard compliance made integration trivial using existing Viem patterns
+- ERC20 standard compliance made integration simpler using existing Viem patterns
 - Testnet faucet (faucet.circle.com) provided seamless USDC access for testing
 - Bridge Kit SDK integrated smoothly with browser wallet providers via `createViemAdapterFromProvider`
 - CCTP attestation times were consistent (30-60 seconds on testnet)
-- Gateway wallet contract worked flawlessly across all supported chains
 - Circle MCP tools accelerated development by providing accurate SDK documentation
 
 ---
 
-## Mainnet Readiness: Production Infrastructure Plan
+## Mainnet Readiness: Production Plan
 
 **Current Status**: Deployed on Arc Testnet with functional game mechanics, vault system, cross-chain bridging via CCTP, and Gateway integration.
 
@@ -195,11 +194,6 @@ Users holding USDC on external chains can bridge directly to Arc without leaving
 | HyperEVM Testnet | 19 | Live |
 | Sei Atlantic | 16 | Live |
 
-**Implementation**
-- Bridge Kit SDK with `createViemAdapterFromProvider` for browser wallet integration
-- Transfer speed: Fast Transfer (~30-60 seconds, <500ms with Gateway)
-- Native USDC, no wrapped tokens
-
 **User Flow**
 ```
 User opens Deposit Modal
@@ -211,32 +205,7 @@ User opens Deposit Modal
   → Ready to play
 ```
 
-### 2. Circle Gateway Integration (Unified Balance)
-
-Gateway provides a unified USDC balance across chains, enabling instant transfers without waiting for CCTP attestation.
-
-**Supported Gateway Chains**
-- Ethereum Sepolia
-- Base Sepolia  
-- Avalanche Fuji
-- HyperEVM Testnet
-- Sei Atlantic
-
-**Advantages Over CCTP**
-- Instant transfer (<500ms vs 30-60s)
-- Unified balance visible across all chains
-- Same UX as any deposit
-
-**User Flow**
-```
-User → Deposit Modal → Gateway tab
-  → Select source chain
-  → Approve USDC for Gateway wallet
-  → Deposit to Gateway contract
-  → Balance available on Arc instantly
-```
-
-### 3. In-App Faucet
+### 2. In-App Faucet
 
 Integrated testnet faucet eliminates need to visit external sites.
 
@@ -313,7 +282,7 @@ Integrated testnet faucet eliminates need to visit external sites.
 
 Arc's deterministic finality and 500+ TPS throughput enable ARCade to scale to 10,000+ concurrent players without degradation. Planned optimizations:
 
-1. **Batch Settlement**: Aggregate multiple bets into single transactions (reduces gas costs 80%)
+1. **Batch Settlement**: Aggregate multiple bets into single transactions
 2. **Multiplayer Tournaments**: 100-player tournaments with on-chain prize distribution
 3. **Liquidity Provider Incentives**: Allow external LPs to contribute to Vault in exchange for 30% of house edge
 
@@ -325,7 +294,7 @@ ARCade demonstrates Arc's real-world utility for consumer-facing DeFi applicatio
 2. **Generate $40M+ annual USDC volume** on Arc L1 (1,000 DAU × $50 bet × 10 bets/day × 365 days)
 3. **Prove USDC-native architecture viability** for payment-heavy applications (NFT marketplaces, prediction markets, DEXs)
 
-ARCade serves as a reference implementation showing how Arc's sub-350ms finality unlocks use cases impossible on Ethereum or Layer 2s.
+ARCade serves as a reference project showing how Arc's sub-350ms finality unlocks use cases impossible on Ethereum or Layer 2s.
 
 ---
 
@@ -423,4 +392,4 @@ This project is licensed under the MIT License - see [LICENSE](LICENSE) for deta
 
 ---
 
-Built on Arc by [@Cassxbt](https://twitter.com/Cassxbt)
+Built with ❤️ by [@Cassxbt](https://twitter.com/Cassxbt)
