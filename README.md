@@ -59,7 +59,7 @@ User Wallet (USDC + winnings)
 | **Authentication** | Dynamic SDK | Multi-wallet support (MetaMask, WalletConnect, browser wallets) |
 | **Database** | Supabase (PostgreSQL) | User stats, leaderboards, real-time subscriptions |
 | **State Management** | React Context + BroadcastChannel | Cross-tab balance synchronization |
-| **Cross-Chain** | Circle CCTP | USDC bridging from 7+ chains |
+| **Cross-Chain** | Circle CCTP v2 (Bridge Kit v1.5.0) | USDC bridging from 8 chains |
 | **Faucet** | Circle Faucet API | In-app testnet USDC distribution |
 
 ### Game Portfolio
@@ -142,17 +142,6 @@ ARCade is the only gaming platform leveraging Arc's USDC-native architecture, el
 - Levied on winnings only, not total bets
 - Incentivizes retention (players keep more of wins)
 
-### Revenue Projections
-
-**Conservative Scenario** (1,000 daily active users, $50 average bet):
-- Daily Volume: 1,000 users × 10 bets × $50 = $500,000
-- House Edge Revenue (2% avg): $500,000 × 0.02 = $10,000/day
-- Protocol Fees (0.5% on 45% winning bets): $225,000 × 0.005 = $1,125/day
-- **Monthly Revenue**: $333,750
-
-**Growth Scenario** (10,000 DAU, $50 average bet):
-- **Monthly Revenue**: $3,337,500
-
 ---
 
 ## Circle Integration & Developer Feedback
@@ -168,48 +157,55 @@ ARCade is the only gaming platform leveraging Arc's USDC-native architecture, el
 **What Worked Well**
 - Circle's USDC contract on Arc Testnet had 100% uptime during development
 - ERC20 standard compliance made integration simpler using existing Viem patterns
-- Testnet faucet (faucet.circle.com) provided seamless USDC access for testing
-- Bridge Kit SDK integrated smoothly with browser wallet providers via `createViemAdapterFromProvider`
+- Testnet faucet (faucet.circle.com) provided seamless USDC access for testing; our in-app faucet wraps this for a frictionless onboarding experience
+- Bridge Kit SDK's data-driven architecture makes adding new chains trivial — Monad Testnet was integrated in under an hour with zero changes to bridge logic or UI
+- Bridge Kit v1.5.0 auto-retry for expired attestations replaced our manual retry logic, improving reliability on testnets
 - CCTP attestation times were consistent (30-60 seconds on testnet)
 - Circle MCP tools accelerated development by providing accurate SDK documentation
 
+**Areas for Improvement**
+- Bridge Kit does not yet support Circle's own wallets (Modular, User-Controlled, Developer-Controlled). Passkey-based modular wallets combined with CCTP bridging would significantly improve onboarding for non-crypto users
+- No official documentation or example repos for embedded wallet providers (Dynamic Labs, Privy) with Bridge Kit. Developers must add chains to both Bridge Kit config and their wallet provider's network config — this is not covered in Circle docs
+- Gateway support for newer chains like Monad would be valuable for instant cross-chain transfers
+
 ---
 
-## Mainnet Readiness: Production Plan
+## Cross-Chain USDC Bridging (Circle CCTP v2)
 
-**Current Status**: Deployed on Arc Testnet with functional game mechanics, vault system, cross-chain bridging via CCTP, and Gateway integration.
-
-### 1. Circle CCTP Integration (Cross-Chain Transfer Protocol)
-
-Users holding USDC on external chains can bridge directly to Arc without leaving the app.
+Users holding USDC on external chains can bridge directly to Arc without leaving the app via Circle's Bridge Kit SDK with the Viem v2 adapter.
 
 **Supported Source Chains**
-| Chain | Domain | Status |
-|-------|--------|--------|
-| Ethereum Sepolia | 0 | Live |
-| Base Sepolia | 6 | Live |
-| Arbitrum Sepolia | 3 | Live |
-| OP Sepolia | 2 | Live |
-| Avalanche Fuji | 1 | Live |
-| HyperEVM Testnet | 19 | Live |
-| Sei Atlantic | 16 | Live |
+
+| Chain | Domain | Chain ID | Status |
+|-------|--------|----------|--------|
+| Arbitrum Sepolia | 3 | 421614 | Live |
+| Base Sepolia | 6 | 84532 | Live |
+| OP Sepolia | 2 | 11155420 | Live |
+| Ethereum Sepolia | 0 | 11155111 | Live |
+| Avalanche Fuji | 1 | 43113 | Live |
+| HyperEVM Testnet | 19 | 998 | Live |
+| Monad Testnet | 15 | 10143 | Live |
+| Sei Atlantic | 16 | 1328 | Live |
+
+**Destination**: Arc Testnet (Domain 26, Chain ID 5042002)
 
 **User Flow**
 ```
 User opens Deposit Modal
-  → Selects CCTP Bridge or Gateway tab
   → Picks source chain from dropdown
-  → Enters amount → Confirms
-  → CCTP: burn on source → attestation → mint on Arc
-  → Gateway: deposit → instant transfer to Arc
-  → Ready to play
+  → Enters USDC amount → Confirms
+  → Bridge Kit burns USDC on source chain
+  → Circle attestation service verifies (~30-60s)
+  → Native USDC minted on Arc Testnet
+  → Balance available to play
 ```
 
-### 2. In-App Faucet
+Both external wallets (MetaMask, Rabby, WalletConnect) and embedded wallets (Dynamic Labs email login) are supported. Adding a new source chain requires only a config entry in `cctp-config.ts` and a network entry in `dynamic.tsx` for embedded wallet support.
 
-Integrated testnet faucet eliminates need to visit external sites.
+### In-App Faucet
 
-**Features**
+Integrated testnet faucet eliminates the need to visit external sites.
+
 - Multi-chain support (Arc, Ethereum, Base, Arbitrum, OP, Avalanche)
 - 10 USDC per request
 - 24-hour cooldown per chain
@@ -219,7 +215,7 @@ Integrated testnet faucet eliminates need to visit external sites.
 
 ## Technical Implementation
 
-### Production Architecture with Circle Infrastructure
+### Architecture with Circle Infrastructure
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -247,8 +243,6 @@ Integrated testnet faucet eliminates need to visit external sites.
     └──────────────────────────────────────────────┘
 ```
 
-```
-
 ### Security Hardening
 
 **Access Control**
@@ -258,7 +252,7 @@ Integrated testnet faucet eliminates need to visit external sites.
 
 **API Security**
 - HMAC-SHA256 signatures required for all settlement API calls
-- Rate limiting: 20 requests/minute per IP (Cloudflare Workers)
+- Rate limiting: 20 requests/minute per IP (Upstash Redis)
 - Request replay protection via nonce tracking
 
 **Test Coverage**
@@ -273,28 +267,6 @@ Integrated testnet faucet eliminates need to visit external sites.
 | Bet → Settlement | 340ms | 2,100ms | Development testing |
 | Gas Cost (avg) | $0.009 | $0.42 | Sample transactions |
 | Failed Txs/1000 | 0.2 | 3.1 | Network stress testing |
-
----
-
-## Future Prospects
-
-### Scalability
-
-Arc's deterministic finality and 500+ TPS throughput enable ARCade to scale to 10,000+ concurrent players without degradation. Planned optimizations:
-
-1. **Batch Settlement**: Aggregate multiple bets into single transactions
-2. **Multiplayer Tournaments**: 100-player tournaments with on-chain prize distribution
-3. **Liquidity Provider Incentives**: Allow external LPs to contribute to Vault in exchange for 30% of house edge
-
-### Impact on Arc Ecosystem
-
-ARCade demonstrates Arc's real-world utility for consumer-facing DeFi applications. Success could:
-
-1. **Onboard 50,000+ users to Arc** within 12 months of mainnet launch
-2. **Generate $40M+ annual USDC volume** on Arc L1 (1,000 DAU × $50 bet × 10 bets/day × 365 days)
-3. **Prove USDC-native architecture viability** for payment-heavy applications (NFT marketplaces, prediction markets, DEXs)
-
-ARCade serves as a reference project showing how Arc's sub-350ms finality unlocks use cases impossible on Ethereum or Layer 2s.
 
 ---
 
