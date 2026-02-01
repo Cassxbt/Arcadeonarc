@@ -4,7 +4,7 @@ A provably fair crypto gaming platform built on Arc L1 blockchain with native US
 
 ## Overview
 
-ARCade is a decentralized gaming platform featuring multiple casino-style games with on-chain settlement. Players deposit USDC into a smart contract vault and play games with instant payouts. The platform supports cross-chain USDC transfers from Ethereum and Base via Circle's Cross-Chain Transfer Protocol (CCTP).
+ARCade is a decentralized gaming platform featuring multiple casino-style games with on-chain settlement. Players deposit USDC into a smart contract vault and play games with instant payouts. The platform supports cross-chain USDC transfers from 8 source chains via Circle's Cross-Chain Transfer Protocol (CCTP v2).
 
 **Live:** [arcadeonarc.fun](https://arcadeonarc.fun)
 
@@ -19,7 +19,7 @@ ARCade is a decentralized gaming platform featuring multiple casino-style games 
 
 ### Platform
 - **USDC Native** - Arc L1 uses USDC as the native gas token
-- **Cross-Chain Bridge** - Bridge USDC from Ethereum Sepolia and Base Sepolia via CCTP v2
+- **Cross-Chain Bridge** - Bridge USDC from 8 source chains via CCTP v2 (Arbitrum, Base, OP, Ethereum, Avalanche, HyperEVM, Monad, Sei)
 - **Vault System** - Deposit/withdraw USDC to play; balances stored on-chain
 - **Wallet Support** - Dynamic SDK integration supporting MetaMask, Rabby, WalletConnect, and embedded wallets
 - **Provably Fair** - On-chain randomness and transparent game logic
@@ -32,7 +32,7 @@ ARCade is a decentralized gaming platform featuring multiple casino-style games 
 | Styling | CSS Modules, Framer Motion |
 | Blockchain | Viem, Arc L1 Testnet |
 | Wallet | Dynamic SDK |
-| Bridge | Circle CCTP v2, Bridge Kit |
+| Bridge | Circle CCTP v2, Bridge Kit v1.5.0 |
 | Backend | Next.js API Routes, Supabase |
 | Rate Limiting | Upstash Redis |
 
@@ -71,13 +71,26 @@ Deployed on Arc Testnet (Chain ID: 5042002):
 ARCade integrates Circle's CCTP v2 for trustless USDC transfers:
 
 ### Supported Source Chains
-- Ethereum Sepolia (Domain 0)
-- Base Sepolia (Domain 6)
+
+| Chain | Domain | Chain ID |
+|-------|--------|----------|
+| Arbitrum Sepolia | 3 | 421614 |
+| Base Sepolia | 6 | 84532 |
+| OP Sepolia | 2 | 11155420 |
+| Ethereum Sepolia | 0 | 11155111 |
+| Avalanche Fuji | 1 | 43113 |
+| HyperEVM Testnet | 19 | 998 |
+| Monad Testnet | 15 | 10143 |
+| Sei Atlantic | 16 | 1328 |
 
 ### Destination
-- Arc Testnet (Domain 26)
+- Arc Testnet (Domain 26, Chain ID 5042002)
 
-The bridge uses Circle's Bridge Kit with `createAdapterFromProvider` for wallet integration, supporting any EIP-1193 compatible wallet.
+### Integration
+
+The bridge uses Circle's Bridge Kit (`@circle-fin/bridge-kit`) with the Viem v2 adapter (`@circle-fin/adapter-viem-v2`) for wallet integration. Both external wallets (MetaMask, Rabby, WalletConnect) and embedded wallets (Dynamic Labs email login) are supported.
+
+Adding a new source chain requires only a configuration entry in `src/lib/cctp-config.ts` and a corresponding network entry in `src/lib/dynamic.tsx` for embedded wallet support. No changes to bridge logic or UI are needed.
 
 ## Development
 
