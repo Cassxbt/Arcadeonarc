@@ -8,7 +8,7 @@
 
 ---
 
-## Popular Issue
+## Problem
 
 Traditional online gaming platforms suffer from three critical bottlenecks:
 
@@ -53,7 +53,7 @@ User Wallet (USDC + winnings)
 | Layer | Technology | Purpose |
 |-------|-----------|---------|
 | **Frontend** | Next.js 16 (App Router) + React 19 | Server-side rendering, API routes |
-| **Styling** | TailwindCSS + CSS Modules | Component isolation, theme switching |
+| **Styling** | CSS Modules + Framer Motion | Component isolation, animations |
 | **Blockchain** | Solidity 0.8.20 (Foundry) | Smart contracts, deployment scripts |
 | **Network** | Arc Testnet (Reth-based) | USDC-native L1 with <350ms finality |
 | **Authentication** | Dynamic SDK | Multi-wallet support (MetaMask, WalletConnect, browser wallets) |
@@ -66,11 +66,11 @@ User Wallet (USDC + winnings)
 
 | Game | Mechanic | House Edge | Max Multiplier | Contract |
 |------|----------|------------|----------------|----------|
-| **Dice** | Roll target prediction | 1.0% | 99x | [0xB91ddf...](https://testnet.arcscan.app/address/0xB91ddfe1567c38B259f417604755Dc58cdf73f0C) |
-| **Crash** | Cash out before crash | 1.0% | Unlimited | [0x09e1bC...](https://testnet.arcscan.app/address/0x09e1bC3c33aa0A7e0a68cec3c00C44FD4E2dd5Db) |
-| **Tower** | Climb without hitting mines | 3.0% | Variable | [0x7d1F09...](https://testnet.arcscan.app/address/0x7d1F094C8B48cBb7E9a017059eeC5a33eD4c243f) |
-| **Wheel** | Segment prediction | 2.5% | 5x | [0x590777...](https://testnet.arcscan.app/address/0x5907775345715b9F0ac1b00027Cd96B8fEE1e850) |
-| **Laser** | Grid target selection | 4.0% | 95x | [0xcBdff4...](https://testnet.arcscan.app/address/0xcBdff4f22bb291067EF9E36E2202c4d736739579) |
+| **Dice** | Roll target prediction | 10% | 99x | [0xB91ddf...](https://testnet.arcscan.app/address/0xB91ddfe1567c38B259f417604755Dc58cdf73f0C) |
+| **Crash** | Cash out before crash | 5% | 100x | [0x09e1bC...](https://testnet.arcscan.app/address/0x09e1bC3c33aa0A7e0a68cec3c00C44FD4E2dd5Db) |
+| **Tower** | Climb without hitting mines | 10% | 100x | [0x7d1F09...](https://testnet.arcscan.app/address/0x7d1F094C8B48cBb7E9a017059eeC5a33eD4c243f) |
+| **Wheel** | Segment prediction | 4% | 3.5x | [0x104Ac6...](https://testnet.arcscan.app/address/0x104Ac6DADbd5751C79bb76d99d1F2CA501FaDE3D) |
+| **Laser** | Grid target selection | 4% | 95x | [0xcBdff4...](https://testnet.arcscan.app/address/0xcBdff4f22bb291067EF9E36E2202c4d736739579) |
 
 ---
 
@@ -99,7 +99,7 @@ Crypto gaming and betting generated **$4.6B in 2023**, with 15.3% projected CAGR
 - **Behavior**: Currently use centralized casinos (Stake, Rollbit) but distrust house fairness
 - **Pain Point**: High Ethereum gas fees force $50+ minimum bets, excluding casual players
 
-**Beachhead Market**: 500K monthly active Ethereum gamblers spending $200-1000/month who would switch for 10x lower fees and instant finality.
+**Beachhead Market**: Ethereum-native gamblers priced out by gas fees who would switch for 10x lower costs and instant finality.
 
 ---
 
@@ -129,18 +129,16 @@ ARCade is the only gaming platform leveraging Arc's USDC-native architecture, el
 
 ## Revenue Model
 
-### Primary Revenue Streams
+### Revenue Stream
 
-**1. House Edge** (1-4% depending on game complexity)
-- Dice: 1.0% (simple mechanics)
-- Crash: 1.0% (simple mechanics)
-- Wheel: 2.5% (moderate complexity)
-- Tower: 3.0% (multi-step game)
-- Laser: 4.0% (high complexity)
+**House Edge** (4-10% depending on game complexity)
+- Laser: 4% (grid-based selection)
+- Wheel: 4% (segment prediction)
+- Crash: 5% (cash-out timing)
+- Dice: 10% (roll prediction)
+- Tower: 10% (multi-step climbing)
 
-**2. Protocol Fee** (0.5% on all winning payouts)
-- Levied on winnings only, not total bets
-- Incentivizes retention (players keep more of wins)
+House edge is enforced on-chain via multiplier calculations in each game contract. The Vault accumulates house balance from losing bets, withdrawable by the contract owner.
 
 ---
 
@@ -152,7 +150,7 @@ ARCade is the only gaming platform leveraging Arc's USDC-native architecture, el
 
 1. **Arc's Native USDC**: Using USDC for gas eliminates ETH/MATIC volatility that plagues competitors
 2. **Regulatory Clarity**: Circle's compliance (NYDFS BitLicense, EU MiCA) de-risks future expansion
-3. **Liquidity**: USDC's $75B market cap ensures deep liquidity for user on/off ramps
+3. **Liquidity**: USDC's deep market liquidity ensures reliable user on/off ramps
 
 **What Worked Well**
 - Circle's USDC contract on Arc Testnet had 100% uptime during development
@@ -164,7 +162,7 @@ ARCade is the only gaming platform leveraging Arc's USDC-native architecture, el
 - Circle MCP tools accelerated development by providing accurate SDK documentation
 
 **Areas for Improvement**
-- Bridge Kit does not yet support Circle's own wallets (Modular, User-Controlled, Developer-Controlled). Passkey-based modular wallets combined with CCTP bridging would significantly improve onboarding for non-crypto users
+- Bridge Kit's Circle Wallets adapter (added Nov 2025) supports developer-controlled wallets but is server-side only. Client-side support for passkey-based modular wallets combined with CCTP bridging would significantly improve onboarding for non-crypto users
 - No official documentation or example repos for embedded wallet providers (Dynamic Labs, Privy) with Bridge Kit. Developers must add chains to both Bridge Kit config and their wallet provider's network config — this is not covered in Circle docs
 - Gateway support for newer chains like Monad would be valuable for instant cross-chain transfers
 
@@ -221,16 +219,16 @@ Integrated testnet faucet eliminates the need to visit external sites.
 ┌─────────────────────────────────────────────────────────────┐
 │                    User Entry Points                         │
 ├─────────────────────────────────────────────────────────────┤
-│  Crypto User (ETH USDC)  │  Non-Crypto User (Credit Card)  │
+│  Crypto User (ETH USDC)  │  Non-Crypto User (planned)      │
 └──────────┬────────────────┴──────────────┬──────────────────┘
            │                               │
-           │ Circle CCTP Bridge            │ Circle Gateway
+           │ Circle CCTP Bridge            │ Circle Gateway (planned)
            │                               │
            ▼                               ▼
     ┌──────────────────────────────────────────────┐
     │         Circle Infrastructure Layer          │
     │  - CCTP Attestation Service                  │
-    │  - Gateway Payment Processing (KYC/AML)      │
+    │  - Gateway Payment Processing (planned)      │
     │  - USDC Minting on Arc L1                    │
     └──────────────────┬───────────────────────────┘
                        │
@@ -256,17 +254,17 @@ Integrated testnet faucet eliminates the need to visit external sites.
 - Request replay protection via nonce tracking
 
 **Test Coverage**
-- 100% line coverage across 53 unit tests
-- Foundry invariant testing for Vault accounting
+- 51 unit tests covering Vault accounting, game logic, and access control
+- Foundry invariant testing for Vault balance integrity
 - Integration tests with forked Arc Testnet state
 
-### Performance Benchmarks
+### Performance Benchmarks (Arc Testnet)
 
-| Metric | ARCade (Arc) | Rollbit (Arbitrum) | Measured |
-|--------|--------------|-------------------|----------|
-| Bet → Settlement | 340ms | 2,100ms | Development testing |
-| Gas Cost (avg) | $0.009 | $0.42 | Sample transactions |
-| Failed Txs/1000 | 0.2 | 3.1 | Network stress testing |
+| Metric | Value | Context |
+|--------|-------|---------|
+| Bet → Settlement | 340ms | Average across development testing |
+| Gas Cost (avg) | $0.009 | Sample of 100+ transactions |
+| Failed Txs/1000 | 0.2 | Under sustained load testing |
 
 ---
 
@@ -276,7 +274,7 @@ Integrated testnet faucet eliminates the need to visit external sites.
 
 - Node.js 20+
 - Foundry (for contract development)
-- Arc Testnet USDC ([In-app Faucet](/faucet) or [Circle Faucet](https://faucet.circle.com))
+- Arc Testnet USDC ([In-app Faucet](https://arcadeonarc.fun/faucet) or [Circle Faucet](https://faucet.circle.com))
 
 ### Installation
 
@@ -307,6 +305,11 @@ SIGNER_PRIVATE_KEY=0x_your_private_key
 # Supabase
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+
+# Rate Limiting (Upstash Redis)
+UPSTASH_REDIS_REST_URL=your_upstash_url
+UPSTASH_REDIS_REST_TOKEN=your_upstash_token
 
 # Circle API (for in-app faucet)
 CIRCLE_API_KEY=your_circle_api_key
