@@ -4,8 +4,9 @@ import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { useGame } from '@/lib/game-context';
 import { useSound } from '@/lib/sounds';
+import { authFetch, getRequestErrorMessage, readResponseError } from '@/lib/auth-fetch';
 import { GAME_CONFIG } from '@/lib/constants';
-import { TowerControl, Dice6, Bomb, Skull, Sparkles, Check } from '@/components/icons';
+import { TowerControl, Skull, Sparkles, Check } from '@/components/icons';
 import { GameModeSelector } from '@/components/GameModeSelector';
 import { DemoLimitOverlay } from '@/components/DemoLimitOverlay';
 import { GameInfoPanel, InfoButton, TOWER_GAME_RULES } from '@/components/GameInfoPanel';
@@ -14,7 +15,6 @@ import styles from './page.module.css';
 // Tower configuration
 const TOWER_ROWS = GAME_CONFIG.TOWER_ROWS;
 const TILE_PATTERN = GAME_CONFIG.TOWER_PATTERN;
-const VISIBLE_ROWS = 4; // Only show 4 rows at a time
 const ROW_HEIGHT = 88; // Height of tile row + gap
 
 function calculateMultiplier(row: number): number {
@@ -37,19 +37,53 @@ interface TileState {
     isSelected: boolean;
 }
 
+type TowerServerState = {
+    currentRow?: number;
+    revealedDeaths?: Record<string, number>;
+    selectedTiles?: Record<string, number>;
+};
+
+function buildTowerTiles(state?: TowerServerState): TileState[][] {
+    const revealedDeaths = state?.revealedDeaths ?? {};
+    const selectedTiles = state?.selectedTiles ?? {};
+
+    return TILE_PATTERN.map((tileCount, rowIndex) =>
+        Array.from({ length: tileCount }, (_, tileIndex) => {
+            const deathTile = revealedDeaths[rowIndex];
+            const selectedTile = selectedTiles[rowIndex];
+            return {
+                revealed: selectedTile === tileIndex || deathTile === tileIndex,
+                isDeath: deathTile === tileIndex,
+                isSelected: selectedTile === tileIndex,
+            };
+        })
+    );
+}
+
+function buildRevealedDeathsMap(state?: TowerServerState): Map<number, number> {
+    const entries: Array<[number, number]> = [];
+    for (const [row, tile] of Object.entries(state?.revealedDeaths ?? {})) {
+        const rowNumber = Number(row);
+        const tileNumber = Number(tile);
+        if (Number.isInteger(rowNumber) && Number.isInteger(tileNumber)) {
+            entries.push([rowNumber, tileNumber]);
+        }
+    }
+    return new Map(entries);
+}
+
 export default function TowerGame() {
     const { primaryWallet, setShowAuthFlow } = useDynamicContext();
     const {
-        effectiveBalance,
         betAmount,
         setBetAmount,
         canBet,
         addBetRecord,
+        refreshBalance,
         betHistory,
         demoMode,
         toggleDemoMode,
         isDemoLimitReached,
-        getRemainingDemoPlays,
     } = useGame();
     const { playSound, stopSound } = useSound();
 
@@ -64,9 +98,14 @@ export default function TowerGame() {
     const [currentMultiplier, setCurrentMultiplier] = useState(1);
     const [isShaking, setIsShaking] = useState(false);
     const [showInfo, setShowInfo] = useState(false);
-    const [gameNonce, setGameNonce] = useState(0);
     const [isRevealing, setIsRevealing] = useState(false);
+    const [isStarting, setIsStarting] = useState(false);
+    const [isCashoutPending, setIsCashoutPending] = useState(false);
     const [lostBetAmount, setLostBetAmount] = useState(0);
+    const [roundId, setRoundId] = useState<string | null>(null);
+    const [roundVersion, setRoundVersion] = useState<number | null>(null);
+    const [lastPayout, setLastPayout] = useState<number | null>(null);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     const cameraOffset = useMemo(() => {
         if (currentRow < 0) return 0;
@@ -97,61 +136,135 @@ export default function TowerGame() {
     }, [towerHistory]);
 
     const initializeGame = useCallback(() => {
-        const newTiles = TILE_PATTERN.map(tileCount =>
-            Array.from({ length: tileCount }, () => ({
-                revealed: false,
-                isDeath: false,
-                isSelected: false,
-            }))
-        );
-        setTiles(newTiles);
+        setTiles(buildTowerTiles());
         setRevealedDeaths(new Map());
         setCurrentRow(-1);
         setCurrentMultiplier(1);
         setIsShaking(false);
         setIsRevealing(false);
+        setRoundId(null);
+        setRoundVersion(null);
+        setLastPayout(null);
     }, []);
 
-    const startGame = useCallback(() => {
-        if (!canBet(betAmount)) return;
+    const startGame = useCallback(async () => {
+        if (!canBet(betAmount) || isStarting || gameState === 'playing') return;
 
         stopSound('WIN');
         stopSound('LOSE');
         stopSound('CASH_OUT');
 
         initializeGame();
-        setGameNonce(Date.now());
-        setGameState('playing');
-        setCurrentRow(0);
+        setIsStarting(true);
+        setErrorMessage(null);
         playSound('CLICK');
-    }, [betAmount, canBet, initializeGame, playSound, stopSound]);
+
+        try {
+            if (demoMode) {
+                setGameState('playing');
+                setCurrentRow(0);
+            } else {
+                const response = await authFetch('/api/tower/reveal', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'start',
+                        betAmount,
+                    }),
+                });
+
+                if (!response.ok) {
+                    throw new Error(await readResponseError(response, 'Failed to start tower round'));
+                }
+
+                const result = await response.json();
+                const serverState = result.state as TowerServerState | undefined;
+                const serverRow = typeof serverState?.currentRow === 'number'
+                    ? serverState.currentRow
+                    : typeof result.currentRow === 'number'
+                        ? result.currentRow
+                        : 0;
+                const nextRow = Math.min(Math.max(serverRow, 0), TOWER_ROWS - 1);
+
+                setRoundId(result.roundId);
+                setRoundVersion(result.version);
+                setTiles(buildTowerTiles(serverState));
+                setRevealedDeaths(buildRevealedDeathsMap(serverState));
+                setCurrentMultiplier(nextRow > 0 ? MULTIPLIERS[nextRow - 1] : 1);
+                if (typeof result.betAmount === 'number') {
+                    setBetAmount(result.betAmount);
+                }
+                setGameState('playing');
+                setCurrentRow(nextRow);
+                void refreshBalance();
+            }
+        } catch (error) {
+            console.error('Tower start error:', error);
+            setErrorMessage(getRequestErrorMessage(error, 'Failed to start tower round'));
+            setGameState('idle');
+            if (!demoMode) {
+                void refreshBalance();
+            }
+        } finally {
+            setIsStarting(false);
+        }
+    }, [betAmount, canBet, demoMode, gameState, initializeGame, isStarting, playSound, refreshBalance, setBetAmount, stopSound]);
 
     const handleTileClick = useCallback(async (rowIndex: number, tileIndex: number) => {
         if (gameState !== 'playing') return;
         if (rowIndex !== currentRow) return;
         if (isRevealing) return;
+        if (!demoMode && (!roundId || roundVersion === null)) return;
 
         setIsRevealing(true);
+        setErrorMessage(null);
+        let keepRevealLock = false;
+        setTiles(prev => {
+            const newTiles = [...prev];
+            newTiles[rowIndex] = newTiles[rowIndex].map((tile, i) => ({
+                ...tile,
+                isSelected: i === tileIndex,
+            }));
+            return newTiles;
+        });
+        playSound('CLICK');
 
         try {
-            // Call server for secure death tile reveal
-            const response = await fetch('/api/tower/reveal', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    userAddress: primaryWallet?.address || 'demo',
-                    nonce: gameNonce,
-                    row: rowIndex,
-                    tilesInRow: TILE_PATTERN[rowIndex],
-                }),
-            });
+            let deathTile: number;
+            let outcome: 'safe' | 'loss' | 'win';
+            let nextVersion: number | null = null;
+            let serverMultiplier = MULTIPLIERS[rowIndex];
+            let serverPayout = betAmount * serverMultiplier;
 
-            if (!response.ok) {
-                throw new Error('Failed to reveal tile');
+            if (demoMode) {
+                deathTile = Math.floor(Math.random() * TILE_PATTERN[rowIndex]);
+                outcome = deathTile === tileIndex
+                    ? 'loss'
+                    : rowIndex === TOWER_ROWS - 1
+                        ? 'win'
+                        : 'safe';
+            } else {
+                const response = await authFetch('/api/tower/reveal', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'reveal',
+                        roundId,
+                        version: roundVersion,
+                        row: rowIndex,
+                        tileIndex,
+                    }),
+                });
+
+                if (!response.ok) {
+                    throw new Error(await readResponseError(response, 'Failed to reveal tile'));
+                }
+
+                const result = await response.json();
+                deathTile = result.deathTile;
+                outcome = result.outcome;
+                nextVersion = result.version ?? null;
+                serverMultiplier = result.multiplier ?? serverMultiplier;
+                serverPayout = result.payout ?? serverPayout;
             }
-
-            const { deathTile } = await response.json();
-            const isDeath = deathTile === tileIndex;
 
             setRevealedDeaths(prev => new Map(prev).set(rowIndex, deathTile));
 
@@ -166,61 +279,143 @@ export default function TowerGame() {
                 return newTiles;
             });
 
-            if (isDeath) {
+            if (outcome === 'loss') {
                 playSound('LOSE');
                 setIsShaking(true);
                 setTimeout(() => setIsShaking(false), 400);
                 setLostBetAmount(betAmount);
                 setGameState('lost');
-                addBetRecord({
-                    game: 'tower',
-                    betAmount,
-                    outcome: 'loss',
-                    multiplier: 0,
-                    payout: 0,
-                    gameParams: { row: rowIndex, outcome: 'loss' },
-                });
-            } else {
-                playSound('CLICK');
-                const newMultiplier = MULTIPLIERS[rowIndex];
-                setCurrentMultiplier(newMultiplier);
-
-                if (rowIndex === TOWER_ROWS - 1) {
-                    cashOut();
+                setLastPayout(0);
+                if (demoMode) {
+                    addBetRecord({
+                        game: 'tower',
+                        betAmount,
+                        outcome: 'loss',
+                        multiplier: 0,
+                        payout: 0,
+                        gameParams: { row: rowIndex, outcome: 'loss' },
+                    });
                 } else {
-                    setTimeout(() => setCurrentRow(rowIndex + 1), 300);
+                    void refreshBalance();
                 }
+            } else if (outcome === 'win') {
+                playSound('WIN');
+                setCurrentMultiplier(serverMultiplier);
+                setLastPayout(serverPayout);
+                setGameState('won');
+                if (demoMode) {
+                    addBetRecord({
+                        game: 'tower',
+                        betAmount,
+                        outcome: 'win',
+                        multiplier: serverMultiplier,
+                        payout: serverPayout,
+                        gameParams: { row: rowIndex, outcome: 'win' },
+                    });
+                } else {
+                    void refreshBalance();
+                }
+            } else {
+                setCurrentMultiplier(serverMultiplier);
+                if (nextVersion !== null) {
+                    setRoundVersion(nextVersion);
+                }
+                keepRevealLock = true;
+                setTimeout(() => {
+                    setCurrentRow(rowIndex + 1);
+                    setIsRevealing(false);
+                }, 120);
             }
         } catch (error) {
             console.error('Tile reveal error:', error);
+            setErrorMessage(getRequestErrorMessage(error, 'Failed to reveal tile'));
+            setTiles(prev => {
+                const newTiles = [...prev];
+                newTiles[rowIndex] = newTiles[rowIndex].map(tile => ({
+                    ...tile,
+                    isSelected: tile.revealed ? tile.isSelected : false,
+                }));
+                return newTiles;
+            });
+            if (!demoMode) {
+                void refreshBalance();
+            }
         } finally {
-            setIsRevealing(false);
+            if (!keepRevealLock) {
+                setIsRevealing(false);
+            }
         }
-    }, [gameState, currentRow, gameNonce, primaryWallet?.address, isRevealing, betAmount, playSound, addBetRecord]);
+    }, [gameState, currentRow, isRevealing, demoMode, roundId, roundVersion, betAmount, playSound, addBetRecord, refreshBalance]);
 
-    const cashOut = useCallback(() => {
+    const cashOut = useCallback(async () => {
         if (gameState !== 'playing' || currentRow < 0) return;
+        if (isCashoutPending) return;
+        if (!demoMode && (!roundId || roundVersion === null)) return;
 
-        const payout = betAmount * currentMultiplier;
-        playSound('CASH_OUT');
-        setGameState('won');
-        addBetRecord({
-            game: 'tower',
-            betAmount,
-            outcome: 'win',
-            multiplier: currentMultiplier,
-            payout,
-            gameParams: { row: currentRow, outcome: 'win' },
-        });
+        setIsCashoutPending(true);
+        setErrorMessage(null);
 
-        setTiles(prev => prev.map((row, rowIndex) =>
-            row.map((tile, tileIndex) => ({
-                ...tile,
-                revealed: revealedDeaths.has(rowIndex) ? true : tile.revealed,
-                isDeath: revealedDeaths.get(rowIndex) === tileIndex,
-            }))
-        ));
-    }, [gameState, currentRow, betAmount, currentMultiplier, revealedDeaths, playSound, addBetRecord]);
+        try {
+            let payout = betAmount * currentMultiplier;
+            let multiplier = currentMultiplier;
+            let completedRow = Math.max(0, currentRow - 1);
+
+            if (!demoMode) {
+                const response = await authFetch('/api/tower/reveal', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'cashout',
+                        roundId,
+                        version: roundVersion,
+                    }),
+                });
+
+                if (!response.ok) {
+                    throw new Error(await readResponseError(response, 'Failed to cash out'));
+                }
+
+                const result = await response.json();
+                payout = result.payout;
+                multiplier = result.multiplier;
+                completedRow = result.row;
+            }
+
+            playSound('CASH_OUT');
+            setCurrentMultiplier(multiplier);
+            setLastPayout(payout);
+            setGameState('won');
+
+            if (demoMode) {
+                addBetRecord({
+                    game: 'tower',
+                    betAmount,
+                    outcome: 'win',
+                    multiplier,
+                    payout,
+                    gameParams: { row: completedRow, outcome: 'win' },
+                });
+            } else {
+                void refreshBalance();
+            }
+
+            setTiles(prev => prev.map((row, rowIndex) =>
+                row.map((tile, tileIndex) => ({
+                    ...tile,
+                    revealed: revealedDeaths.has(rowIndex) ? true : tile.revealed,
+                    isDeath: revealedDeaths.get(rowIndex) === tileIndex,
+                }))
+            ));
+        } catch (error) {
+            console.error('Tower cashout error:', error);
+            setErrorMessage(getRequestErrorMessage(error, 'Failed to cash out'));
+            setGameState('playing');
+            if (!demoMode) {
+                void refreshBalance();
+            }
+        } finally {
+            setIsCashoutPending(false);
+        }
+    }, [gameState, currentRow, isCashoutPending, demoMode, roundId, roundVersion, betAmount, currentMultiplier, revealedDeaths, playSound, addBetRecord, refreshBalance]);
 
     useEffect(() => {
         initializeGame();
@@ -281,7 +476,7 @@ export default function TowerGame() {
                             <button
                                 className={styles.betAdjustBtn}
                                 onClick={() => setBetAmount(Math.max(0.5, betAmount - 0.5))}
-                                disabled={gameState === 'playing'}
+                                disabled={gameState === 'playing' || isStarting}
                             >
                                 −
                             </button>
@@ -294,14 +489,14 @@ export default function TowerGame() {
                                         const val = parseFloat(e.target.value);
                                         if (!isNaN(val)) setBetAmount(val);
                                     }}
-                                    disabled={gameState === 'playing'}
+                                    disabled={gameState === 'playing' || isStarting}
                                     className={styles.betInput}
                                 />
                             </div>
                             <button
                                 className={styles.betAdjustBtn}
                                 onClick={() => setBetAmount(Math.min(100, betAmount + 0.5))}
-                                disabled={gameState === 'playing'}
+                                disabled={gameState === 'playing' || isStarting}
                             >
                                 +
                             </button>
@@ -312,7 +507,7 @@ export default function TowerGame() {
                                 <button
                                     key={amount}
                                     onClick={() => setBetAmount(amount)}
-                                    disabled={gameState === 'playing'}
+                                    disabled={gameState === 'playing' || isStarting}
                                     className={styles.quickBtn}
                                 >
                                     ${amount}
@@ -360,7 +555,7 @@ export default function TowerGame() {
                                     {gameState === 'won' ? (
                                         <>
                                             <span className={styles.resultWon}>
-                                                +${(betAmount * currentMultiplier).toFixed(2)}
+                                                +${(lastPayout ?? betAmount * currentMultiplier).toFixed(2)}
                                             </span>
                                             <span className={styles.resultLabel}>at {currentMultiplier.toFixed(2)}×</span>
                                         </>
@@ -376,25 +571,29 @@ export default function TowerGame() {
                     </div>
 
                     {/* Action Button */}
+                    {errorMessage && (
+                        <div className={styles.errorMessage}>{errorMessage}</div>
+                    )}
+
                     {gameState === 'idle' && (
                         <button
                             onClick={startGame}
-                            disabled={!canBet(betAmount)}
+                            disabled={!canBet(betAmount) || isStarting}
                             className={styles.primaryBtn}
                         >
-                            Play
+                            {isStarting ? 'Starting...' : 'Play'}
                         </button>
                     )}
 
                     {gameState === 'playing' && currentRow > 0 && (
-                        <button onClick={cashOut} className={styles.cashoutBtn}>
-                            Cash Out ${(betAmount * currentMultiplier).toFixed(2)}
+                        <button onClick={cashOut} disabled={isCashoutPending} className={styles.cashoutBtn}>
+                            {isCashoutPending ? 'Cashing Out...' : `Cash Out $${(betAmount * currentMultiplier).toFixed(2)}`}
                         </button>
                     )}
 
                     {gameState === 'playing' && currentRow === 0 && (
                         <button disabled className={styles.primaryBtn}>
-                            Pick a Tile
+                            {isStarting ? 'Starting...' : 'Pick a Tile'}
                         </button>
                     )}
 
@@ -454,12 +653,15 @@ export default function TowerGame() {
                                                 if (isRevealed && isDeath) {
                                                     tileClass += ` ${styles.tileDeathRevealed}`;
                                                 }
+                                                if (isSelected && !isRevealed) {
+                                                    tileClass += ` ${styles.tileSelected}`;
+                                                }
 
                                                 return (
                                                     <button
                                                         key={tileIndex}
                                                         onClick={() => handleTileClick(rowIndex, tileIndex)}
-                                                        disabled={!isActive || gameState !== 'playing'}
+                                                        disabled={!isActive || gameState !== 'playing' || isRevealing || isStarting}
                                                         className={tileClass}
                                                     >
                                                         {!isRevealed && (
@@ -488,7 +690,7 @@ export default function TowerGame() {
                                     <h2>CASHED OUT!</h2>
                                     <div className={styles.winMultiplier}>{currentMultiplier.toFixed(2)}×</div>
                                     <div className={styles.winAmount}>
-                                        +${(betAmount * currentMultiplier).toFixed(2)}
+                                        +${(lastPayout ?? betAmount * currentMultiplier).toFixed(2)}
                                     </div>
                                 </div>
                             </div>
@@ -562,4 +764,3 @@ export default function TowerGame() {
         </div>
     );
 }
-

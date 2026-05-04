@@ -19,6 +19,16 @@ type EIP1193Provider = {
     request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
 };
 
+type WalletSwitchError = {
+    code?: number;
+    data?: {
+        originalError?: {
+            code?: number;
+        };
+    };
+    message?: string;
+};
+
 const SUPPORTED_CHAINS: Chain[] = [...SOURCE_CHAINS.map(c => c.chain), arcTestnet];
 
 interface EmbeddedWalletContext {
@@ -244,7 +254,7 @@ export function useBridge(): UseBridgeReturn {
                 try {
                     await (primaryWallet as unknown as { switchNetwork: (chainId: number) => Promise<void> }).switchNetwork(chainId);
                     return true;
-                } catch (error: any) {
+                } catch (error: unknown) {
                     console.warn('[bridge] Dynamic switchNetwork failed, trying fallback:', error);
                     // Continue to fallback
                 }
@@ -259,14 +269,15 @@ export function useBridge(): UseBridgeReturn {
                         params: [{ chainId: `0x${chainId.toString(16)}` }],
                     });
                     return true;
-                } catch (switchError: any) {
+                } catch (switchError: unknown) {
+                    const walletSwitchError = switchError as WalletSwitchError;
                     // This error code 4902 means the chain has not been added to the wallet.
                     // Some wallets return a different error code or message for this.
                     if (
-                        switchError.code === 4902 ||
-                        switchError.data?.originalError?.code === 4902 ||
-                        switchError.message?.includes('Unrecognized chain ID') ||
-                        switchError.message?.includes('check your wallet')
+                        walletSwitchError.code === 4902 ||
+                        walletSwitchError.data?.originalError?.code === 4902 ||
+                        walletSwitchError.message?.includes('Unrecognized chain ID') ||
+                        walletSwitchError.message?.includes('check your wallet')
                     ) {
                         if (!chainConfig) {
                             console.error('[bridge] Cannot add chain: config not found for ID', chainId);
@@ -507,7 +518,7 @@ export function useBridge(): UseBridgeReturn {
                 const failedStep = (result.steps as BridgeResultStep[]).find(s => s.state === 'error');
                 const errorMsg = failedStep?.error || 'Bridge transfer failed';
                 console.error('[bridge] Transfer failed at step:', failedStep?.name, errorMsg);
-                setError(`Bridge failed: ${failedStep?.name || 'unknown step'}`);
+                setError(errorMsg);
                 setCurrentStep('error');
                 return false;
             }

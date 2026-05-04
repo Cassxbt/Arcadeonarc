@@ -4,6 +4,7 @@ import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { useGame } from '@/lib/game-context';
 import { useSound } from '@/lib/sounds';
+import { authFetch } from '@/lib/auth-fetch';
 import { Dice6, Flame, Sparkles, Frown } from '@/components/icons';
 import { GameModeSelector } from '@/components/GameModeSelector';
 import { DemoLimitOverlay } from '@/components/DemoLimitOverlay';
@@ -20,6 +21,7 @@ export default function DiceGame() {
         setBetAmount,
         canBet,
         addBetRecord,
+        refreshBalance,
         demoMode,
         toggleDemoMode,
         isDemoLimitReached,
@@ -33,6 +35,7 @@ export default function DiceGame() {
     const [gameState, setGameState] = useState<GameState>('idle');
     const [target, setTarget] = useState(50);
     const [rollResult, setRollResult] = useState<number | null>(null);
+    const [lastPayout, setLastPayout] = useState<number | null>(null);
     const [betType, setBetType] = useState<'under' | 'over'>('under');
     const [streak, setStreak] = useState(0);
     const [showInfo, setShowInfo] = useState(false);
@@ -60,6 +63,7 @@ export default function DiceGame() {
         playSound('DICE_ROLL');
         setGameState('rolling');
         setRollResult(null);
+        setLastPayout(null);
 
         // Simulate rolling animation (visual only)
         const rollInterval = setInterval(() => {
@@ -67,57 +71,72 @@ export default function DiceGame() {
         }, 50);
 
         try {
-            const response = await fetch('/api/dice/roll', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    userAddress: primaryWallet?.address || 'demo',
-                    nonce: Date.now(),
-                    target,
-                    betUnder: betType === 'under',
-                }),
-            });
+            let finalResult: number;
+            let won: boolean;
+            let finalPayout = 0;
+            let finalMultiplier = 0;
 
-            if (!response.ok) {
-                throw new Error('Failed to roll dice');
+            if (demoMode) {
+                finalResult = Math.floor(Math.random() * 100) + 1;
+                won = betType === 'under' ? finalResult < target : finalResult > target;
+                finalMultiplier = won ? multiplier : 0;
+                finalPayout = won ? betAmount * multiplier : 0;
+            } else {
+                const response = await authFetch('/api/dice/roll', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        betAmount,
+                        target,
+                        betUnder: betType === 'under',
+                    }),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to roll dice');
+                }
+
+                const result = await response.json();
+                finalResult = result.result;
+                won = result.won;
+                finalPayout = result.payout;
+                finalMultiplier = result.multiplier;
             }
-
-            const { result: finalResult, won } = await response.json();
 
             clearInterval(rollInterval);
             setRollResult(finalResult);
+            setLastPayout(finalPayout);
 
             if (won) {
                 playSound('WIN');
                 setGameState('won');
                 setStreak(prev => prev + 1);
-                addBetRecord({
-                    game: 'dice',
-                    betAmount,
-                    outcome: 'win',
-                    multiplier,
-                    payout: betAmount * multiplier,
-                    gameParams: { target, result: finalResult, betUnder: betType === 'under' },
-                });
             } else {
                 playSound('LOSE');
                 setGameState('lost');
                 setStreak(0);
+            }
+
+            if (demoMode) {
                 addBetRecord({
                     game: 'dice',
                     betAmount,
-                    outcome: 'loss',
-                    multiplier: 0,
-                    payout: 0,
+                    outcome: won ? 'win' : 'loss',
+                    multiplier: finalMultiplier,
+                    payout: finalPayout,
                     gameParams: { target, result: finalResult, betUnder: betType === 'under' },
                 });
+            } else {
+                await refreshBalance();
             }
         } catch (error) {
             clearInterval(rollInterval);
             setGameState('idle');
             console.error('Dice roll error:', error);
+            if (!demoMode) {
+                await refreshBalance();
+            }
         }
-    }, [canBet, betAmount, gameState, target, betType, multiplier, playSound, stopSound, addBetRecord, primaryWallet?.address]);
+    }, [canBet, betAmount, gameState, target, betType, multiplier, demoMode, playSound, stopSound, addBetRecord, refreshBalance]);
 
     const handleQuickBet = (amount: number) => {
         if (gameState === 'rolling') return;
@@ -341,7 +360,7 @@ export default function DiceGame() {
                                 <span className={styles.resultEmoji}>
                                     <Sparkles size={32} style={{ color: 'var(--neon-yellow)', filter: 'drop-shadow(0 0 10px var(--neon-yellow))' }} />
                                 </span>
-                                <span>You rolled {rollResult}! Won ${(betAmount * multiplier).toFixed(2)}</span>
+                                <span>You rolled {rollResult}! Won ${(lastPayout ?? betAmount * multiplier).toFixed(2)}</span>
                             </div>
                         )}
 

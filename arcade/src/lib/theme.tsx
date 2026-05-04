@@ -12,38 +12,37 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
+function getInitialTheme(): Theme {
+    if (typeof window === 'undefined') {
+        return 'dark';
+    }
+
+    const savedTheme = localStorage.getItem('arcade-theme');
+    if (savedTheme === 'light' || savedTheme === 'dark') {
+        return savedTheme;
+    }
+
+    return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+}
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-    const [theme, setThemeState] = useState<Theme>('dark');
-    const [mounted, setMounted] = useState(false);
+    const [theme, setThemeState] = useState<Theme>(getInitialTheme);
 
     useEffect(() => {
-        setMounted(true);
-        const savedTheme = localStorage.getItem('arcade-theme') as Theme | null;
-        if (savedTheme) {
-            setThemeState(savedTheme);
-        } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
-            setThemeState('light');
-        }
-    }, []);
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('arcade-theme', theme);
 
-    useEffect(() => {
-        if (mounted) {
-            document.documentElement.setAttribute('data-theme', theme);
-            localStorage.setItem('arcade-theme', theme);
+        // Force repaint for mobile Safari GPU caching
+        const forceRepaint = () => {
+            document.body.style.display = 'none';
+            void document.body.offsetHeight;
+            document.body.style.display = '';
+        };
 
-            // Force repaint for mobile Safari GPU caching
-            const forceRepaint = () => {
-                document.body.style.display = 'none';
-                // Trigger reflow
-                void document.body.offsetHeight;
-                document.body.style.display = '';
-            };
-
-            requestAnimationFrame(() => {
-                requestAnimationFrame(forceRepaint);
-            });
-        }
-    }, [theme, mounted]);
+        requestAnimationFrame(() => {
+            requestAnimationFrame(forceRepaint);
+        });
+    }, [theme]);
 
     const toggleTheme = () => {
         setThemeState(prev => prev === 'dark' ? 'light' : 'dark');
@@ -52,10 +51,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const setTheme = (newTheme: Theme) => {
         setThemeState(newTheme);
     };
-
-    if (!mounted) {
-        return <>{children}</>;
-    }
 
     return (
         <ThemeContext.Provider value={{ theme, toggleTheme, setTheme }}>

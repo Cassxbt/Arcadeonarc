@@ -3,10 +3,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
-import { useBridge, type BridgeStep } from '@/lib/useBridge';
+import { useBridge } from '@/lib/useBridge';
 import { useGame } from '@/lib/game-context';
 import { useSound } from '@/lib/sounds';
-import { SOURCE_CHAINS, type SourceChainConfig } from '@/lib/cctp-config';
+import { type SourceChainConfig } from '@/lib/cctp-config';
 import styles from './BridgeModal.module.css';
 
 interface BridgeModalProps {
@@ -65,7 +65,7 @@ export function BridgeModal({ isOpen, onClose, onSuccess }: BridgeModalProps) {
         sourceChains,
     } = useBridge();
 
-    const [selectedChain, setSelectedChain] = useState<SourceChainConfig | null>(null);
+    const [selectedChain, setSelectedChain] = useState<SourceChainConfig | null>(() => sourceChains[0] ?? null);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [amount, setAmount] = useState('');
     const [sourceBalance, setSourceBalance] = useState(0);
@@ -73,23 +73,22 @@ export function BridgeModal({ isOpen, onClose, onSuccess }: BridgeModalProps) {
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        if (isOpen && sourceChains.length > 0 && !selectedChain) {
-            setSelectedChain(sourceChains[0]);
-        }
-    }, [isOpen, sourceChains, selectedChain]);
+        if (!isOpen || !selectedChain || !primaryWallet?.address) return;
 
-    useEffect(() => {
-        if (!selectedChain || !primaryWallet?.address) return;
-
+        let cancelled = false;
         const fetchBalance = async () => {
             setIsFetchingBalance(true);
             const balance = await getSourceBalance(selectedChain.id);
+            if (cancelled) return;
             setSourceBalance(balance);
             setIsFetchingBalance(false);
         };
 
         fetchBalance();
-    }, [selectedChain, primaryWallet?.address, getSourceBalance]);
+        return () => {
+            cancelled = true;
+        };
+    }, [isOpen, selectedChain, primaryWallet?.address, getSourceBalance]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -298,7 +297,7 @@ export function BridgeModal({ isOpen, onClose, onSuccess }: BridgeModalProps) {
                                             </div>
                                         </div>
                                     )}
-                                    {completedSteps.map((step, index) => (
+                                    {completedSteps.map((step) => (
                                         <div
                                             key={step.name}
                                             className={`${styles.step} ${styles[`step${step.status.charAt(0).toUpperCase() + step.status.slice(1)}`]}`}
@@ -360,4 +359,3 @@ export function BridgeModal({ isOpen, onClose, onSuccess }: BridgeModalProps) {
         </AnimatePresence>
     );
 }
-

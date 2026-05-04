@@ -83,7 +83,9 @@ export function useDailyBonus(): UseDailyBonusReturn {
     }, [walletAddress]);
 
     useEffect(() => {
-        checkDailyBonus();
+        queueMicrotask(() => {
+            void checkDailyBonus();
+        });
     }, [checkDailyBonus]);
 
     return {

@@ -10,7 +10,10 @@ const inter = Inter({
   variable: "--font-sans",
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://arcadeonarc.fun";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: "ARCade | Best Games & Apps on Arc L1 (Circle)",
   description: "The #1 place to play games on Arc L1. Win USDC instantly on the Circle-powered Arc blockchain. Try Tower, Crash, Dice and other top apps.",
   keywords: ["arc l1 apps", "games on arc", "circle l1", "crypto arcade", "usdc gaming", "play to earn arc", "tower", "crash", "dice"],
@@ -20,12 +23,13 @@ export const metadata: Metadata = {
     description: "Experience the fastest games on Circle's Arc L1 blockchain. Instant payouts, provably fair.",
     type: "website",
     siteName: "ARCade",
-    images: [{ url: '/twitter-image.png' }], // Assuming an image exists or will be added, good practice to have placeholder
+    images: [{ url: '/android-chrome-512x512.png' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: "ARCade - #1 Game on Arc L1",
     description: "Play fast, fair games on Arc L1. Win USDC.",
+    images: ['/android-chrome-512x512.png'],
   },
   icons: {
     icon: [

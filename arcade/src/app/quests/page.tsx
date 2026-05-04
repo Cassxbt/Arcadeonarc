@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { useQuests, Quest } from '@/lib/useQuests';
 import { useDailyBonus } from '@/lib/useDailyBonus';
@@ -278,7 +278,7 @@ export default function QuestsPage() {
         }
     };
 
-    const handleClaimDailyBonus = async () => {
+    const handleClaimDailyBonus = useCallback(async () => {
         setClaimingBonus(true);
         const result = await claimDailyBonus();
         setClaimingBonus(false);
@@ -286,14 +286,16 @@ export default function QuestsPage() {
         if (result.claimed) {
             showToast(`Daily bonus: +${result.points} points!`, 'success');
         }
-    };
+    }, [claimDailyBonus, showToast]);
 
     // Auto-claim daily bonus on first visit
     useEffect(() => {
-        if (!dailyBonus.isLoading && !dailyBonus.claimed && primaryWallet) {
-            handleClaimDailyBonus();
+        if (!dailyBonus.isLoading && !dailyBonus.claimed && primaryWallet && !claimingBonus) {
+            queueMicrotask(() => {
+                void handleClaimDailyBonus();
+            });
         }
-    }, [dailyBonus.isLoading, dailyBonus.claimed, primaryWallet]);
+    }, [dailyBonus.isLoading, dailyBonus.claimed, primaryWallet, claimingBonus, handleClaimDailyBonus]);
 
     const completedCount = quests.filter(q => q.completed).length;
     const allCompleted = completedCount === quests.length && quests.length > 0;

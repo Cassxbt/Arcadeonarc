@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateChallenge, createSignMessage } from '@/lib/session';
-import { redis } from '@/lib/redis';
-
-const CHALLENGE_TTL = 300; // 5 minutes
+import { storeAuthChallenge } from '@/lib/auth-challenges';
 
 export async function POST(request: NextRequest) {
     try {
@@ -16,14 +14,7 @@ export async function POST(request: NextRequest) {
         const challenge = generateChallenge();
         const message = createSignMessage(challenge);
 
-        try {
-            await redis.set(`auth:challenge:${walletLower}`, challenge, { ex: CHALLENGE_TTL });
-        } catch (redisError) {
-            // Graceful degradation: if Redis is at capacity (e.g. Upstash free tier limit),
-            // still return the challenge. Verification will fail for this challenge,
-            // but the app won't show 500 errors to every user trying to log in.
-            console.warn('Redis unavailable for challenge storage:', redisError instanceof Error ? redisError.message : 'Unknown error');
-        }
+        await storeAuthChallenge(walletLower, challenge);
 
         return NextResponse.json({ challenge, message });
     } catch (error) {

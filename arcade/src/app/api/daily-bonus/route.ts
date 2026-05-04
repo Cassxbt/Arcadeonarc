@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
-import { getVerifiedWallet } from '@/lib/verify-dynamic-jwt';
+import { getSessionWallet } from '@/lib/session';
 
 const DAILY_BONUS_POINTS = 25;
 
@@ -52,8 +52,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
     try {
-        // SECURITY: Get wallet from verified Dynamic JWT
-        const wallet = await getVerifiedWallet(request);
+        const wallet = await getSessionWallet(request);
         if (!wallet) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }

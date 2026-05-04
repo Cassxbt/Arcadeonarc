@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { useDynamicContext, useIsLoggedIn } from '@dynamic-labs/sdk-react-core';
 import { useDemoLimits, GameType } from './useDemoLimits';
 import { useUser } from './useUser';
@@ -91,7 +91,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     const [betHistory, setBetHistory] = useState<BetRecord[]>([]);
 
     useEffect(() => {
-        if (isLoggedIn && !isRegistered && !demoMode && !isUserLoading) {
+        if (!primaryWallet?.address || !isLoggedIn || demoMode) {
+            setShowUsernameModal(false);
+            return;
+        }
+
+        if (!isRegistered && !isUserLoading) {
             const timer = setTimeout(() => {
                 setShowUsernameModal(true);
             }, 500);
@@ -101,7 +106,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         if (isRegistered && showUsernameModal) {
             setShowUsernameModal(false);
         }
-    }, [isLoggedIn, isRegistered, demoMode, isUserLoading, showUsernameModal]);
+    }, [primaryWallet?.address, isLoggedIn, isRegistered, demoMode, isUserLoading, showUsernameModal]);
 
     const refreshBalance = useCallback(async () => {
         if (!primaryWallet?.address) {

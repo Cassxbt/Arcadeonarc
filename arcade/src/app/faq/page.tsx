@@ -34,7 +34,7 @@ const faqSections: FAQSection[] = [
                 <ol>
                     <li>Place your bet (0.5 - 100 USDC)</li>
                     <li>Each row has multiple tiles, but one is a death tile</li>
-                    <li>Click a tile to reveal if it's safe or deadly</li>
+                    <li>Click a tile to reveal if it&apos;s safe or deadly</li>
                     <li>Safe tiles let you climb higher with increasing multipliers</li>
                     <li>Cash out anytime to secure your winnings</li>
                     <li>Hit a death tile and lose your bet!</li>
@@ -188,7 +188,7 @@ const faqSections: FAQSection[] = [
             <div className={styles.faqContent}>
                 <h4>Smart Contract Security:</h4>
                 <ul>
-                    <li><strong>Reentrancy Protection:</strong> All contracts use OpenZeppelin's ReentrancyGuard</li>
+                    <li><strong>Reentrancy Protection:</strong> All contracts use OpenZeppelin&apos;s ReentrancyGuard</li>
                     <li><strong>Pausable:</strong> Emergency pause functionality for admin</li>
                     <li><strong>Access Control:</strong> Only authorized game contracts can access the vault</li>
                     <li><strong>Withdrawal Pattern:</strong> Pull over push for safe fund transfers</li>

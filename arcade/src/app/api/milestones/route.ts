@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
-import { getVerifiedWallet } from '@/lib/verify-dynamic-jwt';
+import { getSessionWallet } from '@/lib/session';
 
 const MILESTONE_DEFINITIONS = {
     bronze: {
@@ -48,7 +48,7 @@ function getCurrentWeek(): { week: number; year: number } {
 
 export async function GET(request: NextRequest) {
     try {
-        const wallet = await getVerifiedWallet(request);
+        const wallet = await getSessionWallet(request);
         if (!wallet) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
@@ -115,7 +115,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
     try {
-        const wallet = await getVerifiedWallet(request);
+        const wallet = await getSessionWallet(request);
         if (!wallet) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }

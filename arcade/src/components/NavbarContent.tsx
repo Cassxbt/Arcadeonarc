@@ -38,7 +38,9 @@ export function NavbarContent() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     useEffect(() => {
-        setMobileMenuOpen(false);
+        queueMicrotask(() => {
+            setMobileMenuOpen(false);
+        });
     }, [pathname]);
 
     useEffect(() => {

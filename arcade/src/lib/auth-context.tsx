@@ -93,7 +93,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 throw new Error('Failed to get challenge');
             }
 
-            const { message } = await challengeResponse.json();
+            const { challenge, message } = await challengeResponse.json();
 
             // Step 2: Sign the message with wallet
             const connector = primaryWallet.connector;
@@ -111,7 +111,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const verifyResponse = await fetch('/api/auth/verify', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ wallet: walletLower, signature }),
+                body: JSON.stringify({ wallet: walletLower, signature, challenge }),
             });
 
             if (!verifyResponse.ok) {

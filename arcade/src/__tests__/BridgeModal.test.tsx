@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BridgeModal } from '../components/BridgeModal';
 
@@ -52,44 +52,52 @@ describe('BridgeModal', () => {
         mockGetSourceBalance.mockResolvedValue(100);
     });
 
+    async function renderOpenBridgeModal(props = defaultProps) {
+        render(<BridgeModal {...props} />);
+        await waitFor(() => {
+            expect(mockGetSourceBalance).toHaveBeenCalledWith('ethereum_sepolia');
+        });
+    }
+
     describe('rendering', () => {
         it('renders nothing when closed', () => {
             render(<BridgeModal {...defaultProps} isOpen={false} />);
             expect(screen.queryByText('Bridge USDC')).not.toBeInTheDocument();
+            expect(mockGetSourceBalance).not.toHaveBeenCalled();
         });
 
-        it('renders modal when open', () => {
-            render(<BridgeModal {...defaultProps} />);
+        it('renders modal when open', async () => {
+            await renderOpenBridgeModal();
             expect(screen.getByText('Bridge USDC')).toBeInTheDocument();
         });
 
-        it('displays subtitle text', () => {
-            render(<BridgeModal {...defaultProps} />);
+        it('displays subtitle text', async () => {
+            await renderOpenBridgeModal();
             expect(screen.getByText(/Transfer USDC from another chain to Arc Testnet/)).toBeInTheDocument();
         });
 
-        it('displays chain selector', () => {
-            render(<BridgeModal {...defaultProps} />);
+        it('displays chain selector', async () => {
+            await renderOpenBridgeModal();
             expect(screen.getByText('From Chain')).toBeInTheDocument();
         });
 
-        it('displays quick amount buttons', () => {
-            render(<BridgeModal {...defaultProps} />);
+        it('displays quick amount buttons', async () => {
+            await renderOpenBridgeModal();
             expect(screen.getByRole('button', { name: '$5' })).toBeInTheDocument();
             expect(screen.getByRole('button', { name: '$10' })).toBeInTheDocument();
             expect(screen.getByRole('button', { name: '$25' })).toBeInTheDocument();
             expect(screen.getByRole('button', { name: '$50' })).toBeInTheDocument();
         });
 
-        it('displays submit button', () => {
-            render(<BridgeModal {...defaultProps} />);
+        it('displays submit button', async () => {
+            await renderOpenBridgeModal();
             expect(screen.getByRole('button', { name: 'Bridge to Arc' })).toBeInTheDocument();
         });
     });
 
     describe('chain selection', () => {
         it('defaults to first chain', async () => {
-            render(<BridgeModal {...defaultProps} />);
+            await renderOpenBridgeModal();
 
             await waitFor(() => {
                 expect(screen.getByText('Ethereum Sepolia')).toBeInTheDocument();
@@ -98,7 +106,7 @@ describe('BridgeModal', () => {
 
         it('opens dropdown when chain button clicked', async () => {
             const user = userEvent.setup();
-            render(<BridgeModal {...defaultProps} />);
+            await renderOpenBridgeModal();
 
             const chainButton = screen.getByRole('button', { name: /Ethereum Sepolia/i });
             await user.click(chainButton);
@@ -109,18 +117,16 @@ describe('BridgeModal', () => {
         });
 
         it('fetches balance when chain selected', async () => {
-            render(<BridgeModal {...defaultProps} />);
+            await renderOpenBridgeModal();
 
-            await waitFor(() => {
-                expect(mockGetSourceBalance).toHaveBeenCalledWith('ethereum_sepolia');
-            });
+            expect(mockGetSourceBalance).toHaveBeenCalledWith('ethereum_sepolia');
         });
     });
 
     describe('amount input', () => {
         it('allows typing amount', async () => {
             const user = userEvent.setup();
-            render(<BridgeModal {...defaultProps} />);
+            await renderOpenBridgeModal();
 
             const input = screen.getByPlaceholderText('0.00');
             await user.type(input, '50');
@@ -130,7 +136,7 @@ describe('BridgeModal', () => {
 
         it('sets amount when quick button clicked', async () => {
             const user = userEvent.setup();
-            render(<BridgeModal {...defaultProps} />);
+            await renderOpenBridgeModal();
 
             await user.click(screen.getByRole('button', { name: '$25' }));
 
@@ -140,7 +146,7 @@ describe('BridgeModal', () => {
 
         it('disables quick buttons when amount exceeds balance', async () => {
             mockGetSourceBalance.mockResolvedValue(20);
-            render(<BridgeModal {...defaultProps} />);
+            await renderOpenBridgeModal();
 
             await waitFor(() => {
                 expect(screen.getByRole('button', { name: '$25' })).toBeDisabled();
@@ -150,15 +156,15 @@ describe('BridgeModal', () => {
     });
 
     describe('form submission', () => {
-        it('disables submit when amount is empty', () => {
-            render(<BridgeModal {...defaultProps} />);
+        it('disables submit when amount is empty', async () => {
+            await renderOpenBridgeModal();
 
             expect(screen.getByRole('button', { name: 'Bridge to Arc' })).toBeDisabled();
         });
 
         it('disables submit when amount is zero', async () => {
             const user = userEvent.setup();
-            render(<BridgeModal {...defaultProps} />);
+            await renderOpenBridgeModal();
 
             const input = screen.getByPlaceholderText('0.00');
             await user.type(input, '0');
@@ -169,7 +175,7 @@ describe('BridgeModal', () => {
         it('calls bridge function on submit', async () => {
             const user = userEvent.setup();
             mockBridge.mockResolvedValue(true);
-            render(<BridgeModal {...defaultProps} />);
+            await renderOpenBridgeModal();
 
             const input = screen.getByPlaceholderText('0.00');
             await user.type(input, '10');
@@ -187,7 +193,7 @@ describe('BridgeModal', () => {
         it('calls onClose when close button clicked', async () => {
             const user = userEvent.setup();
             const onClose = vi.fn();
-            render(<BridgeModal {...defaultProps} onClose={onClose} />);
+            await renderOpenBridgeModal({ ...defaultProps, onClose });
 
             const closeButton = screen.getByRole('button', { name: '×' });
             await user.click(closeButton);
@@ -198,7 +204,7 @@ describe('BridgeModal', () => {
         it('calls onClose when overlay clicked', async () => {
             const user = userEvent.setup();
             const onClose = vi.fn();
-            render(<BridgeModal {...defaultProps} onClose={onClose} />);
+            await renderOpenBridgeModal({ ...defaultProps, onClose });
 
             const overlay = screen.getByText('Bridge USDC').parentElement?.parentElement?.parentElement;
             if (overlay) {

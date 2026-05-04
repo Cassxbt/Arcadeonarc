@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useCallback, useMemo, useRef } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { useGame } from '@/lib/game-context';
 import { useSound } from '@/lib/sounds';
+import { authFetch, getRequestErrorMessage, readResponseError } from '@/lib/auth-fetch';
 import { FerrisWheel, Target, BarChart3 } from '@/components/icons';
 import { GameModeSelector } from '@/components/GameModeSelector';
 import { DemoLimitOverlay } from '@/components/DemoLimitOverlay';
@@ -52,6 +53,16 @@ const SEGMENTS = [
 ];
 
 type GameState = 'idle' | 'spinning' | 'result';
+const SPIN_DURATION_MS = 5000;
+const RESULT_HOLD_MS = 1800;
+
+type WheelOutcome = {
+    segment: number;
+    multiplier: number;
+    payout: number;
+    color: string;
+    isWin: boolean;
+};
 
 export default function WheelGame() {
     const { primaryWallet, setShowAuthFlow } = useDynamicContext();
@@ -61,6 +72,7 @@ export default function WheelGame() {
         setBetAmount,
         canBet,
         addBetRecord,
+        refreshBalance,
         demoMode,
         toggleDemoMode,
         isDemoLimitReached,
@@ -74,22 +86,49 @@ export default function WheelGame() {
     const [gameState, setGameState] = useState<GameState>('idle');
     const [currentRotation, setCurrentRotation] = useState(0);
     const [resultSegment, setResultSegment] = useState<number | null>(null);
+    const [lastOutcome, setLastOutcome] = useState<WheelOutcome | null>(null);
+    const [lockedBetAmount, setLockedBetAmount] = useState(betAmount);
     const [recentResults, setRecentResults] = useState<number[]>([]);
     const [showInfo, setShowInfo] = useState(false);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const spinTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const resetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const resultInfo = useMemo(() => {
-        if (resultSegment === null) return null;
-        const segment = SEGMENTS[resultSegment];
-        return {
-            multiplier: segment.multiplier,
-            payout: betAmount * segment.multiplier,
-            color: segment.color,
-            isWin: segment.multiplier > 0,
-        };
-    }, [resultSegment, betAmount]);
+        if (!lastOutcome) return null;
+        return lastOutcome;
+    }, [lastOutcome]);
 
-    const spinWheel = useCallback(() => {
+    const roundLocked = gameState !== 'idle';
+    const displayBetAmount = roundLocked ? lockedBetAmount : betAmount;
+    const wheelStatus = gameState === 'idle'
+        ? 'Ready'
+        : gameState === 'spinning'
+            ? resultSegment === null ? 'Locking result' : 'Spinning'
+            : resultInfo?.isWin ? 'Paid' : 'No hit';
+
+    const wheelStatusDetail = gameState === 'idle'
+        ? 'One spin. One server result.'
+        : gameState === 'spinning'
+            ? resultSegment === null ? 'Confirming round...' : 'Landing on the committed segment.'
+            : resultInfo
+                ? `${resultInfo.multiplier.toFixed(1)}x on $${lockedBetAmount.toFixed(2)}`
+                : 'Round settled.';
+
+    useEffect(() => {
+        return () => {
+            if (spinTimeoutRef.current) clearTimeout(spinTimeoutRef.current);
+            if (resetTimeoutRef.current) clearTimeout(resetTimeoutRef.current);
+            stopSound('WHEEL_SPIN');
+        };
+    }, [stopSound]);
+
+    const spinWheel = useCallback(async () => {
         if (!canBet(betAmount) || gameState !== 'idle') return;
+        const wager = betAmount;
+
+        if (spinTimeoutRef.current) clearTimeout(spinTimeoutRef.current);
+        if (resetTimeoutRef.current) clearTimeout(resetTimeoutRef.current);
 
         stopSound('WIN');
         stopSound('LOSE');
@@ -98,43 +137,92 @@ export default function WheelGame() {
         playSound('CLICK');
         setGameState('spinning');
         setResultSegment(null);
+        setLastOutcome(null);
+        setLockedBetAmount(wager);
+        setErrorMessage(null);
 
-        playSound('WHEEL_SPIN', { loop: true });
+        let targetSegment: number;
+        let serverPayout: number | null = null;
+        let serverMultiplier: number | null = null;
 
-        const targetSegment = Math.floor(Math.random() * 20);
+        try {
+            if (demoMode) {
+                targetSegment = Math.floor(Math.random() * 20);
+            } else {
+                const response = await authFetch('/api/wheel', {
+                    method: 'POST',
+                    body: JSON.stringify({ betAmount: wager }),
+                });
+
+                if (!response.ok) {
+                    throw new Error(await readResponseError(response, 'Failed to spin wheel'));
+                }
+
+                const result = await response.json();
+                targetSegment = result.segment;
+                serverPayout = typeof result.payout === 'number' ? result.payout : null;
+                serverMultiplier = typeof result.multiplier === 'number' ? result.multiplier : null;
+            }
+
+            if (!Number.isInteger(targetSegment) || targetSegment < 0 || targetSegment >= SEGMENTS.length) {
+                throw new Error('Invalid wheel result');
+            }
+        } catch (error) {
+            stopSound('WHEEL_SPIN');
+            setGameState('idle');
+            setErrorMessage(getRequestErrorMessage(error, 'Failed to spin wheel'));
+            console.error('Wheel spin error:', error);
+            await refreshBalance();
+            return;
+        }
 
         const segmentAngle = 360 / 20;
-        const fullSpins = 5 + Math.floor(Math.random() * 3); // 5-7 full rotations
+        const currentAngle = ((currentRotation % 360) + 360) % 360;
+        const fullSpins = 7 + Math.floor(Math.random() * 2);
         const segmentPosition = 360 - (targetSegment * segmentAngle) - (segmentAngle / 2);
-        const targetRotation = currentRotation + (fullSpins * 360) + segmentPosition - (currentRotation % 360);
+        const deltaToSegment = (segmentPosition - currentAngle + 360) % 360;
+        const targetRotation = currentRotation + (fullSpins * 360) + deltaToSegment;
 
+        setResultSegment(targetSegment);
+        playSound('WHEEL_SPIN', { loop: true });
         setCurrentRotation(targetRotation);
 
-        // After spin animation completes (5 seconds)
-        setTimeout(() => {
+        spinTimeoutRef.current = setTimeout(() => {
             stopSound('WHEEL_SPIN');
 
             const segment = SEGMENTS[targetSegment];
-            setResultSegment(targetSegment);
+            const settledMultiplier = serverMultiplier ?? segment.multiplier;
+            const settledPayout = serverPayout ?? wager * settledMultiplier;
+            const settledOutcome: WheelOutcome = {
+                segment: targetSegment,
+                multiplier: settledMultiplier,
+                payout: settledPayout,
+                color: segment.color,
+                isWin: settledMultiplier > 0,
+            };
+
+            setLastOutcome(settledOutcome);
             setGameState('result');
 
-            setRecentResults(prev => [segment.multiplier, ...prev].slice(0, 3));
+            setRecentResults(prev => [settledMultiplier, ...prev].slice(0, 5));
 
-            if (segment.multiplier > 0) {
+            if (!demoMode) {
+                refreshBalance();
+            } else if (settledOutcome.isWin) {
                 playSound('WIN');
                 addBetRecord({
                     game: 'wheel',
-                    betAmount,
+                    betAmount: wager,
                     outcome: 'win',
-                    multiplier: segment.multiplier,
-                    payout: betAmount * segment.multiplier,
+                    multiplier: settledMultiplier,
+                    payout: settledPayout,
                     gameParams: { segment: targetSegment },
                 });
             } else {
                 playSound('LOSE');
                 addBetRecord({
                     game: 'wheel',
-                    betAmount,
+                    betAmount: wager,
                     outcome: 'loss',
                     multiplier: 0,
                     payout: 0,
@@ -142,24 +230,32 @@ export default function WheelGame() {
                 });
             }
 
-            setTimeout(() => {
+            if (!demoMode) {
+                if (settledOutcome.isWin) {
+                    playSound('WIN');
+                } else {
+                    playSound('LOSE');
+                }
+            }
+
+            resetTimeoutRef.current = setTimeout(() => {
                 setGameState('idle');
-            }, 2000);
-        }, 5000);
-    }, [canBet, betAmount, gameState, currentRotation, playSound, stopSound, addBetRecord]);
+            }, RESULT_HOLD_MS);
+        }, SPIN_DURATION_MS);
+    }, [canBet, betAmount, gameState, demoMode, currentRotation, playSound, stopSound, addBetRecord, refreshBalance]);
 
     const handleQuickBet = (amount: number) => {
-        if (gameState === 'spinning') return;
+        if (roundLocked) return;
         setBetAmount(amount);
     };
 
     const handleHalfBet = () => {
-        if (gameState === 'spinning') return;
+        if (roundLocked) return;
         setBetAmount(Math.max(0.5, betAmount / 2));
     };
 
     const handleDoubleBet = () => {
-        if (gameState === 'spinning') return;
+        if (roundLocked) return;
         setBetAmount(Math.min(effectiveBalance, betAmount * 2));
     };
 
@@ -221,7 +317,7 @@ export default function WheelGame() {
                                 min={0.5}
                                 max={100}
                                 step={0.5}
-                                disabled={gameState === 'spinning'}
+                                disabled={roundLocked}
                                 className={styles.input}
                             />
                         </div>
@@ -231,7 +327,7 @@ export default function WheelGame() {
                                 <button
                                     key={amount}
                                     onClick={() => handleQuickBet(amount)}
-                                    disabled={gameState === 'spinning'}
+                                    disabled={roundLocked}
                                     className={styles.quickBtn}
                                 >
                                     ${amount}
@@ -240,15 +336,15 @@ export default function WheelGame() {
                         </div>
 
                         <div className={styles.betActions}>
-                            <button onClick={handleHalfBet} disabled={gameState === 'spinning'} className={styles.actionBtn}>
+                            <button onClick={handleHalfBet} disabled={roundLocked} className={styles.actionBtn}>
                                 ½
                             </button>
-                            <button onClick={handleDoubleBet} disabled={gameState === 'spinning'} className={styles.actionBtn}>
+                            <button onClick={handleDoubleBet} disabled={roundLocked} className={styles.actionBtn}>
                                 2×
                             </button>
                             <button
                                 onClick={() => setBetAmount(effectiveBalance)}
-                                disabled={gameState === 'spinning'}
+                                disabled={roundLocked}
                                 className={styles.actionBtn}
                             >
                                 MAX
@@ -260,22 +356,31 @@ export default function WheelGame() {
                     <div className={styles.card}>
                         <div className={styles.statRow}>
                             <span className={styles.statLabel}>Max Win</span>
-                            <span className={styles.statValue}>${(betAmount * 3.5).toFixed(2)}</span>
+                            <span className={styles.statValue}>${(displayBetAmount * 3.5).toFixed(2)}</span>
                         </div>
                     </div>
+
+                    <div className={styles.statusCard}>
+                        <span className={styles.statusLabel}>{wheelStatus}</span>
+                        <span className={styles.statusDetail}>{wheelStatusDetail}</span>
+                    </div>
+
+                    {errorMessage && (
+                        <div className={styles.errorMessage}>{errorMessage}</div>
+                    )}
 
                     {/* Spin Button */}
                     <button
                         onClick={spinWheel}
-                        disabled={!canBet(betAmount) || gameState !== 'idle'}
-                        className={styles.spinBtn}
+                        disabled={!canBet(betAmount) || roundLocked}
+                        className={`${styles.spinBtn} ${roundLocked ? styles.spinBtnLocked : ''}`}
                     >
                         {gameState === 'spinning' ? 'SPINNING...' : `SPIN ($${betAmount})`}
                     </button>
                 </div>
 
                 {/* Game Area - The Wheel */}
-                <div className={styles.gameArea}>
+                <div className={`${styles.gameArea} ${gameState === 'spinning' ? styles.gameAreaActive : ''}`}>
                     {/* Recent Results Strip */}
                     {recentResults.length > 0 && (
                         <div className={styles.recentResults}>
@@ -366,6 +471,15 @@ export default function WheelGame() {
                                     </div>
                                     <div className={styles.resultPayout}>
                                         {resultInfo.isWin ? '+' : ''}${resultInfo.payout.toFixed(2)}
+                                    </div>
+                                </div>
+                            ) : gameState === 'spinning' ? (
+                                <div className={styles.spinCenter}>
+                                    <div className={styles.spinCenterLabel}>
+                                        {resultSegment === null ? 'LOCKING' : 'LIVE'}
+                                    </div>
+                                    <div className={styles.spinCenterValue}>
+                                        ${lockedBetAmount.toFixed(2)}
                                     </div>
                                 </div>
                             ) : (

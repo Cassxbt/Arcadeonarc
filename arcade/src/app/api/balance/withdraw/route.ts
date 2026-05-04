@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
-import { getVerifiedWallet } from '@/lib/verify-dynamic-jwt';
+import { getSessionWallet } from '@/lib/session';
 
 export async function POST(request: NextRequest) {
     const clientIp = getClientIp(request);
@@ -11,15 +11,14 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-        // SECURITY: Get wallet from verified Dynamic JWT
-        const wallet = await getVerifiedWallet(request);
+        const wallet = await getSessionWallet(request);
         if (!wallet) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
         const { amount } = await request.json();
 
-        if (typeof amount !== 'number' || amount <= 0) {
+        if (typeof amount !== 'number' || !Number.isFinite(amount) || amount <= 0) {
             return NextResponse.json({ error: 'Invalid amount' }, { status: 400 });
         }
 
@@ -62,13 +61,20 @@ export async function PUT(request: NextRequest) {
     }
 
     try {
-        // SECURITY: Get wallet from verified Dynamic JWT
-        const wallet = await getVerifiedWallet(request);
+        const wallet = await getSessionWallet(request);
         if (!wallet) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
         const { amount, action } = await request.json();
+
+        if (typeof amount !== 'number' || !Number.isFinite(amount) || amount <= 0) {
+            return NextResponse.json({ error: 'Invalid amount' }, { status: 400 });
+        }
+
+        if (action !== 'confirm' && action !== 'cancel') {
+            return NextResponse.json({ error: 'Invalid withdrawal action' }, { status: 400 });
+        }
 
         const supabase = createServerClient();
 

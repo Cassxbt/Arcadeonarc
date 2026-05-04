@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { User } from './supabase';
+import { authFetch } from './auth-fetch';
 
 interface UseUserReturn {
     user: User | null;
@@ -60,10 +61,9 @@ export function useUser(): UseUserReturn {
         }
 
         try {
-            const response = await fetch('/api/users', {
+            const response = await authFetch('/api/users', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ wallet: walletAddress, username }),
+                body: JSON.stringify({ username }),
             });
 
             const data = await response.json();
@@ -90,10 +90,9 @@ export function useUser(): UseUserReturn {
         }
 
         try {
-            const response = await fetch('/api/users', {
+            const response = await authFetch('/api/users', {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ wallet: walletAddress, username }),
+                body: JSON.stringify({ username }),
             });
 
             const data = await response.json();

@@ -4,7 +4,7 @@ import { arcTestnet, CONTRACTS } from '@/lib/constants';
 import { VAULT_ABI } from '@/lib/abi';
 import { createServerClient } from '@/lib/supabase-server';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
-import { getVerifiedWallet } from '@/lib/verify-dynamic-jwt';
+import { getSessionWallet } from '@/lib/session';
 
 const publicClient = createPublicClient({
     chain: arcTestnet,
@@ -24,8 +24,7 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-        // SECURITY: Get wallet from verified Dynamic JWT
-        const wallet = await getVerifiedWallet(request);
+        const wallet = await getSessionWallet(request);
         if (!wallet) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }

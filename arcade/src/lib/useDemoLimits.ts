@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 
 const DEMO_STORAGE_KEY = 'arcadeDemoPlays';
 const MAX_PLAYS_PER_DAY = 5;
@@ -70,11 +70,7 @@ function saveLimits(limits: DemoLimits): void {
 }
 
 export function useDemoLimits(): DemoLimitState {
-    const [limits, setLimits] = useState<DemoLimits>(getDefaultLimits);
-
-    useEffect(() => {
-        setLimits(loadLimits());
-    }, []);
+    const [limits, setLimits] = useState<DemoLimits>(loadLimits);
 
     const canPlay = useCallback((game: GameType): boolean => {
         const gameLimit = limits?.[game];

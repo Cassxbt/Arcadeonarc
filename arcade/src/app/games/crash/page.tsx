@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { useGame } from '@/lib/game-context';
 import { useSound } from '@/lib/sounds';
+import { authFetch, getRequestErrorMessage, readResponseError } from '@/lib/auth-fetch';
 import { Rocket, Flame, CircleDollarSign, Sparkles, Zap, Target, BarChart3 } from '@/components/icons';
 import { GameModeSelector } from '@/components/GameModeSelector';
 import { DemoLimitOverlay } from '@/components/DemoLimitOverlay';
@@ -33,7 +34,9 @@ const CRASH_GAME_RULES = [
     },
 ];
 
-type GameState = 'idle' | 'flying' | 'crashed' | 'cashedOut';
+type GameState = 'idle' | 'launching' | 'flying' | 'cashingOut' | 'crashed' | 'cashedOut';
+type ActiveCrashRound = { roundId: string; version: number };
+const SERVER_CHECK_INTERVAL_MS = 500;
 
 function getMultiplierLevel(multiplier: number): 'low' | 'medium' | 'high' {
     if (multiplier >= 5) return 'high';
@@ -52,14 +55,23 @@ function getTrajectoryPath(multiplier: number): string {
     return `M ${startX} ${startY} L ${endX} ${endY}`;
 }
 
+function calculateDisplayedMultiplier(startTime: number, now: number): number {
+    const elapsedSeconds = Math.max(0, now - startTime) / 1000;
+    return Math.max(1, Math.floor(Math.pow(1.06, elapsedSeconds * 10) * 100) / 100);
+}
+
+function canStartFromState(gameState: GameState): boolean {
+    return gameState === 'idle' || gameState === 'crashed' || gameState === 'cashedOut';
+}
+
 export default function CrashGame() {
     const { primaryWallet, setShowAuthFlow } = useDynamicContext();
     const {
-        effectiveBalance,
         betAmount,
         setBetAmount,
         canBet,
         addBetRecord,
+        refreshBalance,
         demoMode,
         toggleDemoMode,
         isDemoLimitReached,
@@ -75,15 +87,22 @@ export default function CrashGame() {
     const [crashPoint, setCrashPoint] = useState(0);
     const [autoCashout, setAutoCashout] = useState<number | null>(null);
     const [cashedOutAt, setCashedOutAt] = useState<number | null>(null);
+    const [roundBetAmount, setRoundBetAmount] = useState(betAmount);
+    const [settledPayout, setSettledPayout] = useState<number | null>(null);
     const [showFlash, setShowFlash] = useState(false);
     const [showInfo, setShowInfo] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [activeRound, setActiveRound] = useState<ActiveCrashRound | null>(null);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     const animationRef = useRef<number | null>(null);
     const startTimeRef = useRef<number>(0);
     const gameAreaRef = useRef<HTMLDivElement>(null);
     const gameStateRef = useRef<GameState>(gameState);
     const isStartingRef = useRef<boolean>(false);
+    const isCashoutRef = useRef<boolean>(false);
+    const demoCrashPointRef = useRef<number>(0);
+    const serverTimeOffsetRef = useRef<number>(0);
 
     useEffect(() => {
         gameStateRef.current = gameState;
@@ -94,7 +113,7 @@ export default function CrashGame() {
     const multiplierClass = useMemo(() => {
         if (gameState === 'crashed') return styles.multiplierCrashed;
         if (gameState === 'cashedOut') return styles.multiplierCashedOut;
-        if (gameState === 'flying') {
+        if (gameState === 'flying' || gameState === 'cashingOut') {
             const baseClass = styles.multiplierFlying;
             if (multiplierLevel === 'high') return `${baseClass} ${styles.multiplierHigh}`;
             if (multiplierLevel === 'medium') return `${baseClass} ${styles.multiplierMedium}`;
@@ -103,79 +122,202 @@ export default function CrashGame() {
         return '';
     }, [gameState, multiplierLevel]);
 
-    const [gameNonce, setGameNonce] = useState<number>(0);
+    const generateDemoCrashPoint = () => {
+        const random = Math.random();
+        if (random < 0.10) return 10000;
+        const normalizedRandom = (random - 0.10) / 0.90;
+        const result = (0.95 / 0.90) / normalizedRandom;
+        return Math.min(Math.max(10000, Math.floor(result * 10000)), 1000000);
+    };
+
+    const getCurrentMultiplierBps = useCallback(() => {
+        const now = Date.now() + serverTimeOffsetRef.current;
+        const elapsedSeconds = Math.max(0, now - startTimeRef.current) / 1000;
+        return Math.max(10000, Math.floor(Math.pow(1.06, elapsedSeconds * 10) * 10000));
+    }, []);
 
     const startGame = useCallback(async () => {
-        if (!canBet(betAmount) || gameState === 'flying' || isStartingRef.current || isLoading) return;
+        if (!canBet(betAmount) || !canStartFromState(gameState) || isStartingRef.current || isLoading) return;
 
         isStartingRef.current = true;
         setIsLoading(true);
+        setGameState('launching');
+        setErrorMessage(null);
+        setActiveRound(null);
+        setMultiplier(1.00);
+        setCrashPoint(0);
+        setCashedOutAt(null);
+        setRoundBetAmount(betAmount);
+        setSettledPayout(null);
+        setShowFlash(false);
+        let initialMultiplier = 1.00;
 
         stopSound('WIN');
         stopSound('EXPLOSION');
         stopSound('CASH_OUT');
+        playSound('CLICK');
 
         if (animationRef.current) {
             cancelAnimationFrame(animationRef.current);
             animationRef.current = null;
         }
 
-        const nonce = Date.now();
-        setGameNonce(nonce);
-
         try {
-            const response = await fetch('/api/crash', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'start',
-                    userAddress: primaryWallet?.address || 'demo',
-                    nonce,
-                }),
-            });
+            if (demoMode) {
+                demoCrashPointRef.current = generateDemoCrashPoint();
+                setActiveRound(null);
+            } else {
+                const response = await authFetch('/api/crash', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'start',
+                        betAmount,
+                    }),
+                });
 
-            if (!response.ok) {
-                throw new Error('Failed to start game');
+                if (!response.ok) {
+                    throw new Error(await readResponseError(response, 'Failed to start game'));
+                }
+
+                const data = await response.json();
+                setActiveRound({ roundId: data.roundId, version: data.version });
+                const serverTime = typeof data.serverTime === 'number' ? data.serverTime : Date.now();
+                serverTimeOffsetRef.current = serverTime - Date.now();
+                startTimeRef.current = typeof data.startedAt === 'number' ? data.startedAt : serverTime;
+                initialMultiplier = calculateDisplayedMultiplier(startTimeRef.current, serverTime);
+                if (typeof data.betAmount === 'number') {
+                    setRoundBetAmount(data.betAmount);
+                    setBetAmount(data.betAmount);
+                }
             }
 
-            setMultiplier(1.00);
-            setCashedOutAt(null);
-            setShowFlash(false);
+            setMultiplier(initialMultiplier);
             setGameState('flying');
-            startTimeRef.current = Date.now();
+            if (demoMode) {
+                serverTimeOffsetRef.current = 0;
+                startTimeRef.current = Date.now();
+            }
             lastCheckRef.current = 0;
-
-            playSound('CLICK');
         } catch (error) {
             console.error('Crash start error:', error);
+            setErrorMessage(getRequestErrorMessage(error, 'Failed to start game'));
+            setGameState('idle');
         } finally {
             setIsLoading(false);
             isStartingRef.current = false;
         }
-    }, [canBet, betAmount, gameState, isLoading, playSound, stopSound, primaryWallet?.address]);
+    }, [canBet, betAmount, gameState, isLoading, playSound, setBetAmount, stopSound, demoMode]);
 
     // Cash out
-    const cashOut = useCallback(() => {
-        if (gameState !== 'flying') return;
+    const cashOut = useCallback(async () => {
+        if (gameState !== 'flying' || isCashoutRef.current) return;
+        isCashoutRef.current = true;
+        setErrorMessage(null);
 
         if (animationRef.current) {
             cancelAnimationFrame(animationRef.current);
             animationRef.current = null;
         }
 
-        setCashedOutAt(multiplier);
-        setGameState('cashedOut');
-        playSound('WIN');
+        const cashoutMultiplier = getCurrentMultiplierBps();
+        const displayedCashoutMultiplier = cashoutMultiplier / 10000;
 
-        addBetRecord({
-            game: 'crash',
-            betAmount,
-            outcome: 'win',
-            multiplier,
-            payout: betAmount * multiplier,
-            gameParams: { cashoutMultiplier: Math.floor(multiplier * 10000), crashPoint: 0 },
-        });
-    }, [gameState, multiplier, betAmount, playSound, addBetRecord]);
+        setMultiplier(displayedCashoutMultiplier);
+        setCashedOutAt(displayedCashoutMultiplier);
+        setSettledPayout(roundBetAmount * displayedCashoutMultiplier);
+        setGameState('cashingOut');
+        playSound('CASH_OUT');
+
+        try {
+            if (demoMode) {
+                const won = cashoutMultiplier <= demoCrashPointRef.current;
+                if (!won) {
+                    setCrashPoint(demoCrashPointRef.current / 10000);
+                    setMultiplier(demoCrashPointRef.current / 10000);
+                    setGameState('crashed');
+                    setShowFlash(true);
+                    playSound('EXPLOSION');
+                addBetRecord({
+                    game: 'crash',
+                    betAmount: roundBetAmount,
+                    outcome: 'loss',
+                    multiplier: 0,
+                    payout: 0,
+                        gameParams: { cashoutMultiplier: 0, crashPoint: demoCrashPointRef.current },
+                    });
+                    return;
+                }
+
+                playSound('WIN');
+                addBetRecord({
+                    game: 'crash',
+                    betAmount: roundBetAmount,
+                    outcome: 'win',
+                    multiplier: displayedCashoutMultiplier,
+                    payout: roundBetAmount * displayedCashoutMultiplier,
+                    gameParams: { cashoutMultiplier, crashPoint: demoCrashPointRef.current },
+                });
+                setGameState('cashedOut');
+                return;
+            }
+
+            if (!activeRound) {
+                throw new Error('No active crash round');
+            }
+
+            const response = await authFetch('/api/crash', {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'cashout',
+                    roundId: activeRound.roundId,
+                    version: activeRound.version,
+                    cashoutMultiplier,
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error(await readResponseError(response, 'Failed to cash out'));
+            }
+
+            const data = await response.json();
+            if (!data.success) {
+                setCrashPoint(data.crashPoint / 10000);
+                setMultiplier(data.crashPoint / 10000);
+                setGameState('crashed');
+                setShowFlash(true);
+                playSound('EXPLOSION');
+                setActiveRound(null);
+                void refreshBalance();
+                return;
+            }
+
+            setCashedOutAt(data.multiplier);
+            setSettledPayout(typeof data.payout === 'number' ? data.payout : roundBetAmount * data.multiplier);
+            setGameState('cashedOut');
+            setActiveRound(null);
+            playSound('WIN');
+            void refreshBalance();
+        } catch (error) {
+            console.error('Crash cashout error:', error);
+            const message = getRequestErrorMessage(error, 'Failed to cash out');
+            setErrorMessage(message);
+            setCashedOutAt(null);
+            setSettledPayout(null);
+            if (message === 'Round not found' || !activeRound) {
+                setActiveRound(null);
+                setMultiplier(1.00);
+                setGameState('idle');
+            } else {
+                lastCheckRef.current = 0;
+                setGameState('flying');
+            }
+            if (!demoMode) {
+                void refreshBalance();
+            }
+        } finally {
+            isCashoutRef.current = false;
+        }
+    }, [gameState, roundBetAmount, demoMode, activeRound, playSound, addBetRecord, refreshBalance, getCurrentMultiplierBps]);
 
     const lastCheckRef = useRef<number>(0);
 
@@ -183,57 +325,68 @@ export default function CrashGame() {
     useEffect(() => {
         if (gameState !== 'flying') return;
 
-        const checkInterval = 150;
-
         const animate = async () => {
             if (gameStateRef.current !== 'flying') return;
 
-            const elapsed = (Date.now() - startTimeRef.current) / 1000;
-            const newMultiplier = Math.pow(1.06, elapsed * 10);
-            const roundedMultiplier = Math.floor(newMultiplier * 100) / 100;
+            const multiplierBps = getCurrentMultiplierBps();
+            const roundedMultiplier = Math.floor((multiplierBps / 10000) * 100) / 100;
 
             setMultiplier(roundedMultiplier);
 
             if (autoCashout && roundedMultiplier >= autoCashout) {
-                cashOut();
+                void cashOut();
                 return;
             }
 
             // Periodically check with server if we've crashed
             const now = Date.now();
-            if (now - lastCheckRef.current > checkInterval) {
+            if (!isCashoutRef.current && now - lastCheckRef.current > SERVER_CHECK_INTERVAL_MS) {
                 lastCheckRef.current = now;
 
                 try {
-                    const response = await fetch('/api/crash', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            action: 'check',
-                            userAddress: primaryWallet?.address || 'demo',
-                            nonce: gameNonce,
-                            currentMultiplier: roundedMultiplier * 10000, // Convert to basis points
-                        }),
-                    });
-
-                    if (response.ok) {
-                        const data = await response.json();
-                        if (data.crashed) {
-                            setCrashPoint(data.crashPoint / 10000);
-                            setMultiplier(data.crashPoint / 10000);
+                    if (demoMode) {
+                        if (roundedMultiplier * 10000 >= demoCrashPointRef.current) {
+                            setCrashPoint(demoCrashPointRef.current / 10000);
+                            setMultiplier(demoCrashPointRef.current / 10000);
                             setGameState('crashed');
                             setShowFlash(true);
                             playSound('EXPLOSION');
 
                             addBetRecord({
                                 game: 'crash',
-                                betAmount,
+                                betAmount: roundBetAmount,
                                 outcome: 'loss',
                                 multiplier: 0,
                                 payout: 0,
-                                gameParams: { cashoutMultiplier: 0, crashPoint: data.crashPoint },
+                                gameParams: { cashoutMultiplier: 0, crashPoint: demoCrashPointRef.current },
                             });
                             return;
+                        }
+                    } else if (activeRound) {
+                        const response = await authFetch('/api/crash', {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                action: 'check',
+                                roundId: activeRound.roundId,
+                                version: activeRound.version,
+                                currentMultiplier: Math.floor(roundedMultiplier * 10000),
+                            }),
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.crashed) {
+                                setCrashPoint(data.crashPoint / 10000);
+                                setMultiplier(data.crashPoint / 10000);
+                                setGameState('crashed');
+                                setShowFlash(true);
+                                setActiveRound(null);
+                                playSound('EXPLOSION');
+                                void refreshBalance();
+                                return;
+                            }
+                        } else {
+                            console.warn('Crash check error:', await readResponseError(response, 'Failed to check crash round'));
                         }
                     }
                 } catch {
@@ -251,10 +404,35 @@ export default function CrashGame() {
                 cancelAnimationFrame(animationRef.current);
             }
         };
-    }, [gameState, gameNonce, autoCashout, cashOut, betAmount, playSound, addBetRecord, primaryWallet?.address]);
+    }, [gameState, autoCashout, cashOut, roundBetAmount, playSound, addBetRecord, demoMode, activeRound, refreshBalance, getCurrentMultiplierBps]);
+
+    const roundLocked = gameState === 'launching' || gameState === 'flying' || gameState === 'cashingOut' || isLoading;
+    const displayedPayout = roundBetAmount * multiplier;
+    const flightStatus = gameState === 'idle'
+        ? 'Ready'
+        : gameState === 'launching'
+            ? 'Launching'
+            : gameState === 'flying'
+                ? 'Live'
+                : gameState === 'cashingOut'
+                    ? 'Securing'
+                    : gameState === 'cashedOut'
+                        ? 'Paid'
+                        : 'Crashed';
+    const flightStatusDetail = gameState === 'flying'
+        ? 'Cashout request will lock the current multiplier server-side.'
+        : gameState === 'cashingOut'
+            ? 'Settlement request in flight. Controls stay locked.'
+            : gameState === 'launching'
+                ? 'Creating wagered round.'
+                : gameState === 'cashedOut'
+                    ? `Settled at ${cashedOutAt?.toFixed(2) ?? multiplier.toFixed(2)}x.`
+                    : gameState === 'crashed'
+                        ? `Stopped at ${crashPoint.toFixed(2)}x.`
+                        : 'Set wager, launch, and cash out before the crash.';
 
     const handleQuickBet = (amount: number) => {
-        if (gameState === 'flying') return;
+        if (roundLocked) return;
         setBetAmount(amount);
     };
 
@@ -281,7 +459,7 @@ export default function CrashGame() {
         );
     }
 
-    const rocketProgress = gameState === 'flying' || gameState === 'crashed' || gameState === 'cashedOut'
+    const rocketProgress = gameState === 'flying' || gameState === 'cashingOut' || gameState === 'crashed' || gameState === 'cashedOut'
         ? Math.min((multiplier - 1) * 12, 70)
         : 0;
 
@@ -321,7 +499,7 @@ export default function CrashGame() {
                                 min={0.5}
                                 max={100}
                                 step={0.5}
-                                disabled={gameState === 'flying'}
+                                disabled={roundLocked}
                                 className={styles.input}
                             />
                         </div>
@@ -331,7 +509,7 @@ export default function CrashGame() {
                                 <button
                                     key={amount}
                                     onClick={() => handleQuickBet(amount)}
-                                    disabled={gameState === 'flying'}
+                                    disabled={roundLocked}
                                     className={styles.quickBtn}
                                 >
                                     ${amount}
@@ -351,7 +529,7 @@ export default function CrashGame() {
                                 placeholder="Off"
                                 min={1.1}
                                 step={0.1}
-                                disabled={gameState === 'flying'}
+                                disabled={roundLocked}
                                 className={styles.input}
                             />
                             <span className={styles.multiplierLabel}>×</span>
@@ -360,22 +538,30 @@ export default function CrashGame() {
 
                     {/* Game Actions */}
                     <div className={styles.gameActions}>
-                        {(gameState === 'idle' || gameState === 'crashed' || gameState === 'cashedOut') && (
+                        {errorMessage && (
+                            <div className={styles.errorMessage}>{errorMessage}</div>
+                        )}
+
+                        {(canStartFromState(gameState) || gameState === 'launching') && (
                             <button
                                 onClick={startGame}
-                                disabled={!canBet(betAmount) || isLoading}
+                                disabled={!canBet(betAmount) || roundLocked}
                                 className={`${styles.primaryBtn} ${isLoading ? styles.loading : ''}`}
                                 style={{ touchAction: 'manipulation' }}
                             >
                                 <Rocket size={20} style={{ marginRight: '8px' }} />
-                                {isLoading ? 'Launching...' : `Launch Cannon ($${betAmount})`}
+                                {gameState === 'launching' ? 'Launching...' : `Launch Cannon ($${betAmount})`}
                             </button>
                         )}
 
-                        {gameState === 'flying' && (
-                            <button onClick={cashOut} className={styles.cashoutBtn}>
+                        {(gameState === 'flying' || gameState === 'cashingOut') && (
+                            <button
+                                onClick={cashOut}
+                                disabled={gameState === 'cashingOut'}
+                                className={`${styles.cashoutBtn} ${gameState === 'cashingOut' ? styles.cashoutPending : ''}`}
+                            >
                                 <CircleDollarSign size={20} style={{ marginRight: '8px' }} />
-                                Cash Out @ {multiplier.toFixed(2)}×
+                                {gameState === 'cashingOut' ? 'Cashing out...' : `Cash Out @ ${multiplier.toFixed(2)}×`}
                             </button>
                         )}
                     </div>
@@ -387,7 +573,7 @@ export default function CrashGame() {
                                 <Sparkles size={32} style={{ color: 'var(--neon-green)', filter: 'drop-shadow(0 0 15px var(--neon-green))' }} />
                             </span>
                             <span>Cashed out at {cashedOutAt.toFixed(2)}×</span>
-                            <span className={styles.resultPayout}>+${(betAmount * cashedOutAt).toFixed(2)}</span>
+                            <span className={styles.resultPayout}>+${(settledPayout ?? roundBetAmount * cashedOutAt).toFixed(2)}</span>
                         </div>
                     )}
 
@@ -406,6 +592,27 @@ export default function CrashGame() {
                     ref={gameAreaRef}
                     className={`${styles.gameArea} ${gameState === 'crashed' ? styles.shake : ''}`}
                 >
+                    <div className={styles.flightDeck}>
+                        <div className={styles.flightDeckItem}>
+                            <span className={styles.flightDeckLabel}>Status</span>
+                            <strong className={styles.flightDeckValue}>{flightStatus}</strong>
+                        </div>
+                        <div className={styles.flightDeckItem}>
+                            <span className={styles.flightDeckLabel}>Wager</span>
+                            <strong className={styles.flightDeckValue}>${roundBetAmount.toFixed(2)}</strong>
+                        </div>
+                        <div className={styles.flightDeckItem}>
+                            <span className={styles.flightDeckLabel}>Potential</span>
+                            <strong className={styles.flightDeckValue}>${displayedPayout.toFixed(2)}</strong>
+                        </div>
+                        <div className={styles.flightDeckItem}>
+                            <span className={styles.flightDeckLabel}>Auto</span>
+                            <strong className={styles.flightDeckValue}>{autoCashout ? `${autoCashout.toFixed(2)}x` : 'Off'}</strong>
+                        </div>
+                    </div>
+
+                    <div className={styles.flightStatusLine}>{flightStatusDetail}</div>
+
                     {/* Screen Flash on Crash */}
                     {showFlash && <div className={styles.screenFlash} />}
 
@@ -425,7 +632,7 @@ export default function CrashGame() {
                                     <stop offset="100%" stopColor="var(--neon-cyan)" />
                                 </linearGradient>
                             </defs>
-                            {(gameState === 'flying' || gameState === 'cashedOut') && (
+                            {(gameState === 'flying' || gameState === 'cashingOut' || gameState === 'cashedOut') && (
                                 <>
                                     <path
                                         className={styles.trajectoryGlow}
@@ -441,7 +648,7 @@ export default function CrashGame() {
                     </div>
 
                     {/* Rocket Container - Only show when flying or idle */}
-                    {(gameState === 'idle' || gameState === 'flying') && (
+                    {(gameState === 'idle' || gameState === 'launching' || gameState === 'flying' || gameState === 'cashingOut') && (
                         <div
                             className={styles.rocketContainer}
                             style={{
@@ -450,14 +657,14 @@ export default function CrashGame() {
                             }}
                         >
                             {/* Rocket Assembly - rocket + flame rotate together */}
-                            <div className={`${styles.rocketAssembly} ${gameState === 'flying' ? styles.rocketFlying : styles.rocketIdle}`}>
+                            <div className={`${styles.rocketAssembly} ${gameState === 'flying' || gameState === 'cashingOut' ? styles.rocketFlying : styles.rocketIdle}`}>
                                 {/* Glowing Trail - extends from back of rocket when flying */}
-                                {gameState === 'flying' && (
+                                {(gameState === 'flying' || gameState === 'cashingOut') && (
                                     <div className={styles.glowTrail} />
                                 )}
 
                                 {/* Flame - behind rocket, only when flying */}
-                                {gameState === 'flying' && (
+                                {(gameState === 'flying' || gameState === 'cashingOut') && (
                                     <div className={styles.flameContainer}>
                                         <Flame
                                             size={50}
@@ -519,6 +726,11 @@ export default function CrashGame() {
                                 <Zap size={16} fill="currentColor" style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />
                                 Click to cash out!
                                 <Zap size={16} fill="currentColor" style={{ display: 'inline', verticalAlign: 'middle', marginLeft: '4px' }} />
+                            </span>
+                        )}
+                        {gameState === 'cashingOut' && (
+                            <span className={styles.multiplierHint}>
+                                Securing payout...
                             </span>
                         )}
                     </div>

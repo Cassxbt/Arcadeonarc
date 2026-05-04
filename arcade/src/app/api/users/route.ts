@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
+import { getSessionWallet } from '@/lib/session';
 
 // GET /api/users?wallet=0x...
 export async function GET(request: NextRequest) {
@@ -37,11 +38,16 @@ export async function GET(request: NextRequest) {
 // POST /api/users - Register new user
 export async function POST(request: NextRequest) {
     try {
-        const body = await request.json();
-        const { wallet, username } = body;
+        const wallet = await getSessionWallet(request);
+        if (!wallet) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
 
-        if (!wallet || !username) {
-            return NextResponse.json({ error: 'Wallet and username required' }, { status: 400 });
+        const body = await request.json();
+        const { username } = body;
+
+        if (!username) {
+            return NextResponse.json({ error: 'Username required' }, { status: 400 });
         }
 
         const walletLower = wallet.toLowerCase();
@@ -105,11 +111,16 @@ export async function POST(request: NextRequest) {
 // PATCH /api/users - Update username
 export async function PATCH(request: NextRequest) {
     try {
-        const body = await request.json();
-        const { wallet, username } = body;
+        const wallet = await getSessionWallet(request);
+        if (!wallet) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
 
-        if (!wallet || !username) {
-            return NextResponse.json({ error: 'Wallet and username required' }, { status: 400 });
+        const body = await request.json();
+        const { username } = body;
+
+        if (!username) {
+            return NextResponse.json({ error: 'Username required' }, { status: 400 });
         }
 
         const walletLower = wallet.toLowerCase();

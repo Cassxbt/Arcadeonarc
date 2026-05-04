@@ -3,16 +3,27 @@ import { renderHook, act, waitFor } from '@testing-library/react';
 import { useBridge } from '../lib/useBridge';
 
 // Mock Bridge Kit SDK - use vi.hoisted for proper mock hoisting
-const { mockBridge, mockOn, MockBridgeKit } = vi.hoisted(() => {
+const { mockBridge, mockOn, mockProvider, mockGetWalletClient, mockSwitchNetwork, MockBridgeKit } = vi.hoisted(() => {
     const mockBridge = vi.fn();
     const mockOn = vi.fn();
+    const mockProvider = {
+        request: vi.fn(),
+    };
+    const mockGetWalletClient = vi.fn(() => Promise.resolve({
+        transport: {
+            value: {
+                provider: mockProvider,
+            },
+        },
+    }));
+    const mockSwitchNetwork = vi.fn(() => Promise.resolve());
 
     class MockBridgeKit {
         bridge = mockBridge;
         on = mockOn;
     }
 
-    return { mockBridge, mockOn, MockBridgeKit };
+    return { mockBridge, mockOn, mockProvider, mockGetWalletClient, mockSwitchNetwork, MockBridgeKit };
 });
 
 vi.mock('@circle-fin/bridge-kit', () => ({
@@ -21,12 +32,35 @@ vi.mock('@circle-fin/bridge-kit', () => ({
         Arc_Testnet: 'Arc_Testnet',
         Ethereum_Sepolia: 'Ethereum_Sepolia',
         Base_Sepolia: 'Base_Sepolia',
+        Arbitrum_Sepolia: 'Arbitrum_Sepolia',
+        Optimism_Sepolia: 'Optimism_Sepolia',
+        Avalanche_Fuji: 'Avalanche_Fuji',
+        HyperEVM_Testnet: 'HyperEVM_Testnet',
+        Monad_Testnet: 'Monad_Testnet',
+        Sei_Testnet: 'Sei_Testnet',
     },
 }));
 
 // Mock adapter
 vi.mock('@circle-fin/adapter-viem-v2', () => ({
-    createViemAdapterFromProvider: vi.fn(() => Promise.resolve({})),
+    createAdapterFromProvider: vi.fn(() => Promise.resolve({})),
+}));
+
+vi.mock('@dynamic-labs/sdk-react-core', () => ({
+    useDynamicContext: vi.fn(() => ({
+        primaryWallet: {
+            address: '0x1234567890123456789012345678901234567890',
+            connector: {
+                isEmbeddedWallet: false,
+            },
+            getWalletClient: mockGetWalletClient,
+            switchNetwork: mockSwitchNetwork,
+        },
+    })),
+}));
+
+vi.mock('@dynamic-labs/ethereum', () => ({
+    isEthereumWallet: vi.fn(() => true),
 }));
 
 // Mock viem
@@ -47,6 +81,14 @@ vi.mock('viem', async () => {
 describe('useBridge', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        mockGetWalletClient.mockResolvedValue({
+            transport: {
+                value: {
+                    provider: mockProvider,
+                },
+            },
+        });
+        mockSwitchNetwork.mockResolvedValue(undefined);
     });
 
     describe('initial state', () => {
@@ -57,7 +99,7 @@ describe('useBridge', () => {
             expect(result.current.error).toBeNull();
             expect(result.current.currentStep).toBe('idle');
             expect(result.current.completedSteps).toEqual([]);
-            expect(result.current.sourceChains).toHaveLength(2);
+            expect(result.current.sourceChains).toHaveLength(8);
         });
 
         it('provides Ethereum Sepolia and Base Sepolia as source chains', () => {

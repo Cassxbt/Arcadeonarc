@@ -19,12 +19,14 @@ vi.mock('@dynamic-labs/sdk-react-core', () => ({
             },
         },
     })),
+    useIsLoggedIn: vi.fn(() => true),
 }));
 
 // Mock sounds hook
 vi.mock('@/lib/sounds', () => ({
     useSound: vi.fn(() => ({
         playSound: vi.fn(),
+        stopSound: vi.fn(),
     })),
 }));
 

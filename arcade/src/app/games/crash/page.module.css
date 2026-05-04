@@ -163,6 +163,17 @@
     margin-top: var(--space-md);
 }
 
+.errorMessage {
+    margin-bottom: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    border: 1px solid rgba(255, 42, 109, 0.55);
+    border-radius: var(--radius-md);
+    color: var(--color-danger);
+    background: rgba(255, 42, 109, 0.1);
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
 /* Premium Launch Button */
 .primaryBtn {
     width: 100%;
@@ -262,6 +273,16 @@
     transform: scale(1.02);
 }
 
+.cashoutBtn:disabled {
+    cursor: wait;
+    opacity: 0.9;
+}
+
+.cashoutPending {
+    animation: loadingPulse 0.6s ease-in-out infinite alternate;
+    background: linear-gradient(135deg, #ccff00, var(--neon-green));
+}
+
 /* Results */
 .resultWin,
 .resultLoss {
@@ -307,15 +328,19 @@
    ========================================== */
 .gameArea {
     position: relative;
-    background: linear-gradient(180deg, #0a0a15 0%, #0f172a 50%, #0a0a15 100%);
-    border: 2px solid var(--border-color);
-    border-radius: var(--radius-xl);
+    background:
+        radial-gradient(circle at 22% 80%, rgba(5, 217, 232, 0.12), transparent 28%),
+        radial-gradient(circle at 78% 22%, rgba(255, 42, 109, 0.12), transparent 30%),
+        linear-gradient(180deg, #080a12 0%, #0f172a 50%, #090a12 100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
     overflow: hidden;
     min-height: 450px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    isolation: isolate;
 }
 
 /* Grid Background */
@@ -336,6 +361,59 @@
     position: absolute;
     inset: 0;
     background: radial-gradient(ellipse at center bottom, transparent 30%, rgba(10, 10, 21, 0.8) 100%);
+    pointer-events: none;
+}
+
+.flightDeck {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    right: 1rem;
+    z-index: 30;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.75rem;
+    pointer-events: none;
+}
+
+.flightDeckItem {
+    display: grid;
+    gap: 0.25rem;
+    padding: 0.75rem 0.85rem;
+    background: rgba(2, 6, 23, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 8px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(12px);
+}
+
+.flightDeckLabel {
+    color: var(--text-muted);
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+}
+
+.flightDeckValue {
+    color: var(--text-primary);
+    font-family: var(--font-arcade);
+    font-size: clamp(0.8rem, 1.2vw, 1rem);
+    letter-spacing: 0;
+    text-shadow: 0 0 16px rgba(255, 255, 255, 0.18);
+}
+
+.flightStatusLine {
+    position: absolute;
+    top: 5.85rem;
+    left: 50%;
+    z-index: 30;
+    width: min(620px, calc(100% - 2rem));
+    transform: translateX(-50%);
+    color: var(--text-secondary);
+    text-align: center;
+    font-size: 0.82rem;
+    line-height: 1.35;
     pointer-events: none;
 }
 
@@ -549,7 +627,7 @@
     text-shadow: 0 0 40px rgba(255, 255, 255, 0.05);
     transition: all 0.15s ease-out;
     line-height: 1;
-    letter-spacing: -0.02em;
+    letter-spacing: 0;
 }
 
 /* Active Flying State - Cyan glow */
@@ -937,6 +1015,16 @@
         min-height: 280px;
     }
 
+    .flightDeck {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.5rem;
+    }
+
+    .flightStatusLine {
+        top: 8.3rem;
+        font-size: 0.75rem;
+    }
+
     .multiplierValue {
         font-size: 5rem;
     }
@@ -988,6 +1076,29 @@
         min-height: 220px;
         max-height: 42vh;
         border-radius: var(--radius-lg);
+    }
+
+    .flightDeck {
+        top: 0.5rem;
+        left: 0.5rem;
+        right: 0.5rem;
+        gap: 0.35rem;
+    }
+
+    .flightDeckItem {
+        padding: 0.45rem 0.5rem;
+    }
+
+    .flightDeckLabel {
+        font-size: 0.48rem;
+    }
+
+    .flightDeckValue {
+        font-size: 0.64rem;
+    }
+
+    .flightStatusLine {
+        display: none;
     }
 
     .multiplierDisplay {
