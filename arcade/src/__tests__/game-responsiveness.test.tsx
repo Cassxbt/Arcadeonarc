@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import WheelGame from '@/app/games/wheel/page';
 import LaserGame from '@/app/games/laser/page';
 import TowerGame from '@/app/games/tower/page';
@@ -14,7 +14,7 @@ vi.mock('@/lib/auth-fetch', () => ({
 const mockedAuthFetch = vi.mocked(authFetch);
 const mockedUseGame = vi.mocked(useGame);
 
-function mockGameContext() {
+function mockGameContext(overrides: Partial<ReturnType<typeof useGame>> = {}) {
     mockedUseGame.mockReturnValue({
         effectiveBalance: 100,
         betAmount: 1,
@@ -28,6 +28,7 @@ function mockGameContext() {
         betHistory: [],
         balance: 100,
         syncBalanceAfterDeposit: vi.fn(() => Promise.resolve()),
+        ...overrides,
     } as unknown as ReturnType<typeof useGame>);
 }
 
@@ -37,6 +38,11 @@ describe('game responsiveness', () => {
         mockedAuthFetch.mockReset();
         mockedUseGame.mockReset();
         mockGameContext();
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+        vi.restoreAllMocks();
     });
 
     it('does not retarget the wheel while the server result is still pending', async () => {
@@ -129,6 +135,40 @@ describe('game responsiveness', () => {
             } as Response);
             await Promise.resolve();
         });
+    });
+
+    it('settles demo crash cashout from the visible live state instead of retroactively crashing', async () => {
+        vi.useFakeTimers();
+        vi.setSystemTime(0);
+        const addBetRecord = vi.fn();
+        mockGameContext({
+            demoMode: true,
+            addBetRecord,
+        } as Partial<ReturnType<typeof useGame>>);
+        vi.spyOn(Math, 'random').mockReturnValue(0.999);
+
+        render(<CrashGame />);
+
+        await act(async () => {
+            fireEvent.click(screen.getByRole('button', { name: /launch cannon/i }));
+            await Promise.resolve();
+        });
+
+        vi.setSystemTime(110);
+
+        expect(screen.getByRole('button', { name: /cash out/i })).toBeEnabled();
+
+        await act(async () => {
+            fireEvent.click(screen.getByRole('button', { name: /cash out/i }));
+            await Promise.resolve();
+        });
+
+        expect(screen.getByText(/cashed out at/i)).toBeInTheDocument();
+        expect(screen.queryByText(/crashed at/i)).not.toBeInTheDocument();
+        expect(addBetRecord).toHaveBeenCalledWith(expect.objectContaining({
+            game: 'crash',
+            outcome: 'win',
+        }));
     });
 
     it('advances tower to cashout-ready state within one short reveal beat after a safe server response', async () => {

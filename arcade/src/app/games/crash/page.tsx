@@ -37,6 +37,7 @@ const CRASH_GAME_RULES = [
 type GameState = 'idle' | 'launching' | 'flying' | 'cashingOut' | 'crashed' | 'cashedOut';
 type ActiveCrashRound = { roundId: string; version: number };
 const SERVER_CHECK_INTERVAL_MS = 500;
+const MULTIPLIER_BPS = 10000;
 
 function getMultiplierLevel(multiplier: number): 'low' | 'medium' | 'high' {
     if (multiplier >= 5) return 'high';
@@ -58,6 +59,14 @@ function getTrajectoryPath(multiplier: number): string {
 function calculateDisplayedMultiplier(startTime: number, now: number): number {
     const elapsedSeconds = Math.max(0, now - startTime) / 1000;
     return Math.max(1, Math.floor(Math.pow(1.06, elapsedSeconds * 10) * 100) / 100);
+}
+
+function multiplierBpsToDisplay(multiplierBps: number): number {
+    return Math.max(1, Math.floor((multiplierBps / MULTIPLIER_BPS) * 100) / 100);
+}
+
+function displayMultiplierToBps(displayedMultiplier: number): number {
+    return Math.max(MULTIPLIER_BPS, Math.floor(displayedMultiplier * MULTIPLIER_BPS));
 }
 
 function canStartFromState(gameState: GameState): boolean {
@@ -99,14 +108,54 @@ export default function CrashGame() {
     const startTimeRef = useRef<number>(0);
     const gameAreaRef = useRef<HTMLDivElement>(null);
     const gameStateRef = useRef<GameState>(gameState);
+    const roundBetAmountRef = useRef<number>(betAmount);
+    const visibleMultiplierBpsRef = useRef<number>(MULTIPLIER_BPS);
     const isStartingRef = useRef<boolean>(false);
     const isCashoutRef = useRef<boolean>(false);
     const demoCrashPointRef = useRef<number>(0);
     const serverTimeOffsetRef = useRef<number>(0);
+    const lastCheckRef = useRef<number>(0);
 
     useEffect(() => {
         gameStateRef.current = gameState;
     }, [gameState]);
+
+    const stopAnimation = useCallback(() => {
+        if (animationRef.current) {
+            cancelAnimationFrame(animationRef.current);
+            animationRef.current = null;
+        }
+    }, []);
+
+    const setDisplayedMultiplier = useCallback((nextMultiplier: number) => {
+        visibleMultiplierBpsRef.current = displayMultiplierToBps(nextMultiplier);
+        setMultiplier(nextMultiplier);
+    }, []);
+
+    const finalizeDemoCrash = useCallback(() => {
+        if (gameStateRef.current !== 'flying' || isCashoutRef.current) return;
+
+        stopAnimation();
+        const crashPointBps = demoCrashPointRef.current;
+        const displayedCrashPoint = multiplierBpsToDisplay(crashPointBps);
+        const wager = roundBetAmountRef.current;
+
+        gameStateRef.current = 'crashed';
+        setCrashPoint(displayedCrashPoint);
+        setDisplayedMultiplier(displayedCrashPoint);
+        setGameState('crashed');
+        setShowFlash(true);
+        playSound('EXPLOSION');
+
+        addBetRecord({
+            game: 'crash',
+            betAmount: wager,
+            outcome: 'loss',
+            multiplier: 0,
+            payout: 0,
+            gameParams: { cashoutMultiplier: 0, crashPoint: crashPointBps },
+        });
+    }, [addBetRecord, playSound, setDisplayedMultiplier, stopAnimation]);
 
     const multiplierLevel = getMultiplierLevel(multiplier);
 
@@ -141,15 +190,19 @@ export default function CrashGame() {
 
         isStartingRef.current = true;
         setIsLoading(true);
+        gameStateRef.current = 'launching';
         setGameState('launching');
         setErrorMessage(null);
         setActiveRound(null);
-        setMultiplier(1.00);
+        setDisplayedMultiplier(1.00);
         setCrashPoint(0);
         setCashedOutAt(null);
+        roundBetAmountRef.current = betAmount;
         setRoundBetAmount(betAmount);
         setSettledPayout(null);
         setShowFlash(false);
+        isCashoutRef.current = false;
+        visibleMultiplierBpsRef.current = MULTIPLIER_BPS;
         let initialMultiplier = 1.00;
 
         stopSound('WIN');
@@ -157,10 +210,7 @@ export default function CrashGame() {
         stopSound('CASH_OUT');
         playSound('CLICK');
 
-        if (animationRef.current) {
-            cancelAnimationFrame(animationRef.current);
-            animationRef.current = null;
-        }
+        stopAnimation();
 
         try {
             if (demoMode) {
@@ -186,12 +236,14 @@ export default function CrashGame() {
                 startTimeRef.current = typeof data.startedAt === 'number' ? data.startedAt : serverTime;
                 initialMultiplier = calculateDisplayedMultiplier(startTimeRef.current, serverTime);
                 if (typeof data.betAmount === 'number') {
+                    roundBetAmountRef.current = data.betAmount;
                     setRoundBetAmount(data.betAmount);
                     setBetAmount(data.betAmount);
                 }
             }
 
-            setMultiplier(initialMultiplier);
+            setDisplayedMultiplier(initialMultiplier);
+            gameStateRef.current = 'flying';
             setGameState('flying');
             if (demoMode) {
                 serverTimeOffsetRef.current = 0;
@@ -201,62 +253,49 @@ export default function CrashGame() {
         } catch (error) {
             console.error('Crash start error:', error);
             setErrorMessage(getRequestErrorMessage(error, 'Failed to start game'));
+            gameStateRef.current = 'idle';
             setGameState('idle');
         } finally {
             setIsLoading(false);
             isStartingRef.current = false;
         }
-    }, [canBet, betAmount, gameState, isLoading, playSound, setBetAmount, stopSound, demoMode]);
+    }, [canBet, betAmount, gameState, isLoading, playSound, setBetAmount, stopSound, demoMode, setDisplayedMultiplier, stopAnimation]);
 
     // Cash out
     const cashOut = useCallback(async () => {
-        if (gameState !== 'flying' || isCashoutRef.current) return;
+        if (gameStateRef.current !== 'flying' || isCashoutRef.current) return;
         isCashoutRef.current = true;
         setErrorMessage(null);
 
-        if (animationRef.current) {
-            cancelAnimationFrame(animationRef.current);
-            animationRef.current = null;
-        }
+        stopAnimation();
 
-        const cashoutMultiplier = getCurrentMultiplierBps();
-        const displayedCashoutMultiplier = cashoutMultiplier / 10000;
+        const visibleCashoutMultiplier = Math.max(MULTIPLIER_BPS, visibleMultiplierBpsRef.current);
+        const demoCrashPoint = demoCrashPointRef.current;
+        const cashoutMultiplier = demoMode
+            ? Math.min(visibleCashoutMultiplier, demoCrashPoint || visibleCashoutMultiplier)
+            : visibleCashoutMultiplier;
+        const displayedCashoutMultiplier = multiplierBpsToDisplay(cashoutMultiplier);
+        const wager = roundBetAmountRef.current;
 
-        setMultiplier(displayedCashoutMultiplier);
+        gameStateRef.current = 'cashingOut';
+        setDisplayedMultiplier(displayedCashoutMultiplier);
         setCashedOutAt(displayedCashoutMultiplier);
-        setSettledPayout(roundBetAmount * displayedCashoutMultiplier);
+        setSettledPayout(wager * displayedCashoutMultiplier);
         setGameState('cashingOut');
         playSound('CASH_OUT');
 
         try {
             if (demoMode) {
-                const won = cashoutMultiplier <= demoCrashPointRef.current;
-                if (!won) {
-                    setCrashPoint(demoCrashPointRef.current / 10000);
-                    setMultiplier(demoCrashPointRef.current / 10000);
-                    setGameState('crashed');
-                    setShowFlash(true);
-                    playSound('EXPLOSION');
-                addBetRecord({
-                    game: 'crash',
-                    betAmount: roundBetAmount,
-                    outcome: 'loss',
-                    multiplier: 0,
-                    payout: 0,
-                        gameParams: { cashoutMultiplier: 0, crashPoint: demoCrashPointRef.current },
-                    });
-                    return;
-                }
-
                 playSound('WIN');
                 addBetRecord({
                     game: 'crash',
-                    betAmount: roundBetAmount,
+                    betAmount: wager,
                     outcome: 'win',
                     multiplier: displayedCashoutMultiplier,
-                    payout: roundBetAmount * displayedCashoutMultiplier,
-                    gameParams: { cashoutMultiplier, crashPoint: demoCrashPointRef.current },
+                    payout: wager * displayedCashoutMultiplier,
+                    gameParams: { cashoutMultiplier, crashPoint: demoCrashPoint },
                 });
+                gameStateRef.current = 'cashedOut';
                 setGameState('cashedOut');
                 return;
             }
@@ -281,8 +320,10 @@ export default function CrashGame() {
 
             const data = await response.json();
             if (!data.success) {
-                setCrashPoint(data.crashPoint / 10000);
-                setMultiplier(data.crashPoint / 10000);
+                const serverCrashPoint = data.crashPoint / MULTIPLIER_BPS;
+                gameStateRef.current = 'crashed';
+                setCrashPoint(serverCrashPoint);
+                setDisplayedMultiplier(serverCrashPoint);
                 setGameState('crashed');
                 setShowFlash(true);
                 playSound('EXPLOSION');
@@ -292,7 +333,8 @@ export default function CrashGame() {
             }
 
             setCashedOutAt(data.multiplier);
-            setSettledPayout(typeof data.payout === 'number' ? data.payout : roundBetAmount * data.multiplier);
+            setSettledPayout(typeof data.payout === 'number' ? data.payout : wager * data.multiplier);
+            gameStateRef.current = 'cashedOut';
             setGameState('cashedOut');
             setActiveRound(null);
             playSound('WIN');
@@ -305,10 +347,12 @@ export default function CrashGame() {
             setSettledPayout(null);
             if (message === 'Round not found' || !activeRound) {
                 setActiveRound(null);
-                setMultiplier(1.00);
+                setDisplayedMultiplier(1.00);
+                gameStateRef.current = 'idle';
                 setGameState('idle');
             } else {
                 lastCheckRef.current = 0;
+                gameStateRef.current = 'flying';
                 setGameState('flying');
             }
             if (!demoMode) {
@@ -317,9 +361,7 @@ export default function CrashGame() {
         } finally {
             isCashoutRef.current = false;
         }
-    }, [gameState, roundBetAmount, demoMode, activeRound, playSound, addBetRecord, refreshBalance, getCurrentMultiplierBps]);
-
-    const lastCheckRef = useRef<number>(0);
+    }, [demoMode, activeRound, playSound, addBetRecord, refreshBalance, setDisplayedMultiplier, stopAnimation]);
 
     // Animation loop
     useEffect(() => {
@@ -329,9 +371,14 @@ export default function CrashGame() {
             if (gameStateRef.current !== 'flying') return;
 
             const multiplierBps = getCurrentMultiplierBps();
-            const roundedMultiplier = Math.floor((multiplierBps / 10000) * 100) / 100;
+            if (demoMode && multiplierBps >= demoCrashPointRef.current) {
+                finalizeDemoCrash();
+                return;
+            }
 
-            setMultiplier(roundedMultiplier);
+            const roundedMultiplier = multiplierBpsToDisplay(multiplierBps);
+
+            setDisplayedMultiplier(roundedMultiplier);
 
             if (autoCashout && roundedMultiplier >= autoCashout) {
                 void cashOut();
@@ -340,29 +387,11 @@ export default function CrashGame() {
 
             // Periodically check with server if we've crashed
             const now = Date.now();
-            if (!isCashoutRef.current && now - lastCheckRef.current > SERVER_CHECK_INTERVAL_MS) {
+            if (!demoMode && !isCashoutRef.current && now - lastCheckRef.current > SERVER_CHECK_INTERVAL_MS) {
                 lastCheckRef.current = now;
 
                 try {
-                    if (demoMode) {
-                        if (roundedMultiplier * 10000 >= demoCrashPointRef.current) {
-                            setCrashPoint(demoCrashPointRef.current / 10000);
-                            setMultiplier(demoCrashPointRef.current / 10000);
-                            setGameState('crashed');
-                            setShowFlash(true);
-                            playSound('EXPLOSION');
-
-                            addBetRecord({
-                                game: 'crash',
-                                betAmount: roundBetAmount,
-                                outcome: 'loss',
-                                multiplier: 0,
-                                payout: 0,
-                                gameParams: { cashoutMultiplier: 0, crashPoint: demoCrashPointRef.current },
-                            });
-                            return;
-                        }
-                    } else if (activeRound) {
+                    if (activeRound) {
                         const response = await authFetch('/api/crash', {
                             method: 'POST',
                             body: JSON.stringify({
@@ -376,8 +405,10 @@ export default function CrashGame() {
                         if (response.ok) {
                             const data = await response.json();
                             if (data.crashed) {
-                                setCrashPoint(data.crashPoint / 10000);
-                                setMultiplier(data.crashPoint / 10000);
+                                const serverCrashPoint = data.crashPoint / MULTIPLIER_BPS;
+                                gameStateRef.current = 'crashed';
+                                setCrashPoint(serverCrashPoint);
+                                setDisplayedMultiplier(serverCrashPoint);
                                 setGameState('crashed');
                                 setShowFlash(true);
                                 setActiveRound(null);
@@ -404,7 +435,7 @@ export default function CrashGame() {
                 cancelAnimationFrame(animationRef.current);
             }
         };
-    }, [gameState, autoCashout, cashOut, roundBetAmount, playSound, addBetRecord, demoMode, activeRound, refreshBalance, getCurrentMultiplierBps]);
+    }, [gameState, autoCashout, cashOut, demoMode, activeRound, refreshBalance, getCurrentMultiplierBps, finalizeDemoCrash, setDisplayedMultiplier, playSound]);
 
     const roundLocked = gameState === 'launching' || gameState === 'flying' || gameState === 'cashingOut' || isLoading;
     const displayedPayout = roundBetAmount * multiplier;
