@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { BadgeDefinition } from './badges';
+import { useWalletIdentity } from './wallet-identity';
 
 interface ProfileData {
     user: {
@@ -37,12 +37,12 @@ interface UseProfileReturn {
 }
 
 export function useProfile(): UseProfileReturn {
-    const { primaryWallet } = useDynamicContext();
+    const wallet = useWalletIdentity();
     const [profile, setProfile] = useState<ProfileData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const walletAddress = primaryWallet?.address?.toLowerCase();
+    const walletAddress = wallet.addressLower;
 
     const fetchProfile = useCallback(async () => {
         if (!walletAddress) {

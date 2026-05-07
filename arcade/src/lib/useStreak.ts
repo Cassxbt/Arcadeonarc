@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
+import { useWalletIdentity } from './wallet-identity';
 
 interface UseStreakReturn {
     streak: number;
@@ -18,12 +18,12 @@ function getStreakMultiplier(streak: number): number {
 }
 
 export function useStreak(): UseStreakReturn {
-    const { primaryWallet } = useDynamicContext();
+    const wallet = useWalletIdentity();
     const [streak, setStreak] = useState(0);
     const [lastPlayedDate, setLastPlayedDate] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    const walletAddress = primaryWallet?.address?.toLowerCase();
+    const walletAddress = wallet.addressLower;
 
     const fetchStreak = useCallback(async () => {
         if (!walletAddress) {

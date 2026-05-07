@@ -2,6 +2,8 @@
 
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
+import { useDisconnect, useSignMessage } from 'wagmi';
+import { useWalletIdentity } from './wallet-identity';
 
 interface AuthContextType {
     isAuthenticated: boolean;
@@ -16,6 +18,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { primaryWallet, handleLogOut } = useDynamicContext();
+    const wallet = useWalletIdentity();
+    const { signMessageAsync } = useSignMessage();
+    const { disconnect } = useDisconnect();
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isAuthenticating, setIsAuthenticating] = useState(false);
     const [sessionWallet, setSessionWallet] = useState<string | null>(null);
@@ -46,32 +51,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Reset failed flag when wallet changes
     useEffect(() => {
         setAuthAttemptFailed(false);
-    }, [primaryWallet?.address]);
-
-    // Auto-authenticate when wallet connects
-    useEffect(() => {
-        if (!hasCheckedSession) return;
-        if (!primaryWallet?.address) {
-            if (isAuthenticated) {
-                setIsAuthenticated(false);
-                setSessionWallet(null);
-            }
-            return;
-        }
-
-        const walletLower = primaryWallet.address.toLowerCase();
-
-        if (isAuthenticated && sessionWallet === walletLower) {
-            return;
-        }
-
-        if (!isAuthenticating && !authAttemptFailed) {
-            authenticate();
-        }
-    }, [primaryWallet?.address, hasCheckedSession, isAuthenticated, sessionWallet, isAuthenticating, authAttemptFailed]);
+    }, [wallet.addressLower]);
 
     const authenticate = useCallback(async (): Promise<boolean> => {
-        if (!primaryWallet?.address) {
+        if (!wallet.addressLower || !wallet.isConnected) {
             setAuthError('Wallet not connected');
             return false;
         }
@@ -80,7 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setAuthError(null);
 
         try {
-            const walletLower = primaryWallet.address.toLowerCase();
+            const walletLower = wallet.addressLower;
 
             // Step 1: Get challenge from server
             const challengeResponse = await fetch('/api/auth/challenge', {
@@ -96,12 +79,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const { challenge, message } = await challengeResponse.json();
 
             // Step 2: Sign the message with wallet
-            const connector = primaryWallet.connector;
             let signature: string;
 
-            if (connector && 'signMessage' in connector) {
+            if (wallet.source === 'external') {
+                signature = await signMessageAsync({ message });
+            } else if (primaryWallet?.connector && 'signMessage' in primaryWallet.connector) {
+                const connector = primaryWallet.connector;
                 signature = await (connector as { signMessage: (msg: string) => Promise<string> }).signMessage(message);
-            } else if ('signMessage' in primaryWallet) {
+            } else if (primaryWallet && 'signMessage' in primaryWallet) {
                 signature = await (primaryWallet as { signMessage: (msg: string) => Promise<string> }).signMessage(message);
             } else {
                 throw new Error('Wallet does not support message signing');
@@ -133,7 +118,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } finally {
             setIsAuthenticating(false);
         }
-    }, [primaryWallet]);
+    }, [primaryWallet, signMessageAsync, wallet.addressLower, wallet.isConnected, wallet.source]);
+
+    // Auto-authenticate when wallet connects
+    useEffect(() => {
+        if (!hasCheckedSession) return;
+        if (!wallet.addressLower || !wallet.isConnected) {
+            if (isAuthenticated) {
+                setIsAuthenticated(false);
+                setSessionWallet(null);
+            }
+            return;
+        }
+
+        if (isAuthenticated && sessionWallet === wallet.addressLower) {
+            return;
+        }
+
+        if (!isAuthenticating && !authAttemptFailed) {
+            authenticate();
+        }
+    }, [authenticate, wallet.addressLower, wallet.isConnected, hasCheckedSession, isAuthenticated, sessionWallet, isAuthenticating, authAttemptFailed]);
 
     const logout = useCallback(async () => {
         try {
@@ -149,7 +154,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (handleLogOut) {
             await handleLogOut();
         }
-    }, [handleLogOut]);
+        disconnect();
+    }, [disconnect, handleLogOut]);
 
     return (
         <AuthContext.Provider

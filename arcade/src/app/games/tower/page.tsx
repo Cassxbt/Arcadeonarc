@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { useGame } from '@/lib/game-context';
+import { useWalletIdentity } from '@/lib/wallet-identity';
 import { useSound } from '@/lib/sounds';
 import { authFetch, getRequestErrorMessage, readResponseError } from '@/lib/auth-fetch';
 import { GAME_CONFIG } from '@/lib/constants';
@@ -73,7 +74,8 @@ function buildRevealedDeathsMap(state?: TowerServerState): Map<number, number> {
 }
 
 export default function TowerGame() {
-    const { primaryWallet, setShowAuthFlow } = useDynamicContext();
+    const { setShowAuthFlow } = useDynamicContext();
+    const wallet = useWalletIdentity();
     const {
         betAmount,
         setBetAmount,
@@ -88,7 +90,7 @@ export default function TowerGame() {
     const { playSound, stopSound } = useSound();
 
     const [modeSelected, setModeSelected] = useState(false);
-    const showModeSelector = !primaryWallet && !demoMode && !modeSelected;
+    const showModeSelector = !wallet.address && !demoMode && !modeSelected;
     const showDemoLimitReached = demoMode && isDemoLimitReached('tower');
 
     const [gameState, setGameState] = useState<GameState>('idle');

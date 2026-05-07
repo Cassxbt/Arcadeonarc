@@ -1,6 +1,7 @@
 'use client';
 
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
+import { useConnect } from 'wagmi';
 import { useGame } from '@/lib/game-context';
 import { GameType } from '@/lib/useDemoLimits';
 import { Lock, Play, Sparkles, Wallet } from './icons';
@@ -13,7 +14,8 @@ interface GameModeSelectorProps {
 }
 
 export function GameModeSelector({ gameName, gameIcon, onDemoSelect }: GameModeSelectorProps) {
-    const { setShowAuthFlow } = useDynamicContext();
+    const { sdkHasLoaded, setShowAuthFlow } = useDynamicContext();
+    const { connect, connectors, isPending } = useConnect();
     const { getRemainingDemoPlays, isDemoLimitReached } = useGame();
 
     const gameId = gameName.toLowerCase().replace(/\s+/g, '') as GameType;
@@ -21,7 +23,15 @@ export function GameModeSelector({ gameName, gameIcon, onDemoSelect }: GameModeS
     const limitReached = isDemoLimitReached(gameId);
 
     const handleSignIn = () => {
-        setShowAuthFlow?.(true);
+        if (sdkHasLoaded) {
+            setShowAuthFlow?.(true);
+            return;
+        }
+
+        const connector = connectors.find((item) => item.type === 'injected') ?? connectors[0];
+        if (connector) {
+            connect({ connector });
+        }
     };
 
     return (
@@ -35,12 +45,12 @@ export function GameModeSelector({ gameName, gameIcon, onDemoSelect }: GameModeS
 
                 <div className={styles.options}>
                     {/* Sign In Option */}
-                    <button onClick={handleSignIn} className={styles.signInOption}>
+                    <button onClick={handleSignIn} disabled={isPending} className={styles.signInOption}>
                         <div className={styles.optionIcon}>
                             <Wallet size={32} style={{ color: 'var(--neon-green)' }} />
                         </div>
                         <div className={styles.optionContent}>
-                            <h3>Sign In</h3>
+                            <h3>{isPending ? 'Connecting' : 'Sign In'}</h3>
                             <p>Play with real USDC</p>
                         </div>
                         <div className={styles.optionBadge}>

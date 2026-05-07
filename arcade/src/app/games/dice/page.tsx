@@ -3,6 +3,7 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { useGame } from '@/lib/game-context';
+import { useWalletIdentity } from '@/lib/wallet-identity';
 import { useSound } from '@/lib/sounds';
 import { authFetch } from '@/lib/auth-fetch';
 import { Dice6, Flame, Sparkles, Frown } from '@/components/icons';
@@ -14,7 +15,8 @@ import styles from './page.module.css';
 type GameState = 'idle' | 'rolling' | 'won' | 'lost';
 
 export default function DiceGame() {
-    const { primaryWallet, setShowAuthFlow } = useDynamicContext();
+    const { setShowAuthFlow } = useDynamicContext();
+    const wallet = useWalletIdentity();
     const {
         effectiveBalance,
         betAmount,
@@ -29,7 +31,7 @@ export default function DiceGame() {
     const { playSound, stopSound } = useSound();
 
     const [modeSelected, setModeSelected] = useState(false);
-    const showModeSelector = !primaryWallet && !demoMode && !modeSelected;
+    const showModeSelector = !wallet.address && !demoMode && !modeSelected;
     const showDemoLimitReached = demoMode && isDemoLimitReached('dice');
 
     const [gameState, setGameState] = useState<GameState>('idle');

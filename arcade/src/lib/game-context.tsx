@@ -1,13 +1,13 @@
 'use client';
 
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { useDynamicContext, useIsLoggedIn } from '@dynamic-labs/sdk-react-core';
 import { useDemoLimits, GameType } from './useDemoLimits';
 import { useUser } from './useUser';
 import { useStreak } from './useStreak';
 import { getSupabaseClient } from './supabase';
 import { broadcastBalanceUpdate, subscribeToBalanceUpdates } from './cross-tab-sync';
 import { authFetch } from './auth-fetch';
+import { useWalletIdentity } from './wallet-identity';
 
 interface GameContextType {
     // Balance
@@ -67,8 +67,7 @@ const GameContext = createContext<GameContextType | undefined>(undefined);
 const DEMO_STARTING_BALANCE = 1000; // $1000 demo balance
 
 export function GameProvider({ children }: { children: React.ReactNode }) {
-    const { primaryWallet } = useDynamicContext();
-    const isLoggedIn = useIsLoggedIn();
+    const wallet = useWalletIdentity();
     const demoLimits = useDemoLimits();
     const { user, isRegistered, isLoading: isUserLoading, refetch: refetchUser } = useUser();
     const { streak, streakMultiplier } = useStreak();
@@ -91,7 +90,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     const [betHistory, setBetHistory] = useState<BetRecord[]>([]);
 
     useEffect(() => {
-        if (!primaryWallet?.address || !isLoggedIn || demoMode) {
+        if (!wallet.addressLower || !wallet.isConnected || demoMode) {
             setShowUsernameModal(false);
             return;
         }
@@ -106,17 +105,17 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         if (isRegistered && showUsernameModal) {
             setShowUsernameModal(false);
         }
-    }, [primaryWallet?.address, isLoggedIn, isRegistered, demoMode, isUserLoading, showUsernameModal]);
+    }, [wallet.addressLower, wallet.isConnected, isRegistered, demoMode, isUserLoading, showUsernameModal]);
 
     const refreshBalance = useCallback(async () => {
-        if (!primaryWallet?.address) {
+        if (!wallet.addressLower) {
             setBalance(0);
             return;
         }
 
         setIsLoading(true);
         try {
-            const response = await fetch(`/api/users?wallet=${primaryWallet.address.toLowerCase()}`);
+            const response = await fetch(`/api/users?wallet=${wallet.addressLower}`);
             const data = await response.json();
 
             if (data.user && data.user.server_balance !== undefined && data.user.server_balance !== null) {
@@ -125,7 +124,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
                 setIsLoading(false);
                 const syncResponse = await authFetch('/api/balance/sync', {
                     method: 'POST',
-                    body: JSON.stringify({ wallet: primaryWallet.address }),
+                    body: JSON.stringify({ wallet: wallet.address }),
                 });
                 if (syncResponse.ok) {
                     const syncData = await syncResponse.json();
@@ -144,15 +143,15 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         } finally {
             setIsLoading(false);
         }
-    }, [primaryWallet?.address]);
+    }, [wallet.address, wallet.addressLower]);
 
     const syncBalanceAfterDeposit = useCallback(async () => {
-        if (!primaryWallet?.address) return;
+        if (!wallet.address) return;
 
         try {
             const response = await authFetch('/api/balance/sync', {
                 method: 'POST',
-                body: JSON.stringify({ wallet: primaryWallet.address }),
+                body: JSON.stringify({ wallet: wallet.address }),
             });
 
             if (response.ok) {
@@ -164,18 +163,18 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
             console.error('Failed to sync balance:', error);
             await refreshBalance();
         }
-    }, [primaryWallet?.address, refreshBalance]);
+    }, [wallet.address, refreshBalance]);
 
     useEffect(() => {
-        if (primaryWallet && isRegistered) {
+        if (wallet.address && isRegistered) {
             syncBalanceAfterDeposit();
         }
-    }, [primaryWallet, isRegistered, syncBalanceAfterDeposit]);
+    }, [wallet.address, isRegistered, syncBalanceAfterDeposit]);
     // Supabase Realtime + cross-tab sync
     useEffect(() => {
-        if (!primaryWallet?.address || demoMode) return;
+        if (!wallet.addressLower || demoMode) return;
 
-        const walletLower = primaryWallet.address.toLowerCase();
+        const walletLower = wallet.addressLower;
         const supabase = getSupabaseClient();
         let reconnectAttempts = 0;
         const maxReconnectAttempts = 5;
@@ -223,7 +222,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
             unsubscribeCrossTab();
             clearInterval(fallbackInterval);
         };
-    }, [primaryWallet?.address, demoMode, refreshBalance]);
+    }, [wallet.addressLower, demoMode, refreshBalance]);
 
     // Toggle demo mode
     const toggleDemoMode = useCallback(() => {
@@ -240,14 +239,14 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     }, []);
     // Server-side payout calculation
     const recordGameToServer = useCallback(async (record: Omit<BetRecord, 'id' | 'timestamp'>) => {
-        if (!primaryWallet?.address || demoMode) return;
+        if (!wallet.addressLower || demoMode) return;
 
         if (isRegistered && record.gameParams) {
             try {
                 const response = await authFetch('/api/games', {
                     method: 'POST',
                     body: JSON.stringify({
-                        wallet: primaryWallet.address.toLowerCase(),
+                        wallet: wallet.addressLower,
                         game: record.game,
                         bet_amount: record.betAmount,
                         game_params: record.gameParams,
@@ -271,7 +270,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
                 await refreshBalance();
             }
         }
-    }, [primaryWallet?.address, isRegistered, demoMode, refreshBalance]);
+    }, [wallet.addressLower, isRegistered, demoMode, refreshBalance]);
 
     const addBetRecord = useCallback((record: Omit<BetRecord, 'id' | 'timestamp'>) => {
         const newRecord: BetRecord = {

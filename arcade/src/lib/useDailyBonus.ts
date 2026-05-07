@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { authFetch } from './auth-fetch';
+import { useWalletIdentity } from './wallet-identity';
 
 interface DailyBonusState {
     claimed: boolean;
@@ -18,7 +18,7 @@ interface UseDailyBonusReturn {
 }
 
 export function useDailyBonus(): UseDailyBonusReturn {
-    const { primaryWallet } = useDynamicContext();
+    const wallet = useWalletIdentity();
     const [dailyBonus, setDailyBonus] = useState<DailyBonusState>({
         claimed: false,
         points: 0,
@@ -26,7 +26,7 @@ export function useDailyBonus(): UseDailyBonusReturn {
         lastClaimDate: null,
     });
 
-    const walletAddress = primaryWallet?.address?.toLowerCase();
+    const walletAddress = wallet.addressLower;
 
     const checkDailyBonus = useCallback(async () => {
         if (!walletAddress) {

@@ -22,6 +22,32 @@ vi.mock('@dynamic-labs/sdk-react-core', () => ({
     useIsLoggedIn: vi.fn(() => true),
 }));
 
+// Mock Wagmi hooks for component tests that render wallet-aware components
+// outside the app-level WagmiProvider.
+vi.mock('wagmi', async () => {
+    const actual = await vi.importActual<typeof import('wagmi')>('wagmi');
+
+    return {
+        ...actual,
+        useConnection: vi.fn(() => ({
+            address: undefined,
+            status: 'disconnected',
+        })),
+        useConnect: vi.fn(() => ({
+            connect: vi.fn(),
+            connectors: [],
+            isPending: false,
+            error: null,
+        })),
+        useDisconnect: vi.fn(() => ({
+            disconnect: vi.fn(),
+        })),
+        useSignMessage: vi.fn(() => ({
+            signMessageAsync: vi.fn(),
+        })),
+    };
+});
+
 // Mock sounds hook
 vi.mock('@/lib/sounds', () => ({
     useSound: vi.fn(() => ({

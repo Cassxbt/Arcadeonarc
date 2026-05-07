@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { useGame } from '@/lib/game-context';
+import { useWalletIdentity } from '@/lib/wallet-identity';
 import { useSound } from '@/lib/sounds';
 import { authFetch, getRequestErrorMessage, readResponseError } from '@/lib/auth-fetch';
 import { FerrisWheel, Target, BarChart3 } from '@/components/icons';
@@ -65,7 +66,8 @@ type WheelOutcome = {
 };
 
 export default function WheelGame() {
-    const { primaryWallet, setShowAuthFlow } = useDynamicContext();
+    const { setShowAuthFlow } = useDynamicContext();
+    const wallet = useWalletIdentity();
     const {
         effectiveBalance,
         betAmount,
@@ -80,7 +82,7 @@ export default function WheelGame() {
     const { playSound, stopSound } = useSound();
 
     const [modeSelected, setModeSelected] = useState(false);
-    const showModeSelector = !primaryWallet && !demoMode && !modeSelected;
+    const showModeSelector = !wallet.address && !demoMode && !modeSelected;
     const showDemoLimitReached = demoMode && isDemoLimitReached('wheel');
 
     const [gameState, setGameState] = useState<GameState>('idle');

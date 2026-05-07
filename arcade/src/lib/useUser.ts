@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { User } from './supabase';
 import { authFetch } from './auth-fetch';
+import { useWalletIdentity } from './wallet-identity';
 
 interface UseUserReturn {
     user: User | null;
@@ -16,12 +16,12 @@ interface UseUserReturn {
 }
 
 export function useUser(): UseUserReturn {
-    const { primaryWallet } = useDynamicContext();
+    const wallet = useWalletIdentity();
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const walletAddress = primaryWallet?.address?.toLowerCase();
+    const walletAddress = wallet.addressLower;
 
     const fetchUser = useCallback(async () => {
         if (!walletAddress) {

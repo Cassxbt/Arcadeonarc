@@ -3,13 +3,14 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useDynamicContext, DynamicWidget } from '@dynamic-labs/sdk-react-core';
 import { useTheme } from '@/lib/theme';
 import { useSound } from '@/lib/sounds';
 import { useGame } from '@/lib/game-context';
+import { useWalletIdentity } from '@/lib/wallet-identity';
 import { DepositModal } from './DepositModal';
 import { CashierWidget } from './CashierWidget';
 import { UserWidget } from './UserWidget';
+import { WalletConnectButton } from './WalletConnectButton';
 import {
     Gamepad2,
     HelpCircle,
@@ -28,7 +29,7 @@ import styles from './Navbar.module.css';
 
 export function NavbarContent() {
     const pathname = usePathname();
-    const { primaryWallet } = useDynamicContext();
+    const wallet = useWalletIdentity();
     const { theme, toggleTheme } = useTheme();
     const { soundEnabled, toggleSound } = useSound();
     const { balance, username } = useGame();
@@ -80,8 +81,8 @@ export function NavbarContent() {
         filter: 'drop-shadow(0 0 6px var(--neon-cyan))',
     };
 
-    const displayBalance = primaryWallet ? balance : 0;
-    const displayUsername = username || (primaryWallet ? `${primaryWallet.address.slice(0, 6)}...` : 'Guest');
+    const displayBalance = wallet.address ? balance : 0;
+    const displayUsername = username || (wallet.address ? `${wallet.address.slice(0, 6)}...` : 'Guest');
 
     return (
         <>
@@ -128,7 +129,7 @@ export function NavbarContent() {
 
                     <div className={styles.right}>
                         <div className={styles.desktopWidgets}>
-                            {primaryWallet && (
+                            {wallet.address && (
                                 <>
                                     <UserWidget username={displayUsername} />
                                     <CashierWidget
@@ -167,7 +168,7 @@ export function NavbarContent() {
                         </div>
 
                         <div className={styles.walletWidget}>
-                            <DynamicWidget />
+                            <WalletConnectButton />
                         </div>
 
                         <button
@@ -271,7 +272,7 @@ export function NavbarContent() {
                         </button>
                     </div>
 
-                    {primaryWallet ? (
+                    {wallet.address ? (
                         <div className={`${styles.mobileWalletSection} ${styles.menuItem} ${styles.menuItem7}`}>
                             <Link href="/profile" className={styles.mobileProfileBtn}>
                                 <div className={styles.mobileUserIcon}>
@@ -294,7 +295,7 @@ export function NavbarContent() {
                         </div>
                     ) : (
                         <div className={`${styles.mobileLoginSection} ${styles.menuItem} ${styles.menuItem7}`}>
-                            <DynamicWidget />
+                            <WalletConnectButton mobile />
                         </div>
                     )}
 

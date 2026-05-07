@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { authFetch } from './auth-fetch';
+import { useWalletIdentity } from './wallet-identity';
 
 export interface Milestone {
     id: string;
@@ -34,7 +34,7 @@ interface UseMilestonesReturn {
 }
 
 export function useMilestones(): UseMilestonesReturn {
-    const { primaryWallet } = useDynamicContext();
+    const wallet = useWalletIdentity();
     const [milestones, setMilestones] = useState<Milestone[]>([]);
     const [stats, setStats] = useState<WeeklyStats>({ gamesPlayed: 0, wins: 0 });
     const [week, setWeek] = useState(0);
@@ -42,7 +42,7 @@ export function useMilestones(): UseMilestonesReturn {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const walletAddress = primaryWallet?.address?.toLowerCase();
+    const walletAddress = wallet.addressLower;
 
     const fetchMilestones = useCallback(async () => {
         if (!walletAddress) {

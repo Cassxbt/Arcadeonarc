@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { authFetch } from './auth-fetch';
+import { useWalletIdentity } from './wallet-identity';
 
 export interface Quest {
     id: string;
@@ -34,7 +34,7 @@ interface UseQuestsReturn {
 }
 
 export function useQuests(): UseQuestsReturn {
-    const { primaryWallet } = useDynamicContext();
+    const wallet = useWalletIdentity();
     const [quests, setQuests] = useState<Quest[]>([]);
     const [completionBonus, setCompletionBonus] = useState<CompletionBonus>({
         available: false,
@@ -44,7 +44,7 @@ export function useQuests(): UseQuestsReturn {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const walletAddress = primaryWallet?.address?.toLowerCase();
+    const walletAddress = wallet.addressLower;
 
     const fetchQuests = useCallback(async () => {
         if (!walletAddress) {
